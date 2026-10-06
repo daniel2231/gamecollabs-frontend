@@ -1,0 +1,145 @@
+{
+  "Site": {
+    "name": "Collab Tracker",
+    "description": "A manually reviewed record of game × IP collaborations, built from public sources. Find which IPs worked with which games, and how.",
+    "nav": { "main": "Main menu", "collabs": "Collabs" },
+    "search": { "label": "Search collabs", "placeholder": "Search games, IPs, companies" },
+    "language": { "label": "Choose language", "ko": "한국어", "en": "English" },
+    "notice": "Manually reviewed from public sources. Not official or real-time figures.",
+    "footer": "Built from public sources and reviewed by hand. Every entry lists its sources and the date they were checked.",
+    "mockBanner": "Development mode: showing mock data. Set API_BASE_URL to use the real API.",
+    "skip": "Skip to content"
+  },
+  "Phase": {
+    "all": "All",
+    "upcoming": "Upcoming",
+    "ongoing": "Ongoing",
+    "ended": "Ended",
+    "unknown": "Status unknown"
+  },
+  "Period": {
+    "unknown": "Dates unknown",
+    "permanent": "Permanent",
+    "tba": "End date TBA",
+    "precision": { "day": "Exact day", "month": "Month only", "unknown": "Precision unknown" },
+    "endKind": { "fixed": "Fixed end date", "permanent": "Runs permanently", "tba": "Not yet announced" }
+  },
+  "Translation": {
+    "fallback": "Not translated",
+    "machine": "Machine translated"
+  },
+  "List": {
+    "title": "Game × IP Collabs",
+    "subtitle": "Which IPs worked with which games, and how.",
+    "publishedCount": "<strong>{count}</strong> published",
+    "copyLink": "Copy filter link",
+    "copied": "Copied",
+    "exportCsv": "Export CSV",
+    "phaseTabs": "Status",
+    "filters": "Filters",
+    "reset": "Reset",
+    "facet": {
+      "category": "Category",
+      "partner_category": "Partner category",
+      "region": "Region",
+      "platform": "Platform",
+      "collab_type": "Collab type"
+    },
+    "showMore": "+ {count} more",
+    "showLess": "Show less",
+    "hierarchyHint": "Choosing a parent includes everything under it.",
+    "period": "Period",
+    "from": "From",
+    "to": "To",
+    "results": "Results",
+    "resultCount": "<strong>{count}</strong> results",
+    "sort": {
+      "label": "Sort",
+      "start_desc": "Start date, newest",
+      "start_asc": "Start date, oldest",
+      "recent": "Recently added"
+    },
+    "loadMore": "Load more",
+    "empty": "No collabs match these filters.",
+    "emptyHint": "Try removing a filter or changing the search.",
+    "removeFilter": "Remove filter {label}",
+    "searchChip": "Search: {q}",
+    "openFilters": "Open filters"
+  },
+  "Role": {
+    "host": "Host",
+    "partner": "Partner",
+    "publisher": "Publisher",
+    "developer": "Developer",
+    "licensor": "IP holder",
+    "brand_partner": "Brand partner",
+    "organizer": "Organizer"
+  },
+  "Detail": {
+    "breadcrumb": "Breadcrumb",
+    "start": "Start",
+    "end": "End",
+    "status": "Status",
+    "computed": "Computed at request time",
+    "summary": "Summary",
+    "summaryEmpty": "No summary yet.",
+    "parties": "Properties involved",
+    "seeAll": "See all collabs →",
+    "companies": "Companies involved",
+    "sources": "Sources",
+    "sourceColumns": { "type": "Type", "title": "Title · Publisher", "accessed": "Checked" },
+    "sourceType": { "official": "Official", "press": "Press", "social": "Social", "store": "Store" },
+    "primary": "Primary source",
+    "archived": "Archived copy",
+    "classification": "Classification",
+    "labels": {
+      "category": "Category",
+      "partner": "Partner",
+      "region": "Region",
+      "platform": "Platform",
+      "type": "Type"
+    },
+    "none": "—",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "report": "Report an error",
+    "reportSoon": "Reporting is coming soon.",
+    "disclaimer": "Manually reviewed from public sources. Private metrics such as revenue or player counts are out of scope.",
+    "related": "Related collabs",
+    "relation": { "same_host": "Same game", "same_partner": "Same partner" },
+    "coverCredit": "Image: {credit}",
+    "updated": "Last updated {date}"
+  },
+  "Property": {
+    "breadcrumb": "Properties",
+    "aliases": "Also known as",
+    "stats": { "collabs": "Published collabs", "counterparts": "Partners", "latest": "Latest start" },
+    "timeline": "Collab timeline",
+    "sortNewest": "Newest",
+    "sortOldest": "Oldest",
+    "unknownYear": "Date unknown",
+    "counterparts": "Collaborated with",
+    "typeDistribution": "Collab types",
+    "info": { "kind": "Category", "franchise": "Franchise", "official": "Official", "slug": "slug", "officialSite": "Official site" },
+    "csv": "Download CSV for this property",
+    "empty": "No published collabs yet.",
+    "noData": "No data"
+  },
+  "Company": {
+    "breadcrumb": "Companies",
+    "country": "Country",
+    "stats": { "collabs": "Collabs", "properties": "Properties", "latest": "Latest start" },
+    "roles": "Roles",
+    "properties": "Properties",
+    "csv": "Download CSV for this company"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "body": "The address may have changed, or the entry is not published yet.",
+    "home": "Back to collabs"
+  },
+  "Error": {
+    "title": "Couldn't load the data",
+    "retry": "Try again"
+  }
+}

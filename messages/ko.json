@@ -1,0 +1,145 @@
+{
+  "Site": {
+    "name": "콜라보 트래커",
+    "description": "공개 출처로 수동 검수한 게임 × IP 콜라보 기록. 어떤 IP가, 어떤 게임과, 어떤 형태로 협업했는지 찾아보세요.",
+    "nav": { "main": "주요 메뉴", "collabs": "콜라보" },
+    "search": { "label": "콜라보 검색", "placeholder": "게임, IP, 회사 이름으로 검색" },
+    "language": { "label": "언어 선택", "ko": "한국어", "en": "English" },
+    "notice": "공개 출처 기반 · 수동 검수 데이터입니다. 공식 집계나 실시간 수치가 아닙니다.",
+    "footer": "공개 출처 기반 · 수동 검수. 각 항목의 출처와 확인일을 함께 표기합니다.",
+    "mockBanner": "개발 모드: 목(mock) 데이터를 표시 중입니다. API_BASE_URL을 설정하면 실제 API를 사용합니다.",
+    "skip": "본문으로 건너뛰기"
+  },
+  "Phase": {
+    "all": "전체",
+    "upcoming": "예정",
+    "ongoing": "진행 중",
+    "ended": "종료",
+    "unknown": "상태 미상"
+  },
+  "Period": {
+    "unknown": "기간 미상",
+    "permanent": "상시",
+    "tba": "종료일 미발표",
+    "precision": { "day": "일 단위 정확도", "month": "월 단위 정확도", "unknown": "정확도 미상" },
+    "endKind": { "fixed": "종료일 확정", "permanent": "상시 진행", "tba": "아직 발표되지 않음" }
+  },
+  "Translation": {
+    "fallback": "번역 없음",
+    "machine": "기계 번역"
+  },
+  "List": {
+    "title": "게임 × IP 콜라보",
+    "subtitle": "어떤 IP가, 어떤 게임과, 어떤 형태로 협업했는지.",
+    "publishedCount": "발행 <strong>{count}</strong>건",
+    "copyLink": "필터 링크 복사",
+    "copied": "복사됨",
+    "exportCsv": "CSV 내보내기",
+    "phaseTabs": "진행 상태",
+    "filters": "필터",
+    "reset": "초기화",
+    "facet": {
+      "category": "카테고리",
+      "partner_category": "파트너 분류",
+      "region": "권역",
+      "platform": "플랫폼",
+      "collab_type": "콜라보 유형"
+    },
+    "showMore": "+ {count}개 더 보기",
+    "showLess": "접기",
+    "hierarchyHint": "상위 항목을 고르면 하위 항목이 함께 포함됩니다.",
+    "period": "기간",
+    "from": "시작",
+    "to": "종료",
+    "results": "검색 결과",
+    "resultCount": "<strong>{count}</strong>건",
+    "sort": {
+      "label": "정렬",
+      "start_desc": "시작일 최신순",
+      "start_asc": "시작일 오래된순",
+      "recent": "최근 등록순"
+    },
+    "loadMore": "더 보기",
+    "empty": "조건에 맞는 콜라보가 없습니다.",
+    "emptyHint": "필터를 줄이거나 검색어를 바꿔 보세요.",
+    "removeFilter": "{label} 필터 제거",
+    "searchChip": "검색: {q}",
+    "openFilters": "필터 열기"
+  },
+  "Role": {
+    "host": "호스트",
+    "partner": "파트너",
+    "publisher": "퍼블리셔",
+    "developer": "개발사",
+    "licensor": "IP 홀더",
+    "brand_partner": "브랜드 파트너",
+    "organizer": "주최"
+  },
+  "Detail": {
+    "breadcrumb": "경로",
+    "start": "시작",
+    "end": "종료",
+    "status": "상태",
+    "computed": "조회 시점 기준 계산",
+    "summary": "요약",
+    "summaryEmpty": "아직 요약이 없습니다.",
+    "parties": "참여 작품",
+    "seeAll": "모든 콜라보 보기 →",
+    "companies": "참여 회사",
+    "sources": "출처",
+    "sourceColumns": { "type": "유형", "title": "제목 · 발행처", "accessed": "확인일" },
+    "sourceType": { "official": "공식", "press": "보도", "social": "소셜", "store": "스토어" },
+    "primary": "주 출처",
+    "archived": "보관본",
+    "classification": "분류",
+    "labels": {
+      "category": "카테고리",
+      "partner": "파트너",
+      "region": "권역",
+      "platform": "플랫폼",
+      "type": "유형"
+    },
+    "none": "—",
+    "copyLink": "링크 복사",
+    "copied": "복사됨",
+    "report": "오류 제보",
+    "reportSoon": "제보 기능은 준비 중입니다.",
+    "disclaimer": "공개 출처 기반 · 수동 검수 데이터입니다. 매출·이용자 수 같은 비공개 지표는 다루지 않습니다.",
+    "related": "관련 콜라보",
+    "relation": { "same_host": "같은 게임", "same_partner": "같은 파트너" },
+    "coverCredit": "이미지 출처: {credit}",
+    "updated": "최종 수정 {date}"
+  },
+  "Property": {
+    "breadcrumb": "작품",
+    "aliases": "별칭",
+    "stats": { "collabs": "발행 콜라보", "counterparts": "협업한 작품", "latest": "최근 시작" },
+    "timeline": "콜라보 타임라인",
+    "sortNewest": "최신순",
+    "sortOldest": "오래된순",
+    "unknownYear": "시기 미상",
+    "counterparts": "협업한 작품",
+    "typeDistribution": "콜라보 유형 분포",
+    "info": { "kind": "분류", "franchise": "프랜차이즈", "official": "공식", "slug": "slug", "officialSite": "공식 사이트" },
+    "csv": "이 작품의 콜라보 CSV",
+    "empty": "아직 발행된 콜라보가 없습니다.",
+    "noData": "데이터 없음"
+  },
+  "Company": {
+    "breadcrumb": "회사",
+    "country": "국가",
+    "stats": { "collabs": "참여 콜라보", "properties": "관련 작품", "latest": "최근 시작" },
+    "roles": "역할 분포",
+    "properties": "관련 작품",
+    "csv": "이 회사의 콜라보 CSV"
+  },
+  "NotFound": {
+    "title": "페이지를 찾을 수 없습니다",
+    "body": "주소가 바뀌었거나 아직 발행되지 않은 항목일 수 있습니다.",
+    "home": "콜라보 목록으로"
+  },
+  "Error": {
+    "title": "데이터를 불러오지 못했습니다",
+    "retry": "다시 시도"
+  }
+}
