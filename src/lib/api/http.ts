@@ -16,6 +16,7 @@ import {
   type CollabQuery,
   type Locale,
 } from '@/schema';
+import { apiBaseUrl } from './config';
 import { ApiError, type AdminApi, type PublicApi } from './types';
 
 /**
@@ -35,9 +36,10 @@ type RequestOptions = {
 };
 
 function baseUrl(): string {
-  const url = process.env.API_BASE_URL;
-  if (!url) throw new Error('API_BASE_URL is not set');
-  return url.replace(/\/$/, '');
+  const url = apiBaseUrl();
+  // index.ts가 같은 함수로 목/실제를 고르므로 정상 흐름에서는 여기 오지 않는다
+  if (!url) throw new Error('API_BASE_URL is empty: the HTTP API client was used without a base URL');
+  return url;
 }
 
 async function request(path: string, opts: RequestOptions = {}): Promise<Response | null> {

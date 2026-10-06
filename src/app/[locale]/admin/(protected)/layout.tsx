@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { AdminNav } from '@/components/admin/AdminNav';
-import { adminApi, usingMockApi } from '@/lib/api';
+import { adminApi, isMockApi } from '@/lib/api';
 import { devBypassEnabled, getAdminSession } from '@/lib/auth/session';
 
 export const metadata: Metadata = { title: '관리자', robots: { index: false, follow: false } };
@@ -22,7 +22,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
             ×
           </span>
           <Text weight="bold">관리자</Text>
-          {usingMockApi && (
+          {isMockApi() && (
             <Badge color="amber" variant="soft" size="1">
               mock
             </Badge>

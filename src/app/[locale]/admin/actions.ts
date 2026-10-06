@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
-import { adminApi, ApiError, usingMockApi } from '@/lib/api';
+import { adminApi, ApiError, isMockApi } from '@/lib/api';
 import type { EntityInput, TermInput } from '@/lib/api/types';
 import { getAdminSession } from '@/lib/auth/session';
 import {
@@ -30,7 +30,7 @@ async function run<T>(fn: (api: ReturnType<typeof adminApi>) => Promise<T>): Pro
   try {
     const data = await fn(adminApi(session.token));
     // 실제 API 모드에서는 Express가 revalidate 웹훅을 호출한다. 목 모드에서는 직접 갱신.
-    if (usingMockApi) revalidatePath('/', 'layout');
+    if (isMockApi()) revalidatePath('/', 'layout');
     return { ok: true, data };
   } catch (e) {
     if (e instanceof ApiError) return { ok: false, error: { code: e.code, message: e.message, fields: e.fields } };
