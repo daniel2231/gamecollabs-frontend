@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { MockBanner, ResearchNotice, SiteFooter } from '@/components/site/SiteChrome';
+import { MockBanner, SiteFooter } from '@/components/site/SiteChrome';
 import { SiteHeader } from '@/components/site/SiteHeader';
 
 export default async function SiteLayout({ children, params }: LayoutProps<'/[locale]'>) {
@@ -11,7 +11,6 @@ export default async function SiteLayout({ children, params }: LayoutProps<'/[lo
         {t('skip')}
       </a>
       <SiteHeader />
-      <ResearchNotice />
       <MockBanner />
       <main id="main" className="ct-container" style={{ paddingTop: 32, paddingBottom: 64, minHeight: '60vh' }}>
         {children}

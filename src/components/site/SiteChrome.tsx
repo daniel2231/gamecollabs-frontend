@@ -1,23 +1,6 @@
-import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { Callout, Flex, Link as RadixLink, Text } from '@radix-ui/themes';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { isMockApi } from '@/lib/api';
-
-export async function ResearchNotice() {
-  const t = await getTranslations('Site');
-  return (
-    <div className="ct-notice">
-      <div className="ct-container">
-        <Flex align="center" gap="2" py="2">
-          <InfoCircledIcon color="var(--gray-11)" aria-hidden="true" />
-          <Text size="2" color="gray">
-            {t('notice')}
-          </Text>
-        </Flex>
-      </div>
-    </div>
-  );
-}
 
 export async function MockBanner() {
   if (!isMockApi()) return null;

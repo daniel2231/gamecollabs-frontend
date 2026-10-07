@@ -257,9 +257,6 @@ export default async function CollabDetailPage({ params }: Props) {
                 </Button>
               </Tooltip>
             </Flex>
-            <Text as="p" size="2" color="gray" className="ct-panel" style={{ padding: '14px 16px', margin: 0 }}>
-              {t('disclaimer')}
-            </Text>
             <Text as="p" size="1" color="gray" m="0">
               {t('updated', { date: collab.updatedAt.slice(0, 10) })}
             </Text>

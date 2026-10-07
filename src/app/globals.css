@@ -88,11 +88,6 @@ body {
   font-weight: 500;
 }
 
-.ct-notice {
-  background: var(--gray-1);
-  border-bottom: 1px solid var(--ct-line);
-}
-
 .ct-footer {
   border-top: 1px solid var(--ct-line);
   background: var(--gray-1);

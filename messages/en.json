@@ -15,7 +15,6 @@
       "ko": "한국어",
       "en": "English"
     },
-    "notice": "Manually reviewed from public sources. Not official or real-time figures.",
     "footer": "Built from public sources and reviewed by hand. Every entry lists its sources and the date they were checked.",
     "mockBanner": "Development mode: showing mock data. Set API_BASE_URL to use the real API.",
     "skip": "Skip to content"
@@ -128,7 +127,6 @@
     "copied": "Copied",
     "report": "Report an error",
     "reportSoon": "Reporting is coming soon.",
-    "disclaimer": "Manually reviewed from public sources. Private metrics such as revenue or player counts are out of scope.",
     "related": "Related collabs",
     "relation": {
       "same_host": "Same game",

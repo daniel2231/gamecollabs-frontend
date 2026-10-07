@@ -19,7 +19,7 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
   const title = collab?.title ?? tSite('name');
   const period = collab ? formatPeriod(collab.period, { unknown: tPeriod('unknown'), permanent: tPeriod('permanent'), tba: tPeriod('tba') }) : '';
   const parties = collab?.parties.map((p) => p.name.value).join(' × ') ?? '';
-  const text = `${title}${period}${parties}${tSite('name')}${tSite('notice')}×`;
+  const text = `${title}${period}${parties}${tSite('name')}×`;
   const font = await loadOgFont(text);
 
   return new ImageResponse(
@@ -33,7 +33,6 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
           <div style={{ fontSize: 72, lineHeight: 1.15, letterSpacing: -2 }}>{title}</div>
           <div style={{ fontSize: 32, color: '#a1a4ab' }}>{period}</div>
         </div>
-        <div style={{ fontSize: 24, color: '#a1a4ab' }}>{tSite('notice')}</div>
       </div>
     ),
     { ...size, fonts: font ? [{ name: 'Noto Sans KR', data: font, weight: 700, style: 'normal' }] : undefined },
