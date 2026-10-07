@@ -67,23 +67,10 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   return (
     <>
-      <Flex wrap="wrap" align="end" justify="between" gap="4" mb="5">
-        <div>
-          <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }}>
-            {t('title')}
-          </Heading>
-          <Text as="p" color="gray" mt="2">
-            {t('subtitle')}{' '}
-            {t.rich('publishedCount', {
-              count: stats.published,
-              strong: (chunks) => (
-                <Text weight="bold" color="gray" highContrast className="ct-mono">
-                  {chunks}
-                </Text>
-              ),
-            })}
-          </Text>
-        </div>
+      <Flex wrap="wrap" align="center" justify="between" gap="4" mb="5">
+        <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }}>
+          {t('title')}
+        </Heading>
         <Flex wrap="wrap" gap="2">
           <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
           <Button asChild size="2">

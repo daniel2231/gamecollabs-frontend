@@ -2,9 +2,19 @@
   "Site": {
     "name": "Collab Tracker",
     "description": "A manually reviewed record of game × IP collaborations, built from public sources. Find which IPs worked with which games, and how.",
-    "nav": { "main": "Main menu", "collabs": "Collabs" },
-    "search": { "label": "Search collabs", "placeholder": "Search games, IPs, companies" },
-    "language": { "label": "Choose language", "ko": "한국어", "en": "English" },
+    "nav": {
+      "main": "Main menu",
+      "collabs": "Collabs"
+    },
+    "search": {
+      "label": "Search collabs",
+      "placeholder": "Search games, IPs, companies"
+    },
+    "language": {
+      "label": "Choose language",
+      "ko": "한국어",
+      "en": "English"
+    },
     "notice": "Manually reviewed from public sources. Not official or real-time figures.",
     "footer": "Built from public sources and reviewed by hand. Every entry lists its sources and the date they were checked.",
     "mockBanner": "Development mode: showing mock data. Set API_BASE_URL to use the real API.",
@@ -21,8 +31,16 @@
     "unknown": "Dates unknown",
     "permanent": "Permanent",
     "tba": "End date TBA",
-    "precision": { "day": "Exact day", "month": "Month only", "unknown": "Precision unknown" },
-    "endKind": { "fixed": "Fixed end date", "permanent": "Runs permanently", "tba": "Not yet announced" }
+    "precision": {
+      "day": "Exact day",
+      "month": "Month only",
+      "unknown": "Precision unknown"
+    },
+    "endKind": {
+      "fixed": "Fixed end date",
+      "permanent": "Runs permanently",
+      "tba": "Not yet announced"
+    }
   },
   "Translation": {
     "fallback": "Not translated",
@@ -30,8 +48,6 @@
   },
   "List": {
     "title": "Game × IP Collabs",
-    "subtitle": "Which IPs worked with which games, and how.",
-    "publishedCount": "<strong>{count}</strong> published",
     "copyLink": "Copy filter link",
     "copied": "Copied",
     "exportCsv": "Export CSV",
@@ -87,8 +103,17 @@
     "seeAll": "See all collabs →",
     "companies": "Companies involved",
     "sources": "Sources",
-    "sourceColumns": { "type": "Type", "title": "Title · Publisher", "accessed": "Checked" },
-    "sourceType": { "official": "Official", "press": "Press", "social": "Social", "store": "Store" },
+    "sourceColumns": {
+      "type": "Type",
+      "title": "Title · Publisher",
+      "accessed": "Checked"
+    },
+    "sourceType": {
+      "official": "Official",
+      "press": "Press",
+      "social": "Social",
+      "store": "Store"
+    },
     "primary": "Primary source",
     "archived": "Archived copy",
     "classification": "Classification",
@@ -106,21 +131,34 @@
     "reportSoon": "Reporting is coming soon.",
     "disclaimer": "Manually reviewed from public sources. Private metrics such as revenue or player counts are out of scope.",
     "related": "Related collabs",
-    "relation": { "same_host": "Same game", "same_partner": "Same partner" },
+    "relation": {
+      "same_host": "Same game",
+      "same_partner": "Same partner"
+    },
     "coverCredit": "Image: {credit}",
     "updated": "Last updated {date}"
   },
   "Property": {
     "breadcrumb": "Properties",
     "aliases": "Also known as",
-    "stats": { "collabs": "Published collabs", "counterparts": "Partners", "latest": "Latest start" },
+    "stats": {
+      "collabs": "Published collabs",
+      "counterparts": "Partners",
+      "latest": "Latest start"
+    },
     "timeline": "Collab timeline",
     "sortNewest": "Newest",
     "sortOldest": "Oldest",
     "unknownYear": "Date unknown",
     "counterparts": "Collaborated with",
     "typeDistribution": "Collab types",
-    "info": { "kind": "Category", "franchise": "Franchise", "official": "Official", "slug": "slug", "officialSite": "Official site" },
+    "info": {
+      "kind": "Category",
+      "franchise": "Franchise",
+      "official": "Official",
+      "slug": "slug",
+      "officialSite": "Official site"
+    },
     "csv": "Download CSV for this property",
     "empty": "No published collabs yet.",
     "noData": "No data"
@@ -128,7 +166,11 @@
   "Company": {
     "breadcrumb": "Companies",
     "country": "Country",
-    "stats": { "collabs": "Collabs", "properties": "Properties", "latest": "Latest start" },
+    "stats": {
+      "collabs": "Collabs",
+      "properties": "Properties",
+      "latest": "Latest start"
+    },
     "roles": "Roles",
     "properties": "Properties",
     "csv": "Download CSV for this company"

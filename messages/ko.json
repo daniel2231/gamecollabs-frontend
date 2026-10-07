@@ -2,9 +2,19 @@
   "Site": {
     "name": "콜라보 트래커",
     "description": "공개 출처로 수동 검수한 게임 × IP 콜라보 기록. 어떤 IP가, 어떤 게임과, 어떤 형태로 협업했는지 찾아보세요.",
-    "nav": { "main": "주요 메뉴", "collabs": "콜라보" },
-    "search": { "label": "콜라보 검색", "placeholder": "게임, IP, 회사 이름으로 검색" },
-    "language": { "label": "언어 선택", "ko": "한국어", "en": "English" },
+    "nav": {
+      "main": "주요 메뉴",
+      "collabs": "콜라보"
+    },
+    "search": {
+      "label": "콜라보 검색",
+      "placeholder": "게임, IP, 회사 이름으로 검색"
+    },
+    "language": {
+      "label": "언어 선택",
+      "ko": "한국어",
+      "en": "English"
+    },
     "notice": "공개 출처 기반 · 수동 검수 데이터입니다. 공식 집계나 실시간 수치가 아닙니다.",
     "footer": "공개 출처 기반 · 수동 검수. 각 항목의 출처와 확인일을 함께 표기합니다.",
     "mockBanner": "개발 모드: 목(mock) 데이터를 표시 중입니다. API_BASE_URL을 설정하면 실제 API를 사용합니다.",
@@ -21,8 +31,16 @@
     "unknown": "기간 미상",
     "permanent": "상시",
     "tba": "종료일 미발표",
-    "precision": { "day": "일 단위 정확도", "month": "월 단위 정확도", "unknown": "정확도 미상" },
-    "endKind": { "fixed": "종료일 확정", "permanent": "상시 진행", "tba": "아직 발표되지 않음" }
+    "precision": {
+      "day": "일 단위 정확도",
+      "month": "월 단위 정확도",
+      "unknown": "정확도 미상"
+    },
+    "endKind": {
+      "fixed": "종료일 확정",
+      "permanent": "상시 진행",
+      "tba": "아직 발표되지 않음"
+    }
   },
   "Translation": {
     "fallback": "번역 없음",
@@ -30,8 +48,6 @@
   },
   "List": {
     "title": "게임 × IP 콜라보",
-    "subtitle": "어떤 IP가, 어떤 게임과, 어떤 형태로 협업했는지.",
-    "publishedCount": "발행 <strong>{count}</strong>건",
     "copyLink": "필터 링크 복사",
     "copied": "복사됨",
     "exportCsv": "CSV 내보내기",
@@ -87,8 +103,17 @@
     "seeAll": "모든 콜라보 보기 →",
     "companies": "참여 회사",
     "sources": "출처",
-    "sourceColumns": { "type": "유형", "title": "제목 · 발행처", "accessed": "확인일" },
-    "sourceType": { "official": "공식", "press": "보도", "social": "소셜", "store": "스토어" },
+    "sourceColumns": {
+      "type": "유형",
+      "title": "제목 · 발행처",
+      "accessed": "확인일"
+    },
+    "sourceType": {
+      "official": "공식",
+      "press": "보도",
+      "social": "소셜",
+      "store": "스토어"
+    },
     "primary": "주 출처",
     "archived": "보관본",
     "classification": "분류",
@@ -106,21 +131,34 @@
     "reportSoon": "제보 기능은 준비 중입니다.",
     "disclaimer": "공개 출처 기반 · 수동 검수 데이터입니다. 매출·이용자 수 같은 비공개 지표는 다루지 않습니다.",
     "related": "관련 콜라보",
-    "relation": { "same_host": "같은 게임", "same_partner": "같은 파트너" },
+    "relation": {
+      "same_host": "같은 게임",
+      "same_partner": "같은 파트너"
+    },
     "coverCredit": "이미지 출처: {credit}",
     "updated": "최종 수정 {date}"
   },
   "Property": {
     "breadcrumb": "작품",
     "aliases": "별칭",
-    "stats": { "collabs": "발행 콜라보", "counterparts": "협업한 작품", "latest": "최근 시작" },
+    "stats": {
+      "collabs": "발행 콜라보",
+      "counterparts": "협업한 작품",
+      "latest": "최근 시작"
+    },
     "timeline": "콜라보 타임라인",
     "sortNewest": "최신순",
     "sortOldest": "오래된순",
     "unknownYear": "시기 미상",
     "counterparts": "협업한 작품",
     "typeDistribution": "콜라보 유형 분포",
-    "info": { "kind": "분류", "franchise": "프랜차이즈", "official": "공식", "slug": "slug", "officialSite": "공식 사이트" },
+    "info": {
+      "kind": "분류",
+      "franchise": "프랜차이즈",
+      "official": "공식",
+      "slug": "slug",
+      "officialSite": "공식 사이트"
+    },
     "csv": "이 작품의 콜라보 CSV",
     "empty": "아직 발행된 콜라보가 없습니다.",
     "noData": "데이터 없음"
@@ -128,7 +166,11 @@
   "Company": {
     "breadcrumb": "회사",
     "country": "국가",
-    "stats": { "collabs": "참여 콜라보", "properties": "관련 작품", "latest": "최근 시작" },
+    "stats": {
+      "collabs": "참여 콜라보",
+      "properties": "관련 작품",
+      "latest": "최근 시작"
+    },
     "roles": "역할 분포",
     "properties": "관련 작품",
     "csv": "이 회사의 콜라보 CSV"
