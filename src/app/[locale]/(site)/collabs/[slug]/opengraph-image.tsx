@@ -26,7 +26,7 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, background: '#0b0b0d', color: '#ededef', fontFamily: 'Noto Sans KR' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 30 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 10, background: '#3e63dd', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>×</div>
+          <div style={{ width: 48, height: 48, borderRadius: 10, background: '#edeef0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#111113' }}>×</div>
           {tSite('name')}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

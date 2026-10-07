@@ -17,6 +17,18 @@
   --color-background: #0b0b0d;
 }
 
+/*
+ * 모노톤 강조색: Radix의 gray 강조색은 단색 버튼이 중간 회색이라 흐릿하다.
+ * 단색 면(버튼·체크박스·탭 표시줄·로고)을 흰색에 가깝게, 그 위 글자는 어둡게 바꾼다.
+ * Radix의 [data-accent-color='gray']와 우선순위가 같고 이 파일이 뒤에 로드되므로 이 값이 적용된다.
+ */
+[data-accent-color='gray'] {
+  --accent-9: var(--gray-12);
+  --accent-10: color-mix(in oklab, var(--gray-12) 86%, var(--gray-1));
+  --accent-contrast: var(--gray-1);
+  --accent-indicator: var(--gray-12);
+}
+
 html,
 body {
   margin: 0;

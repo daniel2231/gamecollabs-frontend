@@ -52,7 +52,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
     <html lang={locale} className={`dark ${plexSans.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider>
-          <Theme appearance="dark" accentColor="indigo" grayColor="slate" radius="medium" panelBackground="solid">
+          <Theme appearance="dark" accentColor="gray" grayColor="slate" radius="medium" panelBackground="solid">
             {children}
           </Theme>
         </NextIntlClientProvider>

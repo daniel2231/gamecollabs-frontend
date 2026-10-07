@@ -192,7 +192,7 @@ export default async function CollabDetailPage({ params }: Props) {
                           {p.name.original}
                         </Text>
                       )}
-                      <Text size="2" color="indigo" mt="1">
+                      <Text size="2" weight="medium" mt="1">
                         {t('seeAll')}
                       </Text>
                     </Link>
@@ -317,7 +317,7 @@ async function Sources({ collab }: { collab: CollabDetail }) {
         {collab.sources.map((s) => (
           <Table.Row key={s.url}>
             <Table.Cell>
-              <Badge variant="soft" color={s.type === 'official' ? 'indigo' : 'gray'}>
+              <Badge variant="soft" color="gray" highContrast={s.type === 'official'}>
                 {t(`sourceType.${s.type}`)}
               </Badge>
             </Table.Cell>
