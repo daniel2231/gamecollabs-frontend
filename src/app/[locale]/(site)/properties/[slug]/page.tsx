@@ -123,10 +123,6 @@ export default async function PropertyPage({ params }: Props) {
                     )}
                   </DataList.Value>
                 </DataList.Item>
-                <DataList.Item>
-                  <DataList.Label minWidth="80px">{t('info.slug')}</DataList.Label>
-                  <DataList.Value className="ct-mono">{p.slug}</DataList.Value>
-                </DataList.Item>
               </DataList.Root>
             </Card>
           </Flex>

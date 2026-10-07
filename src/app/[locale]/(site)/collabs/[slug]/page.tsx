@@ -94,9 +94,6 @@ export default async function CollabDetailPage({ params }: Props) {
                 </Heading>
                 {collab.fallback && <TranslationBadge kind="fallback" />}
               </Flex>
-              <Text size="2" color="gray" className="ct-mono">
-                {collab.slug}
-              </Text>
             </Flex>
 
             {collab.cover && (
