@@ -271,31 +271,90 @@ body {
 }
 
 /* ── 작품 타임라인 ─────────────────────────────────────────── */
-.ct-timeline {
+/* 레일 가운데 = 9px. 행마다 레일 조각을 그려 이어 붙이고, 처음과 끝은 점에서 멈춘다 */
+.ct-tl {
+  --tl-rail: 9px;
+  --tl-dot-y: 26px; /* 카드 위 여백 14px + 제목 줄 높이의 절반 */
   list-style: none;
   margin: 0;
-  padding: 0 0 0 7px;
-  border-left: 2px solid var(--ct-line);
+  padding: 0;
 }
 
-.ct-timeline > li {
+.ct-tl > li {
   position: relative;
-  padding: 6px 0 14px 24px;
+  padding-left: 32px;
 }
 
-.ct-timeline-dot {
+.ct-tl > li::before {
+  content: '';
   position: absolute;
-  left: -9px;
-  top: 26px;
+  left: calc(var(--tl-rail) - 1px);
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gray-a5);
+}
+
+.ct-tl > li:first-child::before {
+  top: 50%;
+}
+
+.ct-tl > li.ct-tl-item:first-child::before {
+  top: var(--tl-dot-y);
+}
+
+.ct-tl > li:last-child::before {
+  bottom: auto;
+  height: var(--tl-dot-y);
+}
+
+.ct-tl-year {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+/* 연도 행: 레일 위 작은 눈금 */
+.ct-tl-year::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--tl-rail) - 4px);
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  background: var(--gray-a7);
+}
+
+.ct-tl-item {
+  padding-bottom: 12px;
+}
+
+.ct-tl-dot {
+  position: absolute;
+  left: calc(var(--tl-rail) - 6px);
+  top: calc(var(--tl-dot-y) - 6px);
   width: 12px;
   height: 12px;
   border-radius: 999px;
-  background: var(--ct-surface);
-  border: 3px solid var(--accent-9);
+  background: var(--gray-8);
+  /* 배경색 테두리로 레일을 끊어 점이 떠 보이게 */
+  box-shadow: 0 0 0 3px var(--color-background);
+  z-index: 1;
 }
 
-.ct-timeline-dot[data-muted] {
-  border-color: var(--gray-8);
+.ct-tl-dot[data-phase='ongoing'] {
+  background: var(--grass-9);
+}
+
+.ct-tl-dot[data-phase='upcoming'] {
+  background: var(--amber-9);
+}
+
+.ct-tl-dot[data-phase='unknown'] {
+  background: var(--color-background);
+  box-shadow:
+    inset 0 0 0 2px var(--gray-8),
+    0 0 0 3px var(--color-background);
 }
 
 .ct-bar {

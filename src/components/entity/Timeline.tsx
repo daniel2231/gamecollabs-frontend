@@ -20,48 +20,44 @@ export function Timeline({ items, order }: { items: Item[]; order: 'desc' | 'asc
     .sort((a, b) => (order === 'desc' ? b.localeCompare(a) : a.localeCompare(b)));
   if (groups.has('')) years.push('');
 
+  // 연도 행과 항목 행을 한 목록에 펼쳐, 왼쪽 레일이 끊기지 않게 한다
   return (
-    <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      {years.map((year) => {
+    <ol className="ct-tl">
+      {years.flatMap((year) => {
         const list = order === 'asc' ? [...groups.get(year)!].reverse() : groups.get(year)!;
-        return (
-          <li key={year || 'unknown'}>
-            <Flex align="center" gap="3" pt="3" pb="2">
-              <Text size="2" weight="medium" color="gray" className="ct-mono">
-                {year || t('unknownYear')}
-              </Text>
-              <span style={{ flex: 1, height: 1, background: 'var(--ct-line)' }} />
-            </Flex>
-            <ol className="ct-timeline">
-              {list.map((item) => (
-                <li key={item.slug}>
-                  <span className="ct-timeline-dot" data-muted={item.phase === 'ended' || item.phase === 'unknown' ? '' : undefined} aria-hidden="true" />
-                  <Link href={`/collabs/${item.slug}`} className="ct-card-link" style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: '8px 20px', padding: '14px 16px' }}>
-                    <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
-                      <Text size="3" weight="bold">
-                        {item.heading}
-                      </Text>
-                      <Text size="2" color="gray">
-                        {[...item.collabTypes, ...item.platforms, ...item.regions].map((x) => x.label).join(' · ') || item.title}
-                      </Text>
-                    </Flex>
-                    <Flex align="center" gap="2" wrap="wrap">
-                      {item.extra && (
-                        <Badge variant="soft" size="1">
-                          {item.extra}
-                        </Badge>
-                      )}
-                      <Text size="2" color="gray">
-                        <PeriodText period={item.period} />
-                      </Text>
-                      <PhaseBadge phase={item.phase} />
-                    </Flex>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </li>
-        );
+        return [
+          <li key={`y-${year || 'unknown'}`} className="ct-tl-year">
+            <Text size="2" weight="medium" color="gray" className="ct-mono">
+              {year || t('unknownYear')}
+            </Text>
+          </li>,
+          ...list.map((item) => (
+            <li key={item.slug} className="ct-tl-item">
+              <span className="ct-tl-dot" data-phase={item.phase} aria-hidden="true" />
+              <Link href={`/collabs/${item.slug}`} className="ct-card-link" style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: '8px 20px', padding: '14px 16px' }}>
+                <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
+                  <Text size="3" weight="bold">
+                    {item.heading}
+                  </Text>
+                  <Text size="2" color="gray">
+                    {[...item.collabTypes, ...item.platforms, ...item.regions].map((x) => x.label).join(' · ') || item.title}
+                  </Text>
+                </Flex>
+                <Flex align="center" gap="2" wrap="wrap">
+                  {item.extra && (
+                    <Badge variant="soft" size="1">
+                      {item.extra}
+                    </Badge>
+                  )}
+                  <Text size="2" color="gray">
+                    <PeriodText period={item.period} />
+                  </Text>
+                  <PhaseBadge phase={item.phase} />
+                </Flex>
+              </Link>
+            </li>
+          )),
+        ];
       })}
     </ol>
   );
