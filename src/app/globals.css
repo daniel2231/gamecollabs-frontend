@@ -211,6 +211,8 @@ body {
   position: absolute;
   top: 10px;
   left: 10px;
+  /* inline 줄 높이 때문에 배지보다 커져 위에 띠가 생기지 않도록 배지 크기에 맞춘다 */
+  display: flex;
   border-radius: var(--radius-2);
   background: var(--color-panel-solid);
 }
