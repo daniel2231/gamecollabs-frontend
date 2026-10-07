@@ -26,7 +26,6 @@ export interface PublicApi {
   getCompany(slug: string, locale: Locale): Promise<CompanyDetail | null>;
   getTaxonomies(): Promise<TaxonomyTerm[]>;
   getStats(): Promise<Stats>;
-  exportCsv(query: CollabQuery, locale: Locale): Promise<string>;
   /** 프론트엔드가 추가로 요청하는 엔드포인트: GET /v1/sitemap */
   getSitemap(): Promise<SitemapData>;
 }

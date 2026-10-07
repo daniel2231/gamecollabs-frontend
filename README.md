@@ -23,7 +23,7 @@ pnpm dev                 # http://localhost:3000/ko
 
 ```bash
 pnpm typecheck   # next typegen + tsc (TS 7)
-pnpm test        # vitest: 진행 상태 계산, URL 필터, CSV, 목 API 규칙
+pnpm test        # vitest: 진행 상태 계산, URL 필터, 목 API 규칙
 pnpm build
 ```
 
@@ -33,13 +33,12 @@ pnpm build
 | --- | --- | --- |
 | `/[locale]` | 목록·검색·필터(카테고리, 파트너 분류, 권역, 플랫폼, 유형, 기간, 진행 상태). 필터 상태는 URL 쿼리에 그대로 들어가 공유 가능. 상위 키를 고르면 하위 항목 포함 | F-01 |
 | `/[locale]/collabs/[slug]` | 상세: 기간·진행 상태, 요약(ko/en), 참여 작품·회사(역할), 출처(확인일), 관련 콜라보. ISR | F-02 |
-| `/[locale]/properties/[slug]` | 작품(게임·IP) 페이지: 연도별 타임라인, 건수, 협업 작품, 유형 분포, CSV. ISR | F-03 |
+| `/[locale]/properties/[slug]` | 작품(게임·IP) 페이지: 연도별 타임라인, 건수, 협업 작품, 유형 분포. ISR | F-03 |
 | `/[locale]/companies/[slug]` | 회사 페이지: 참여 콜라보와 역할. ISR | F-03 |
 | `/[locale]/admin` | 검수 대기열 + 편집기. draft → in_review → published → archived, 발행 조건 체크리스트, 중복 후보 비교, 분류 매핑 실패 표시, `If-Match: rev` 충돌 처리 | F-04 |
 | `/[locale]/admin/entities` | 작품·회사 자동완성(별칭 일치 표시), 생성·수정, 병합 | F-05 |
 | `/[locale]/admin/taxonomy` | 통제 어휘 조회·추가(ko/en 라벨, 기존 표기) | F-06 |
 | `/[locale]/rss.xml` | 최신 발행 콜라보 피드(ko/en 분리) | F-11 |
-| `/api/export` | 현재 필터 결과 CSV (Express 중계) | F-13 |
 | `/sitemap.xml`, `/robots.txt`, OG 이미지, `/tools/game-ip-collab-tracker/*` → 301 | SEO | F-08 |
 
 다국어(F-07): 영문 텍스트가 없으면 한국어를 보여주고 “번역 없음” 배지를, 기계 번역이면 “기계 번역” 배지를 붙인다. 관리자 화면은 운영자 전용이라 한국어만 제공한다.
@@ -59,7 +58,7 @@ src/
   lib/
     api/                  PublicApi·AdminApi 계약, http.ts(Express), mock/
     auth/session.ts       관리자 JWT
-    phase.ts filters.ts format.ts csv.ts taxonomy.ts
+    phase.ts filters.ts format.ts taxonomy.ts
   schema/                 Zod 스키마 (공유 대상)
 messages/{ko,en}.json
 ```

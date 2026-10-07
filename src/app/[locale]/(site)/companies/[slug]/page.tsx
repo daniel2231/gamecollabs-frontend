@@ -2,7 +2,7 @@ import { Badge, Card, Flex, Heading, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { CountList, CsvLink, StatGrid } from '@/components/entity/EntityParts';
+import { CountList, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import type { Locale } from '@/i18n/routing';
@@ -93,7 +93,6 @@ export default async function CompanyPage({ params }: Props) {
                 ))}
               </Flex>
             </Card>
-            <CsvLink href={`/api/export?company=${c.slug}&locale=${locale}`} label={t('csv')} />
           </Flex>
         </aside>
       </div>

@@ -50,7 +50,6 @@
     "title": "Game × IP Collabs",
     "copyLink": "Copy filter link",
     "copied": "Copied",
-    "exportCsv": "Export CSV",
     "phaseTabs": "Status",
     "filters": "Filters",
     "reset": "Reset",
@@ -159,7 +158,6 @@
       "slug": "slug",
       "officialSite": "Official site"
     },
-    "csv": "Download CSV for this property",
     "empty": "No published collabs yet.",
     "noData": "No data"
   },
@@ -172,8 +170,7 @@
       "latest": "Latest start"
     },
     "roles": "Roles",
-    "properties": "Properties",
-    "csv": "Download CSV for this company"
+    "properties": "Properties"
   },
   "NotFound": {
     "title": "Page not found",

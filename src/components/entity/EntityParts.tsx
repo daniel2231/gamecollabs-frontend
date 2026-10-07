@@ -1,5 +1,4 @@
-import { DownloadIcon } from '@radix-ui/react-icons';
-import { Button, Card, Flex, Heading, Text } from '@radix-ui/themes';
+import { Card, Flex, Heading, Text } from '@radix-ui/themes';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
@@ -79,16 +78,5 @@ export function Distribution({ title, items }: { title: string; items: { key: st
         </Flex>
       )}
     </Card>
-  );
-}
-
-export function CsvLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Button asChild variant="surface" color="gray" size="3">
-      <a href={href} download>
-        <DownloadIcon />
-        {label}
-      </a>
-    </Button>
   );
 }

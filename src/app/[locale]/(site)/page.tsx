@@ -1,4 +1,4 @@
-import { Cross2Icon, DownloadIcon } from '@radix-ui/react-icons';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { Badge, Button, Flex, Heading, TabNav, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -62,9 +62,6 @@ export default async function CollabListPage({ params, searchParams }: PageProps
       : []),
   ];
 
-  const csvParams = new URLSearchParams(serializeCollabQuery(query).slice(1));
-  csvParams.set('locale', locale);
-
   return (
     <>
       <Flex wrap="wrap" align="center" justify="between" gap="4" mb="5">
@@ -73,12 +70,6 @@ export default async function CollabListPage({ params, searchParams }: PageProps
         </Heading>
         <Flex wrap="wrap" gap="2">
           <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
-          <Button asChild size="2">
-            <a href={`/api/export?${csvParams}`} download>
-              <DownloadIcon />
-              {t('exportCsv')}
-            </a>
-          </Button>
         </Flex>
       </Flex>
 

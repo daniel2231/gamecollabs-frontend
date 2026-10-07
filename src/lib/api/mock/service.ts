@@ -3,7 +3,6 @@
  * 규칙(facetKeys 펼치기, phase 계산, en→ko 대체, 중복 판정)은 PRD 그대로 따른다.
  */
 import { computePhase } from '@/lib/phase';
-import { collabsToCsv } from '@/lib/csv';
 import type {
   AdminCollab,
   AdminEntity,
@@ -286,10 +285,6 @@ export const mockPublicApi: PublicApi = {
     return { published: published().length, byPhase };
   },
 
-  async exportCsv(query, locale) {
-    const all = filterCollabs({ ...query, limit: 100, cursor: undefined });
-    return collabsToCsv(all.map((c) => toSummary(c, locale)), locale);
-  },
 
   async getSitemap() {
     await delay();

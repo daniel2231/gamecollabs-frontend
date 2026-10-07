@@ -2,7 +2,7 @@ import { Badge, Card, DataList, Flex, Heading, Link as RadixLink, Text } from '@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { CountList, CsvLink, Distribution, StatGrid } from '@/components/entity/EntityParts';
+import { CountList, Distribution, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { TranslationBadge } from '@/components/collab/TranslationBadge';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
@@ -129,7 +129,6 @@ export default async function PropertyPage({ params }: Props) {
                 </DataList.Item>
               </DataList.Root>
             </Card>
-            <CsvLink href={`/api/export?property=${p.slug}&locale=${locale}`} label={t('csv')} />
           </Flex>
         </aside>
       </div>

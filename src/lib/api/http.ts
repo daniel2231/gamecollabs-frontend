@@ -112,13 +112,6 @@ export const httpPublicApi: PublicApi = {
   getTaxonomies: async () =>
     (await jsonOrThrow(taxonomyResponseSchema, '/v1/taxonomies', { tags: ['taxonomies'] })).terms,
   getStats: () => jsonOrThrow(statsSchema, '/v1/stats', { tags: ['collabs'] }),
-  exportCsv: async (query, locale) => {
-    const res = await request(`/v1/collabs/export.csv?${queryToParams(query, locale)}`, {
-      tags: ['collabs'],
-      headers: { Accept: 'text/csv' },
-    });
-    return res!.text();
-  },
   getSitemap: () =>
     jsonOrThrow(
       z.object({
