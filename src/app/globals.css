@@ -122,52 +122,112 @@ body {
   min-width: 0;
 }
 
-/* ── 콜라보 행 ─────────────────────────────────────────────── */
-.ct-rows {
-  border: 1px solid var(--ct-line);
-  border-radius: var(--radius-3);
-  background: var(--ct-surface);
-  overflow: hidden;
+/* ── 콜라보 카드 그리드 ────────────────────────────────────── */
+.ct-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
 }
 
-.ct-row {
+.ct-grid > li {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px 20px;
-  padding: 18px 20px;
+  min-width: 0;
+}
+
+.ct-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid var(--ct-line);
+  border-radius: var(--radius-4);
+  background: var(--ct-surface);
   color: var(--gray-12);
   text-decoration: none;
-}
-
-.ct-rows > li + li .ct-row {
-  border-top: 1px solid var(--ct-line-soft);
-}
-
-.ct-row:hover {
-  background: var(--gray-a2);
-}
-
-.ct-row:focus-visible,
-.ct-card-link:focus-visible {
-  outline: 2px solid var(--accent-8);
-  outline-offset: -2px;
-}
-
-.ct-thumb {
-  flex: 0 0 120px;
-  height: 80px;
-  border-radius: var(--radius-2);
-  background: var(--gray-a3);
-  display: grid;
-  place-items: center;
-  color: var(--gray-8);
   overflow: hidden;
+  transition:
+    border-color 120ms,
+    transform 120ms;
 }
 
-.ct-thumb img {
+.ct-card:hover {
+  border-color: var(--accent-a7);
+  transform: translateY(-2px);
+}
+
+.ct-card:focus-visible {
+  outline: 2px solid var(--accent-8);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-card {
+    transition: none;
+  }
+
+  .ct-card:hover {
+    transform: none;
+  }
+}
+
+.ct-card-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: var(--tint-bg, var(--gray-a3));
+  color: var(--tint-fg, var(--gray-11));
+  border-bottom: 1px solid var(--ct-line-soft);
+}
+
+.ct-card-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+}
+
+.ct-card-mono {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ct-card-x {
+  font-family: var(--code-font-family);
+  font-size: 22px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+/* 커버 위 진행 상태: 이미지 위에서도 읽히도록 불투명 바탕 */
+.ct-card-phase {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  border-radius: var(--radius-2);
+  background: var(--color-panel-solid);
+}
+
+.ct-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.ct-card-meta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ct-card-link {

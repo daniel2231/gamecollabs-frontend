@@ -2,7 +2,7 @@ import { Cross2Icon } from '@radix-ui/react-icons';
 import { Badge, Button, Flex, Heading, TabNav, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { CollabRow } from '@/components/collab/CollabRow';
+import { CollabCard } from '@/components/collab/CollabCard';
 import { FilterPanel } from '@/components/collab/FilterPanel';
 import { SortSelect } from '@/components/collab/SortSelect';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
@@ -124,10 +124,10 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                 </Text>
               </Flex>
             ) : (
-              <ul className="ct-rows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              <ul className="ct-grid">
                 {list.items.map((item) => (
                   <li key={item.slug}>
-                    <CollabRow collab={item} />
+                    <CollabCard collab={item} />
                   </li>
                 ))}
               </ul>
