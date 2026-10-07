@@ -128,7 +128,7 @@ function FacetGroup({
         )}
       </Flex>
       {hint && (
-        <Text as="p" size="1" color="gray" mt="3" mb="0">
+        <Text as="p" size="1" color="gray" mt="3" mb="0" style={{ textWrap: 'balance' }}>
           {hint}
         </Text>
       )}

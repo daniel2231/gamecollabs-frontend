@@ -60,7 +60,7 @@
     },
     "showMore": "+ {count}개 더 보기",
     "showLess": "접기",
-    "hierarchyHint": "상위 항목을 고르면 하위 항목이 함께 포함됩니다.",
+    "hierarchyHint": "상위 항목은 하위 항목을 포함합니다.",
     "period": "기간",
     "from": "시작",
     "to": "종료",

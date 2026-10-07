@@ -60,7 +60,7 @@
     },
     "showMore": "+ {count} more",
     "showLess": "Show less",
-    "hierarchyHint": "Choosing a parent includes everything under it.",
+    "hierarchyHint": "Parents include their sub-items.",
     "period": "Period",
     "from": "From",
     "to": "To",
