@@ -77,7 +77,11 @@
     "emptyHint": "Try removing a filter or changing the search.",
     "removeFilter": "Remove filter {label}",
     "searchChip": "Search: {q}",
-    "openFilters": "Open filters"
+    "openFilters": "Open filters",
+    "year": "Year",
+    "month": "Month",
+    "anyYear": "Any year",
+    "anyMonth": "Any month"
   },
   "Role": {
     "host": "Host",

@@ -77,7 +77,11 @@
     "emptyHint": "필터를 줄이거나 검색어를 바꿔 보세요.",
     "removeFilter": "{label} 필터 제거",
     "searchChip": "검색: {q}",
-    "openFilters": "필터 열기"
+    "openFilters": "필터 열기",
+    "year": "연도",
+    "month": "월",
+    "anyYear": "전체 연도",
+    "anyMonth": "전체 월"
   },
   "Role": {
     "host": "호스트",
