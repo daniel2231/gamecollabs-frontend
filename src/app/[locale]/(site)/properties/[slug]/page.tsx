@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CountList, Distribution, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
-import { TranslationBadge } from '@/components/collab/TranslationBadge';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
@@ -54,7 +53,6 @@ export default async function PropertyPage({ params }: Props) {
             <Heading as="h1" size="9" style={{ letterSpacing: '-0.025em', lineHeight: 1.1 }} lang={p.name.fallback ? 'ko' : undefined}>
               {p.name.value}
             </Heading>
-            {p.name.fallback && <TranslationBadge kind="fallback" />}
           </Flex>
           <Flex wrap="wrap" gap="3">
             {[locale === 'ko' ? p.nameEn : p.nameKo, p.name.original].filter(Boolean).map((n, i) => (

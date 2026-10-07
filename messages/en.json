@@ -42,7 +42,6 @@
     }
   },
   "Translation": {
-    "fallback": "Not translated",
     "machine": "Machine translated"
   },
   "List": {

@@ -3,7 +3,6 @@ import { Link } from '@/i18n/navigation';
 import type { CollabSummary } from '@/schema';
 import { PeriodText } from './PeriodText';
 import { PhaseBadge } from './PhaseBadge';
-import { TranslationBadge } from './TranslationBadge';
 
 const MAX_TAGS = 3;
 // 커버가 없을 때 slug로 고르는 색. Radix 팔레트 안에서만 고른다
@@ -47,7 +46,6 @@ export function CollabCard({ collab }: { collab: CollabSummary }) {
           <Text size="4" weight="bold" className="ct-card-title">
             {collab.title}
           </Text>
-          {collab.fallback && <TranslationBadge kind="fallback" />}
         </Flex>
         {(host || partner) && (
           <Text size="2" color="gray" className="ct-card-meta">

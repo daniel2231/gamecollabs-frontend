@@ -92,7 +92,6 @@ export default async function CollabDetailPage({ params }: Props) {
                 <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }} lang={collab.fallback ? 'ko' : undefined}>
                   {collab.title}
                 </Heading>
-                {collab.fallback && <TranslationBadge kind="fallback" />}
               </Flex>
             </Flex>
 
@@ -159,8 +158,7 @@ export default async function CollabDetailPage({ params }: Props) {
 
             <Section title={t('summary')}>
               <Flex gap="2" mb="1">
-                {collab.summaryFallback && collab.summary && <TranslationBadge kind="fallback" />}
-                {collab.machineTranslated && <TranslationBadge kind="machine" />}
+                {collab.machineTranslated && <TranslationBadge />}
               </Flex>
               {collab.summary ? (
                 <Text as="p" style={{ maxWidth: '68ch', whiteSpace: 'pre-line' }} lang={collab.summaryFallback ? 'ko' : undefined}>
