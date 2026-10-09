@@ -41,7 +41,7 @@ pnpm build
 | `/[locale]/rss.xml` | 최신 발행 콜라보 피드(ko/en 분리) | F-11 |
 | `/sitemap.xml`, `/robots.txt`, OG 이미지, `/tools/game-ip-collab-tracker/*` → 301 | SEO | F-08 |
 
-다국어(F-07): 영문 텍스트가 없으면 한국어를 보여주고 “번역 없음” 배지를, 기계 번역이면 “기계 번역” 배지를 붙인다. 관리자 화면은 운영자 전용이라 한국어만 제공한다.
+다국어(F-07): 모든 콜라보·작품·회사는 한국어와 영어를 모두 갖고 올라온다(백엔드가 둘 다 필수로 검증). 그래서 언어 대체나 “기계 번역” 표시는 없다. 관리자 화면은 운영자 전용이라 한국어만 제공한다.
 
 모든 공개 페이지 상단에 “공개 출처 기반 · 수동 검수” 고지가 있다.
 
@@ -69,24 +69,39 @@ messages/{ko,en}.json
 
 - 공개 조회: `Authorization: Bearer $API_SERVICE_TOKEN`, 응답은 태그 캐시(`collabs`, `collab:<slug>`, `property:<slug>`, `company:<slug>`, `taxonomies`).
 - 발행·수정 후 Express가 `POST /api/revalidate`를 호출한다: `Authorization: Bearer $REVALIDATE_SECRET`, 본문 `{ "tags": ["collabs", "collab:<slug>"] }`.
-- 관리자: GitHub 로그인 후 발급한 JWT(HS256, `AUTH_SECRET`, `iss=collab-tracker-web`, `aud=collab-tracker-api`, `sub`=GitHub 로그인, 8시간)를 그대로 `Bearer`로 넘긴다. Express도 같은 비밀값으로 검증한다.
-- 응답 형태는 `src/schema/index.ts`의 Zod 스키마가 기준이다. 응답은 `locale`에 맞춰 라벨·이름을 채우고(`fallback` 표시), 진행 상태(`phase`)를 계산해서 내려준다.
+- 관리자: GitHub 로그인 후 발급한 JWT(HS256, `AUTH_SECRET`, `iss=gamecollabs-web`, `aud=gamecollabs-api`, `sub`=GitHub 로그인, 8시간)를 그대로 `Bearer`로 넘긴다. Express는 같은 값인 `ADMIN_JWT_SECRET`으로 검증하고, `users` 컬렉션에 등록된 GitHub 계정만 통과시킨다(`cli create-user --github <login> --role admin`).
+- Express 응답(`{ data, meta }`, 이름은 요청 언어의 문자열 하나)은 `src/lib/api/adapt.ts`가 화면 스키마(`src/schema/index.ts`)로 바꾸고, `http.ts`가 그 스키마로 다시 검증한다. 형태가 어긋나면 조용히 깨지지 않고 바로 오류가 난다.
+- 수집 초안은 아직 작품에 연결되지 않은 참여자(이름만 있음)를 가질 수 있다. 편집기는 이를 안내하고, 운영자가 작품을 고르기 전까지 저장해도 수집된 이름을 그대로 보존한다.
 
-PRD의 API 표 외에 프론트엔드가 추가로 기대하는 엔드포인트:
+화면이 쓰는 엔드포인트와 변환 (`adapt.ts`):
 
-| 메서드 | 경로 | 용도 |
+| 화면 | Express | 변환 |
 | --- | --- | --- |
-| GET | `/v1/sitemap` | 발행된 콜라보 slug·updatedAt, 작품·회사 slug |
-| GET | `/v1/admin/collabs?status=review\|draft\|in_review\|published\|archived&origin=` | 검수 대기열 + 상태별 건수 |
-| GET | `/v1/admin/collabs/:id` | 편집용 전체 문서(`unmapped`, `duplicates`, `sourceStatus` 포함) |
-| GET / POST | `/v1/admin/properties`, `/v1/admin/companies` | 엔티티 목록(`?q=`)·생성 |
-| POST | `/v1/admin/taxonomies` | 분류 키 추가 |
-
-`/v1/admin/properties/:id/merge` 본문은 `{ "targetId": "…" }`이고, 경로의 `:id`(원본)가 대상에 흡수된다.
+| 목록·RSS | `GET /v1/collabs` | 필터는 쉼표 목록, 월 범위 `YYYY-MM`은 그 달 첫날·마지막 날, `sort=recent`는 발행일순 |
+| 상세 | `GET /v1/collabs/:slug` | 관련 콜라보의 `same_host`/`same_partner`는 호스트 작품 공유 여부로 판정 |
+| 작품·회사 | `GET /v1/properties/:slug`, `/v1/companies/:slug` | 상대 작품·유형 분포·회사 역할은 타임라인에서 집계 |
+| 필터·편집기 분류 | `GET /v1/taxonomies` | 트리 → 평면 목록 |
+| 홈 요약 | `GET /v1/stats` | `total`, `byPhase` |
+| sitemap | `GET /v1/sitemap` | 그대로 |
+| 검수 대기열 | `GET /v1/admin/collabs?status=draft,in_review` | `meta.counts`(상태별 건수), 항목별 `duplicateCount` |
+| 편집기 | `GET /v1/admin/collabs/:id` + `/duplicates` | `origin.unmapped` → 필드별 미해결 값 |
+| 저장 | `POST`·`PATCH /v1/admin/collabs[/:id]` (`If-Match: <rev>`) | 빈 메모는 `null`, 월 단위 날짜는 `YYYY-MM` |
+| 엔티티 | `GET /v1/admin/{properties,companies}[?q=]` | `q`가 없으면 전체 목록 |
+| 병합 | `POST /v1/admin/{…}/:targetId/merge` `{ from }` | `from`(원본)이 `:targetId`에 흡수된다 |
 
 ## 환경변수
 
-`.env.example` 참고. 필수: `NEXT_PUBLIC_SITE_URL`, `API_BASE_URL`, `API_SERVICE_TOKEN`, `REVALIDATE_SECRET`, `AUTH_SECRET`(32자 이상), `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ADMIN_GITHUB_LOGINS`. 커버 이미지를 R2에서 받으면 `MEDIA_BASE_URL`.
+`.env.example` 참고. 백엔드(홈서버 `deploy/.env`)와 짝이 맞아야 하는 값:
+
+| 프론트 (Vercel) | 백엔드 (`deploy/.env`) |
+| --- | --- |
+| `API_BASE_URL=https://api.<도메인>` (`/v1` 없이) | Cloudflare Tunnel의 api 호스트 |
+| `API_SERVICE_TOKEN` | `SERVICE_TOKENS`에 들어 있는 값 하나 |
+| `AUTH_SECRET` (32자 이상) | `ADMIN_JWT_SECRET` (같은 값) |
+| `REVALIDATE_SECRET` | `WEB_REVALIDATE_SECRET` (같은 값), `WEB_REVALIDATE_URL=https://<사이트>/api/revalidate` |
+| `MEDIA_BASE_URL` | `MEDIA_BASE_URL` (같은 값, 커버 이미지 주소) |
+
+그 밖에 `NEXT_PUBLIC_SITE_URL`, `GITHUB_CLIENT_ID`·`GITHUB_CLIENT_SECRET`(콜백 `https://<사이트>/api/auth/github/callback`), `ADMIN_GITHUB_LOGINS`.
 
 ## 알려 둘 점
 

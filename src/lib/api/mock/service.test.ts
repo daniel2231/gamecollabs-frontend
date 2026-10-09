@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { CollabInput, CollabQuery } from '@/schema';
+import type { AdminCollab, CollabInput, CollabQuery } from '@/schema';
 
 const baseQuery: CollabQuery = { sort: 'start_desc', limit: 20, category: [], partner_category: [], region: [], platform: [], collab_type: [] };
+
+/** 편집기에서 다시 저장할 때처럼, 연결된 작품만 입력으로 넘긴다 */
+const asInput = (c: AdminCollab): CollabInput => ({
+  ...c,
+  parties: c.parties.flatMap((p) => (p.propertyId ? [{ propertyId: p.propertyId, role: p.role }] : [])),
+});
 
 async function load() {
   delete (globalThis as { __collabTrackerMock?: unknown }).__collabTrackerMock;
@@ -59,12 +65,12 @@ describe('목 API: PRD 규칙', () => {
   it('발행 조건을 검증하고, rev가 다르면 거부한다', async () => {
     await expect(svc.mockAdminApi.transition('k_draft_sample', 'publish')).rejects.toMatchObject({ status: 422, code: 'validation_failed' });
     const draft = await svc.mockAdminApi.getCollab('k_draft_sample');
-    await expect(svc.mockAdminApi.updateCollab('k_draft_sample', draft!, draft!.rev - 1)).rejects.toMatchObject({ status: 412 });
+    await expect(svc.mockAdminApi.updateCollab('k_draft_sample', asInput(draft!), draft!.rev - 1)).rejects.toMatchObject({ status: 412 });
   });
 
   it('통제 어휘 밖의 키는 저장할 수 없다', async () => {
     const draft = await svc.mockAdminApi.getCollab('k_draft_sample');
-    await expect(svc.mockAdminApi.updateCollab('k_draft_sample', { ...draft!, platforms: ['Mobile'] }, draft!.rev)).rejects.toMatchObject({
+    await expect(svc.mockAdminApi.updateCollab('k_draft_sample', { ...asInput(draft!), platforms: ['Mobile'] }, draft!.rev)).rejects.toMatchObject({
       code: 'validation_failed',
       fields: { platforms: expect.any(String) },
     });

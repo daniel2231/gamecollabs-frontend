@@ -62,6 +62,7 @@ const ROLE_LABEL: Record<CompanyRole, string> = {
   licensor: 'IP 홀더',
   brand_partner: '브랜드 파트너',
   organizer: '주최',
+  unspecified: '역할 미지정',
 };
 const SOURCE_LABEL = { official: '공식', press: '보도', social: '소셜', store: '스토어' } as const;
 const STATUS_LABEL = { draft: '초안', in_review: '검수 요청됨', published: '발행됨', archived: '보관' } as const;
@@ -89,7 +90,7 @@ function initialState(collab: AdminCollab | null, entities: Record<string, Entit
   return {
     slug: collab?.slug ?? '',
     ko: { title: '', summary: '', note: '', ...collab?.i18n.ko },
-    en: { title: '', summary: '', note: '', machineTranslated: false, ...collab?.i18n.en },
+    en: { title: '', summary: '', note: '', ...collab?.i18n.en },
     host: party('host'),
     partner: party('partner'),
     companies: (collab?.companies ?? []).map<CompanyRow>((c) => ({
@@ -134,8 +135,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
 
   // 원본은 보존하고, 사람이 해당 필드를 채우면 해결된 것으로 본다
   const unresolved = (collab?.unmapped ?? []).filter((u) => {
-    const v = form[u.field as 'platforms' | 'regions' | 'collabTypes'];
-    return !(Array.isArray(v) && v.length > 0);
+    const v = form[u.field as 'platforms' | 'regions' | 'collabTypes' | 'category'];
+    return Array.isArray(v) ? v.length === 0 : !v;
   });
 
   const checks = useMemo(() => {
@@ -145,9 +146,10 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       { ok: hasSource, label: '출처 1개 이상', blocking: true },
       { ok: required, label: required ? '필수 필드' : '필수 필드 누락', blocking: true },
       { ok: unresolved.length === 0, label: unresolved.length ? `분류 매핑 ${unresolved.length}건 미해결` : '분류 매핑', blocking: true },
-      { ok: Boolean(form.en.summary.trim() && form.en.title.trim()), label: form.en.summary.trim() ? '영문 제목·요약' : '영문 요약 없음', blocking: false },
+      { ok: Boolean(form.en.summary.trim() && form.en.title.trim() && form.ko.summary.trim()), label: '한·영 제목·요약', blocking: true },
     ];
   }, [form, unresolved.length]);
+  const unlinked = (collab?.parties ?? []).filter((p) => !p.propertyId && !(p.role === 'host' ? form.host : form.partner));
   const canPublish = checks.every((c) => c.ok || !c.blocking) && (status === 'draft' || status === 'in_review');
 
   function toInput(): CollabInput {
@@ -402,10 +404,6 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
                 <TextArea rows={4} value={form.en.summary} onChange={(e) => setForm((f) => ({ ...f, en: { ...f.en, summary: e.target.value } }))} />
               </Text>
             </div>
-            <Text as="label" size="2" className="ct-check" mt="2">
-              <Checkbox checked={form.en.machineTranslated} onCheckedChange={(v) => setForm((f) => ({ ...f, en: { ...f.en, machineTranslated: v === true } }))} />
-              영문은 기계 번역 (공개 페이지에 “기계 번역” 표시)
-            </Text>
           </FormSection>
 
           <FormSection title="참여 작품">
@@ -421,6 +419,18 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
               </div>
             </div>
             {fieldError('parties')}
+            {unlinked.length > 0 && (
+              <Callout.Root color="amber" size="1" mt="2">
+                <Callout.Icon>
+                  <ExclamationTriangleIcon />
+                </Callout.Icon>
+                <Callout.Text>
+                  아직 작품에 연결되지 않은 수집 이름:{' '}
+                  {unlinked.map((p) => `${p.role === 'host' ? '호스트' : '파트너'} “${p.name?.ko || p.name?.en}”`).join(', ')}. 위에서
+                  기존 작품을 고르거나 새로 만들어 연결하세요. 고르기 전까지는 수집된 이름이 그대로 보존됩니다.
+                </Callout.Text>
+              </Callout.Root>
+            )}
           </FormSection>
 
           <FormSection title="참여 회사">
@@ -467,6 +477,11 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
           </FormSection>
 
           <FormSection title="분류" hint="taxonomy_terms 키만 선택 가능">
+            {(collab?.unmappedOther.length ?? 0) > 0 && (
+              <Text as="p" size="1" color="gray" mt="0" mb="3">
+                참고용 수집 원본값: {collab!.unmappedOther.map((u) => `${u.field} “${u.raw}”`).join(', ')}
+              </Text>
+            )}
             <div className="ct-two">
               <div className="ct-field">
                 <span className="ct-label">카테고리</span>
@@ -481,6 +496,12 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
                     ))}
                   </Select.Content>
                 </Select.Root>
+                {unresolved.some((u) => u.field === 'category') && (
+                  <span className="ct-error-text">
+                    수집 원본값 {unresolved.filter((u) => u.field === 'category').map((r) => `“${r.raw}”`).join(', ')} 매핑 실패 — 원본은 보존됨
+                  </span>
+                )}
+                {fieldError('category')}
               </div>
               {(
                 [
