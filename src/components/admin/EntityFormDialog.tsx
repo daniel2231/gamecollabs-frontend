@@ -79,7 +79,7 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
                   onChange={(e) => setForm({ ...form, ko: e.target.value })}
                 />
               </Field>
-              <Field label="English">
+              <Field label="English *" error={fieldError('name.en')}>
                 <TextField.Root
                   value={form.en}
                   onChange={(e) => {

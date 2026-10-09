@@ -50,7 +50,8 @@ export type Period = z.infer<typeof periodSchema>;
 // ── 엔티티 ─────────────────────────────────────────────────────
 
 export const PARTY_ROLES = ['host', 'partner'] as const;
-export const COMPANY_ROLES = ['publisher', 'developer', 'licensor', 'brand_partner', 'organizer'] as const;
+/** unspecified: 이관된 MVP 데이터처럼 역할이 기록되지 않은 경우 */
+export const COMPANY_ROLES = ['publisher', 'developer', 'licensor', 'brand_partner', 'organizer', 'unspecified'] as const;
 export type CompanyRole = (typeof COMPANY_ROLES)[number];
 export const SOURCE_TYPES = ['official', 'press', 'social', 'store'] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
@@ -60,7 +61,7 @@ export const ORIGIN_TYPES = ['manual', 'gpt', 'agent', 'migration'] as const;
 export type OriginType = (typeof ORIGIN_TYPES)[number];
 
 const localizedName = z.object({
-  /** 요청 locale의 이름. en이 비면 ko 값이 들어오고 fallback=true */
+  /** 요청 locale의 이름. 한·영 모두 필수라 fallback은 항상 false다(목 데이터 호환용으로 남김). */
   value: z.string(),
   fallback: z.boolean(),
   original: z.string().nullable().optional(),
@@ -99,8 +100,9 @@ export const coverSchema = z.object({
   originalUrl: z.string().nullable(),
   credit: z.string().nullable(),
   alt: z.string(),
-  width: z.number().int(),
-  height: z.number().int(),
+  /** 미러링 전 이미지는 크기를 모른다 */
+  width: z.number().int().nullable(),
+  height: z.number().int().nullable(),
 });
 export type Cover = z.infer<typeof coverSchema>;
 
@@ -134,7 +136,6 @@ export type CollabListResponse = z.infer<typeof collabListResponseSchema>;
 export const collabDetailSchema = collabSummarySchema.extend({
   summary: z.string(),
   summaryFallback: z.boolean(),
-  machineTranslated: z.boolean(),
   note: z.string().nullable(),
   companies: z.array(companyRefSchema),
   sources: z.array(sourceSchema),
@@ -229,11 +230,11 @@ export const originSchema = z.object({
 });
 export type Origin = z.infer<typeof originSchema>;
 
+/** 한국어·영어 제목과 요약은 모두 필수다(메모는 둘 다 쓰거나 둘 다 비운다). */
 const i18nTextSchema = z.object({
   title: z.string(),
   summary: z.string(),
   note: z.string(),
-  machineTranslated: z.boolean().optional(),
 });
 
 /** 관리자 편집 폼 = PATCH /v1/admin/collabs/:id 본문 */
@@ -253,12 +254,22 @@ export type CollabInput = z.infer<typeof collabInputSchema>;
 
 /** 관리자 조회용 전체 문서(내부 필드 포함) */
 export const adminCollabSchema = collabInputSchema.extend({
+  /** 수집 초안은 아직 작품에 연결되지 않은 참여자(propertyId=null, 수집된 이름만)를 가질 수 있다 */
+  parties: z.array(
+    z.object({
+      propertyId: z.string().nullable(),
+      role: z.enum(PARTY_ROLES),
+      name: z.object({ ko: z.string(), en: z.string() }).nullable(),
+    }),
+  ),
   id: z.string(),
   status: z.enum(COLLAB_STATUSES),
   rev: z.number().int(),
   origin: originSchema,
   /** 수집 원본값 중 분류 키 매핑에 실패한 것. 원본은 보존된다. */
   unmapped: z.array(z.object({ field: z.string(), raw: z.string() })),
+  /** 편집기 필드가 없는 원본값(파트너 분류, 회사 등). 참고용으로만 보여준다. */
+  unmappedOther: z.array(z.object({ field: z.string(), raw: z.string() })),
   sourceStatus: z.array(z.object({ url: z.string(), httpStatus: z.number().int().nullable() })),
   /** 중복 후보: 출처 URL 일치 또는 같은 작품 쌍 + 시작일 ±14일 */
   duplicates: z.array(

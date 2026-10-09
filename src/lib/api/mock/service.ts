@@ -180,7 +180,6 @@ export const mockPublicApi: PublicApi = {
       ...base,
       summary: locale === 'en' && enSummary ? enSummary : c.i18n.ko.summary,
       summaryFallback: locale === 'en' && !enSummary,
-      machineTranslated: locale === 'en' && Boolean(enSummary) && c.i18n.en.machineTranslated,
       note: (locale === 'en' ? c.i18n.en.note : c.i18n.ko.note) || null,
       companies: c.companies.flatMap((co) => {
         const comp = companyById(co.companyId);
@@ -329,7 +328,7 @@ function toAdmin(c: DbCollab): AdminCollab {
       ko: { ...c.i18n.ko },
       en: { ...c.i18n.en },
     },
-    parties: c.parties,
+    parties: c.parties.map((p) => ({ ...p, name: null })),
     companies: c.companies,
     category: c.category,
     regions: c.regions,
@@ -346,6 +345,7 @@ function toAdmin(c: DbCollab): AdminCollab {
     })),
     origin: c.origin,
     unmapped: c.unmapped,
+    unmappedOther: [],
     sourceStatus: c.sources.map((s) => ({ url: s.url, httpStatus: s.httpStatus ?? null })),
     duplicates: findDuplicates(c),
     createdAt: c.createdAt,
@@ -467,10 +467,7 @@ export const mockAdminApi: AdminApi = {
       id: `k_${crypto.randomUUID().slice(0, 8)}`,
       status: 'draft',
       ...structuredClone(input),
-      i18n: {
-        ko: input.i18n.ko,
-        en: { ...input.i18n.en, machineTranslated: input.i18n.en.machineTranslated ?? false },
-      },
+      i18n: { ko: input.i18n.ko, en: input.i18n.en },
       sources: input.sources.map((s) => ({ ...s, lastCheckedAt: null, httpStatus: null, archiveUrl: null })),
       origin: { type: 'manual', runId: null, model: null, confidence: null },
       unmapped: [],
@@ -493,10 +490,7 @@ export const mockAdminApi: AdminApi = {
     const prevUrls = new Map(c.sources.map((s) => [s.url, s]));
     Object.assign(c, {
       slug: input.slug,
-      i18n: {
-        ko: input.i18n.ko,
-        en: { ...input.i18n.en, machineTranslated: input.i18n.en.machineTranslated ?? false },
-      },
+      i18n: { ko: input.i18n.ko, en: input.i18n.en },
       parties: input.parties,
       companies: input.companies,
       category: input.category,

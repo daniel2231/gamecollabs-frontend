@@ -25,7 +25,7 @@ export function CollabCard({ collab }: { collab: CollabSummary }) {
     <Link href={`/collabs/${collab.slug}`} className="ct-card">
       <div className="ct-card-cover" data-tint={collab.cover ? undefined : tint} style={collab.cover ? undefined : ({ '--tint-bg': `var(--${tint}-a3)`, '--tint-fg': `var(--${tint}-11)` } as React.CSSProperties)}>
         {collab.cover ? (
-          <img src={collab.cover.url} alt="" loading="lazy" width={collab.cover.width} height={collab.cover.height} />
+          <img src={collab.cover.url} alt="" loading="lazy" width={collab.cover.width ?? undefined} height={collab.cover.height ?? undefined} />
         ) : (
           <div className="ct-card-mono" aria-hidden="true">
             <span>{host?.name.value.charAt(0) ?? '?'}</span>

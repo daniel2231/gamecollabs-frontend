@@ -41,9 +41,6 @@
       "tba": "Not yet announced"
     }
   },
-  "Translation": {
-    "machine": "Machine translated"
-  },
   "List": {
     "title": "Game × IP Collabs",
     "copyLink": "Copy filter link",
@@ -90,7 +87,8 @@
     "developer": "Developer",
     "licensor": "IP holder",
     "brand_partner": "Brand partner",
-    "organizer": "Organizer"
+    "organizer": "Organizer",
+    "unspecified": "Unspecified"
   },
   "Detail": {
     "breadcrumb": "Breadcrumb",

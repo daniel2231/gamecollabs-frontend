@@ -4,12 +4,16 @@ import { cookies } from 'next/headers';
 
 /**
  * 관리자 세션: GitHub 로그인 후 발급하는 단기 JWT(HS256)를 httpOnly 쿠키에 둔다.
- * 같은 토큰을 Express /v1/admin/* 호출 시 Bearer로 전달한다(Express는 AUTH_SECRET으로 검증).
+ * 같은 토큰을 Express /v1/admin/* 호출 시 Bearer로 전달한다. Express는 이 값과 같은
+ * ADMIN_JWT_SECRET으로 검증하고, iss/aud와 users 컬렉션의 GitHub 계정을 확인한다.
  * 서버에 세션 상태를 두지 않는다.
  */
 
 export const SESSION_COOKIE = 'ct_admin';
 const TTL_SECONDS = 60 * 60 * 8;
+/** Express의 ADMIN_JWT_ISSUER / ADMIN_JWT_AUDIENCE 기본값과 같아야 한다 */
+const ISSUER = 'gamecollabs-web';
+const AUDIENCE = 'gamecollabs-api';
 
 export type AdminSession = { login: string; name: string | null; avatarUrl: string | null; token: string };
 
@@ -35,8 +39,8 @@ export async function signSession(user: { login: string; name: string | null; av
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.login)
     .setIssuedAt()
-    .setIssuer('collab-tracker-web')
-    .setAudience('collab-tracker-api')
+    .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
     .setExpirationTime(`${TTL_SECONDS}s`)
     .sign(secret());
 }
@@ -44,8 +48,8 @@ export async function signSession(user: { login: string; name: string | null; av
 export async function verifySession(token: string): Promise<AdminSession | null> {
   try {
     const { payload } = await jwtVerify(token, secret(), {
-      issuer: 'collab-tracker-web',
-      audience: 'collab-tracker-api',
+      issuer: ISSUER,
+      audience: AUDIENCE,
     });
     if (!payload.sub || payload.scope !== 'admin') return null;
     // 허용 목록에서 빠진 계정은 토큰이 남아 있어도 거부
