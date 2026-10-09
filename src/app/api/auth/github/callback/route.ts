@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
+import { oauthCallbackUrl } from '@/lib/site';
 import { allowedLogins, SESSION_COOKIE, sessionCookieOptions, signSession } from '@/lib/auth/session';
 
 const STATE_COOKIE = 'ct_oauth_state';
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest) {
       client_id: process.env.GITHUB_CLIENT_ID,
       client_secret: process.env.GITHUB_CLIENT_SECRET,
       code,
-      redirect_uri: new URL('/api/auth/github/callback', req.nextUrl.origin).toString(),
+      redirect_uri: oauthCallbackUrl(),
     }),
     cache: 'no-store',
   });
