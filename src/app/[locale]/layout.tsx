@@ -1,23 +1,16 @@
 import '../globals.css';
 import { Theme } from '@radix-ui/themes';
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Mono, IBM_Plex_Sans_KR } from 'next/font/google';
+import { JetBrains_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { siteUrl } from '@/lib/site';
 
-const plexSans = IBM_Plex_Sans_KR({
-  weight: ['400', '500', '600', '700'],
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-plex-sans',
-  display: 'swap',
-});
-const plexMono = IBM_Plex_Mono({
-  weight: ['400', '500'],
-  subsets: ['latin'],
-  variable: '--font-plex-mono',
+  variable: '--font-jetbrains-mono',
   display: 'swap',
 });
 
@@ -49,7 +42,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} className={`dark ${plexSans.variable} ${plexMono.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`dark ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider>
           <Theme appearance="dark" accentColor="gray" grayColor="slate" radius="medium" panelBackground="solid">
