@@ -233,10 +233,11 @@ export default async function CollabDetailPage({ params }: Props) {
                 <Item label={t('labels.type')} value={collab.collabTypes.map((r) => r.label).join(', ')} none={t('none')} />
               </DataList.Root>
             </Card>
-            <Flex gap="2">
+            {/* 공간이 모자라면 줄바꿈 대신 버튼을 아래로 쌓는다 */}
+            <Flex gap="2" wrap="wrap">
               <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} fullWidth />
               <Tooltip content={t('reportSoon')}>
-                <Button variant="surface" color="gray" size="2" style={{ flex: 1 }} disabled>
+                <Button variant="surface" color="gray" size="2" style={{ flex: '1 1 auto', whiteSpace: 'nowrap' }} disabled>
                   <ExclamationTriangleIcon />
                   {t('report')}
                 </Button>

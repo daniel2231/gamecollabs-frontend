@@ -11,7 +11,7 @@ export function CopyLinkButton({ label, copiedLabel, fullWidth }: { label: strin
       variant="surface"
       color="gray"
       size="2"
-      style={fullWidth ? { flex: 1 } : undefined}
+      style={{ whiteSpace: 'nowrap', ...(fullWidth ? { flex: '1 1 auto' } : undefined) }}
       onClick={async () => {
         await navigator.clipboard.writeText(window.location.href);
         setCopied(true);
