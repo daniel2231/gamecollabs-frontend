@@ -29,17 +29,7 @@
   "Period": {
     "unknown": "기간 미상",
     "permanent": "상시",
-    "tba": "종료일 미발표",
-    "precision": {
-      "day": "일 단위 정확도",
-      "month": "월 단위 정확도",
-      "unknown": "정확도 미상"
-    },
-    "endKind": {
-      "fixed": "종료일 확정",
-      "permanent": "상시 진행",
-      "tba": "아직 발표되지 않음"
-    }
+    "tba": "종료일 미발표"
   },
   "Translation": {
     "machine": "기계 번역"
@@ -97,7 +87,6 @@
     "start": "시작",
     "end": "종료",
     "status": "상태",
-    "computed": "조회 시점 기준 계산",
     "summary": "요약",
     "summaryEmpty": "아직 요약이 없습니다.",
     "parties": "참여 작품",

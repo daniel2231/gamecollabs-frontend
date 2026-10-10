@@ -29,17 +29,7 @@
   "Period": {
     "unknown": "Dates unknown",
     "permanent": "Permanent",
-    "tba": "End date TBA",
-    "precision": {
-      "day": "Exact day",
-      "month": "Month only",
-      "unknown": "Precision unknown"
-    },
-    "endKind": {
-      "fixed": "Fixed end date",
-      "permanent": "Runs permanently",
-      "tba": "Not yet announced"
-    }
+    "tba": "End date TBA"
   },
   "Translation": {
     "machine": "Machine translated"
@@ -97,7 +87,6 @@
     "start": "Start",
     "end": "End",
     "status": "Status",
-    "computed": "Computed at request time",
     "summary": "Summary",
     "summaryEmpty": "No summary yet.",
     "parties": "Properties involved",

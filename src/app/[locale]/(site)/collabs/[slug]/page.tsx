@@ -128,9 +128,6 @@ export default async function CollabDetailPage({ params }: Props) {
                 <Text as="div" size="5" weight="medium" className={start ? 'ct-mono' : undefined}>
                   {start ?? tPeriod('unknown')}
                 </Text>
-                <Text as="div" size="1" color="gray">
-                  {tPeriod(`precision.${collab.period.precision}`)}
-                </Text>
               </div>
               <div>
                 <Text as="div" size="1" color="gray">
@@ -138,9 +135,6 @@ export default async function CollabDetailPage({ params }: Props) {
                 </Text>
                 <Text as="div" size="5" weight="medium" className={collab.period.endKind === 'fixed' && start ? 'ct-mono' : undefined}>
                   {start ? end : tPeriod('unknown')}
-                </Text>
-                <Text as="div" size="1" color="gray">
-                  {tPeriod(`endKind.${collab.period.endKind}`)}
                 </Text>
               </div>
               <div>
@@ -150,22 +144,21 @@ export default async function CollabDetailPage({ params }: Props) {
                 <Text as="div" size="5" weight="medium" color={collab.phase === 'ongoing' ? 'grass' : undefined}>
                   {tPhase(collab.phase)}
                 </Text>
-                <Text as="div" size="1" color="gray">
-                  {t('computed')}
-                </Text>
               </div>
             </section>
 
             <Section title={t('summary')}>
-              <Flex gap="2" mb="1">
-                {collab.machineTranslated && <TranslationBadge />}
-              </Flex>
+              {collab.machineTranslated && (
+                <Flex mb="2">
+                  <TranslationBadge />
+                </Flex>
+              )}
               {collab.summary ? (
-                <Text as="p" style={{ maxWidth: '68ch', whiteSpace: 'pre-line' }} lang={collab.summaryFallback ? 'ko' : undefined}>
+                <Text as="p" style={{ whiteSpace: 'pre-line', margin: 0 }} lang={collab.summaryFallback ? 'ko' : undefined}>
                   {collab.summary}
                 </Text>
               ) : (
-                <Text as="p" color="gray">
+                <Text as="p" color="gray" m="0">
                   {t('summaryEmpty')}
                 </Text>
               )}
