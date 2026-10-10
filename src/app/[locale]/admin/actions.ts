@@ -67,7 +67,7 @@ export async function matchEntities(name: string): Promise<ActionResult<MatchRes
 
 const entityInputSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug는 소문자·숫자·하이픈만'),
-  name: z.object({ ko: z.string().trim().min(1, '필수'), en: z.string().trim(), original: z.string().trim().nullable() }),
+  name: z.object({ ko: z.string().trim().min(1, '필수'), en: z.string().trim().min(1, '필수'), original: z.string().trim().nullable() }),
   aliases: z.array(z.string().trim().min(1)).max(50),
   category: z.string().nullable(),
   country: z.string().regex(/^[A-Z]{2}$/, 'ISO 3166-1 alpha-2 (예: JP)').nullable(),

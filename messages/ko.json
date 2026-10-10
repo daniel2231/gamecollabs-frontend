@@ -31,9 +31,6 @@
     "permanent": "상시",
     "tba": "종료일 미발표"
   },
-  "Translation": {
-    "machine": "기계 번역"
-  },
   "List": {
     "title": "게임 × IP 콜라보",
     "copyLink": "필터 링크 복사",
@@ -80,7 +77,8 @@
     "developer": "개발사",
     "licensor": "IP 홀더",
     "brand_partner": "브랜드 파트너",
-    "organizer": "주최"
+    "organizer": "주최",
+    "unspecified": "역할 미지정"
   },
   "Detail": {
     "breadcrumb": "경로",

@@ -91,7 +91,7 @@ export type DbCollab = {
   status: CollabStatus;
   i18n: {
     ko: { title: string; summary: string; note: string };
-    en: { title: string; summary: string; note: string; machineTranslated: boolean };
+    en: { title: string; summary: string; note: string };
   };
   parties: { propertyId: string; role: 'host' | 'partner' }[];
   companies: { companyId: string; role: CompanyRole }[];
@@ -196,7 +196,7 @@ export const collabs: DbCollab[] = [
     status: 'published',
     i18n: {
       ko: { title: '태고의 달인 × 자가리코', summary: '', note: '' },
-      en: { title: 'Taiko no Tatsujin × Jagariko', summary: '', note: '', machineTranslated: false },
+      en: { title: 'Taiko no Tatsujin × Jagariko', summary: '', note: '' },
     },
     parties: [
       { propertyId: 'p_taiko', role: 'host' },
@@ -225,7 +225,7 @@ export const collabs: DbCollab[] = [
     status: 'published',
     i18n: {
       ko: { title: 'Blood Strike × 진격의 거인', summary: '', note: '' },
-      en: { title: '', summary: '', note: '', machineTranslated: false },
+      en: { title: '', summary: '', note: '' },
     },
     parties: [
       { propertyId: 'p_bloodstrike', role: 'host' },
@@ -251,7 +251,7 @@ export const collabs: DbCollab[] = [
     status: 'published',
     i18n: {
       ko: { title: 'WePlay × 진격의 거인', summary: '', note: '' },
-      en: { title: '', summary: '', note: '', machineTranslated: false },
+      en: { title: '', summary: '', note: '' },
     },
     parties: [
       { propertyId: 'p_weplay', role: 'host' },
@@ -278,7 +278,7 @@ export const collabs: DbCollab[] = [
     status: 'draft',
     i18n: {
       ko: { title: '[게임명] × 진격의 거인', summary: '', note: '' },
-      en: { title: '', summary: '', note: '', machineTranslated: false },
+      en: { title: '', summary: '', note: '' },
     },
     parties: [{ propertyId: 'p_aot', role: 'partner' }],
     companies: [],

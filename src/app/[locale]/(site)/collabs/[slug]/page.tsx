@@ -4,7 +4,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
-import { TranslationBadge } from '@/components/collab/TranslationBadge';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
 import { Link } from '@/i18n/navigation';
@@ -100,8 +99,8 @@ export default async function CollabDetailPage({ params }: Props) {
                 <img
                   src={collab.cover.url}
                   alt={collab.cover.alt}
-                  width={collab.cover.width}
-                  height={collab.cover.height}
+                  width={collab.cover.width ?? undefined}
+                  height={collab.cover.height ?? undefined}
                   style={{ width: '100%', height: 'auto', borderRadius: 8, border: '1px solid var(--ct-line)' }}
                 />
                 {collab.cover.credit && (
@@ -148,11 +147,6 @@ export default async function CollabDetailPage({ params }: Props) {
             </section>
 
             <Section title={t('summary')}>
-              {collab.machineTranslated && (
-                <Flex mb="2">
-                  <TranslationBadge />
-                </Flex>
-              )}
               {collab.summary ? (
                 <Text as="p" style={{ whiteSpace: 'pre-line', margin: 0 }} lang={collab.summaryFallback ? 'ko' : undefined}>
                   {collab.summary}
