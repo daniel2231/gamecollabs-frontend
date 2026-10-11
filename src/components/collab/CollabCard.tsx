@@ -8,6 +8,13 @@ const MAX_TAGS = 3;
 // 커버가 없을 때 slug로 고르는 색. Radix 팔레트 안에서만 고른다
 const TINTS = ['indigo', 'cyan', 'crimson', 'amber', 'grass', 'violet', 'orange', 'teal'] as const;
 
+/** 16:9에서 많이 벗어난 커버(정사각형·세로형 등)는 잘리지 않게 통째로 보여준다 */
+function coverFit(cover: { width?: number | null; height?: number | null }): 'cover' | 'contain' {
+  if (!cover.width || !cover.height) return 'cover';
+  const ratio = cover.width / cover.height / (16 / 9);
+  return ratio > 0.8 && ratio < 1.25 ? 'cover' : 'contain';
+}
+
 function tintFor(slug: string): (typeof TINTS)[number] {
   let h = 0;
   for (const ch of slug) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
@@ -25,7 +32,14 @@ export function CollabCard({ collab }: { collab: CollabSummary }) {
     <Link href={`/collabs/${collab.slug}`} className="ct-card">
       <div className="ct-card-cover" data-tint={collab.cover ? undefined : tint} style={collab.cover ? undefined : ({ '--tint-bg': `var(--${tint}-a3)`, '--tint-fg': `var(--${tint}-11)` } as React.CSSProperties)}>
         {collab.cover ? (
-          <img src={collab.cover.url} alt="" loading="lazy" width={collab.cover.width ?? undefined} height={collab.cover.height ?? undefined} />
+          <img
+            src={collab.cover.url}
+            alt=""
+            loading="lazy"
+            width={collab.cover.width ?? undefined}
+            height={collab.cover.height ?? undefined}
+            data-fit={coverFit(collab.cover)}
+          />
         ) : (
           <div className="ct-card-mono" aria-hidden="true">
             <span>{host?.name.value.charAt(0) ?? '?'}</span>
