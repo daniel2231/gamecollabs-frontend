@@ -3,7 +3,8 @@
 import { MixerHorizontalIcon } from '@radix-ui/react-icons';
 import { Button, Checkbox, Flex, Link as RadixLink, Select, Text } from '@radix-ui/themes';
 import { useLocale, useTranslations } from 'next-intl';
-import { useId, useState, useTransition } from 'react';
+import { useId, useOptimistic, useState, useTransition } from 'react';
+import { PendingMark } from '@/components/site/Pending';
 import { useRouter } from '@/i18n/navigation';
 import { serializeCollabQuery, toggleFacet } from '@/lib/filters';
 import { flatten, type TermNode } from '@/lib/taxonomy';
@@ -20,15 +21,21 @@ export function FilterPanel({ query, facets }: Props) {
   const t = useTranslations('List');
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  // 서버 응답을 기다리지 않고 체크 상태를 바로 바꾼다. 이동이 끝나면 서버 값으로 돌아온다
+  const [optimistic, setOptimistic] = useOptimistic(query);
   const [open, setOpen] = useState(false);
   const bodyId = useId();
 
   function navigate(next: CollabQuery) {
-    startTransition(() => router.replace(`/${serializeCollabQuery(next)}`, { scroll: false }));
+    startTransition(() => {
+      setOptimistic(next);
+      router.replace(`/${serializeCollabQuery(next)}`, { scroll: false });
+    });
   }
 
   return (
     <aside aria-label={t('filters')} className="ct-side ct-filter" aria-busy={pending} style={{ flexBasis: 248 }}>
+      <PendingMark pending={pending} />
       <Flex align="center" justify="between" pb="2">
         <Text weight="bold">{t('filters')}</Text>
         <Flex gap="3" align="center">
@@ -37,7 +44,7 @@ export function FilterPanel({ query, facets }: Props) {
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              navigate({ ...query, category: [], partner_category: [], region: [], platform: [], collab_type: [], from: undefined, to: undefined, limit: 20 });
+              navigate({ ...optimistic, category: [], partner_category: [], region: [], platform: [], collab_type: [], from: undefined, to: undefined, limit: 20 });
             }}
           >
             {t('reset')}
@@ -64,8 +71,8 @@ export function FilterPanel({ query, facets }: Props) {
               key={param}
               legend={t(`facet.${param}`)}
               tree={tree}
-              selected={query[param]}
-              onToggle={(key) => navigate(toggleFacet(query, param, key))}
+              selected={optimistic[param]}
+              onToggle={(key) => navigate(toggleFacet(optimistic, param, key))}
               hint={param === 'platform' || param === 'region' ? t('hierarchyHint') : undefined}
             />
           ),
@@ -74,8 +81,8 @@ export function FilterPanel({ query, facets }: Props) {
         <fieldset className="ct-fieldset">
           <legend>{t('period')}</legend>
           <Flex direction="column" gap="3">
-            <MonthPicker key={`from-${query.from ?? ""}`} label={t("from")} value={query.from} onCommit={(from) => navigate({ ...query, from, limit: 20 })} />
-            <MonthPicker key={`to-${query.to ?? ""}`} label={t("to")} value={query.to} onCommit={(to) => navigate({ ...query, to, limit: 20 })} />
+            <MonthPicker key={`from-${optimistic.from ?? ""}`} label={t("from")} value={optimistic.from} onCommit={(from) => navigate({ ...optimistic, from, limit: 20 })} />
+            <MonthPicker key={`to-${optimistic.to ?? ""}`} label={t("to")} value={optimistic.to} onCommit={(to) => navigate({ ...optimistic, to, limit: 20 })} />
           </Flex>
         </fieldset>
       </div>

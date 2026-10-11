@@ -2,6 +2,7 @@
 
 import { Text } from '@radix-ui/themes';
 import { useSearchParams } from 'next/navigation';
+import { LinkPending } from '@/components/site/Pending';
 import { Link, usePathname } from '@/i18n/navigation';
 
 type Counts = Record<'review' | 'draft' | 'in_review' | 'published' | 'archived', number>;
@@ -30,6 +31,7 @@ export function AdminNav({ counts }: { counts: Counts }) {
       </Text>
       {STATUS_LINKS.map((l) => (
         <Link key={l.status} href={l.status === 'review' ? '/admin' : `/admin?status=${l.status}`} aria-current={current === l.status ? 'page' : undefined}>
+          <LinkPending scope="list" />
           {l.label}
           <span className="ct-mono" style={{ color: current === l.status ? undefined : 'var(--gray-11)' }}>
             {counts[l.status]}

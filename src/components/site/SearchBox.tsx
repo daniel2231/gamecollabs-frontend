@@ -1,10 +1,11 @@
 'use client';
 
 import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
-import { Kbd, TextField, VisuallyHidden } from '@radix-ui/themes';
+import { Kbd, Spinner, TextField, VisuallyHidden } from '@radix-ui/themes';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react';
+import { PendingMark } from './Pending';
 import { usePathname, useRouter } from '@/i18n/navigation';
 
 /** 헤더 검색. 목록 화면에서는 현재 필터를 유지한 채 q만 바꾼다. '/' 키로 포커스 */
@@ -16,6 +17,7 @@ export function SearchBox() {
   const current = pathname === '/' ? (params.get('q') ?? '') : '';
   const [value, setValue] = useState(current);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [pending, startTransition] = useTransition();
 
   useEffect(() => setValue(current), [current]);
 
@@ -39,11 +41,12 @@ export function SearchBox() {
     else next.delete('q');
     next.delete('limit');
     const qs = next.toString();
-    router.push(qs ? `/?${qs}` : '/');
+    startTransition(() => router.push(qs ? `/?${qs}` : '/'));
   }
 
   return (
     <form role="search" onSubmit={onSubmit} style={{ flex: '1 1 260px', minWidth: 0 }}>
+      <PendingMark pending={pending} />
       <VisuallyHidden>
         <label htmlFor="site-search">{t('label')}</label>
       </VisuallyHidden>
@@ -61,9 +64,7 @@ export function SearchBox() {
         <TextField.Slot>
           <MagnifyingGlassIcon height="16" width="16" />
         </TextField.Slot>
-        <TextField.Slot>
-          <Kbd size="1">/</Kbd>
-        </TextField.Slot>
+        <TextField.Slot>{pending ? <Spinner size="2" /> : <Kbd size="1">/</Kbd>}</TextField.Slot>
       </TextField.Root>
     </form>
   );

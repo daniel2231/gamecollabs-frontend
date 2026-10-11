@@ -17,10 +17,17 @@ export async function loadTrees(): Promise<Trees> {
   };
 }
 
+/** 작품·회사 전체 목록. 문서와 상관없이 읽으므로 큐·문서 조회와 동시에 시작할 수 있다 */
+export function loadEntityLists(admin: AdminApi) {
+  return Promise.all([admin.listEntities('property'), admin.listEntities('company')]);
+}
+
 /** 문서가 가리키는 작품·회사 id → 표시 이름 */
-export async function loadEntityNames(admin: AdminApi, collab: AdminCollab | null): Promise<Record<string, EntityChoice>> {
+export function pickEntityNames(
+  [props, comps]: Awaited<ReturnType<typeof loadEntityLists>>,
+  collab: AdminCollab | null,
+): Record<string, EntityChoice> {
   if (!collab) return {};
-  const [props, comps] = await Promise.all([admin.listEntities('property'), admin.listEntities('company')]);
   const ids = new Set([...collab.parties.map((p) => p.propertyId), ...collab.companies.map((c) => c.companyId)]);
   return Object.fromEntries(
     [...props, ...comps]

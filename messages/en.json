@@ -1,5 +1,6 @@
 {
   "Site": {
+    "loading": "Loading…",
     "name": "Collab Tracker",
     "description": "A manually reviewed record of game × IP collaborations, built from public sources. Find which IPs worked with which games, and how.",
     "nav": {

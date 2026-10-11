@@ -525,7 +525,7 @@ body {
   background: var(--ct-surface);
 }
 
-.ct-admin-queue a {
+.ct-admin-queue li a {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -535,11 +535,11 @@ body {
   text-decoration: none;
 }
 
-.ct-admin-queue a:hover {
+.ct-admin-queue li a:hover {
   background: var(--gray-a2);
 }
 
-.ct-admin-queue a[aria-current='true'] {
+.ct-admin-queue li a[aria-current='true'] {
   background: var(--accent-a3);
   box-shadow: inset 3px 0 0 var(--accent-9);
 }
@@ -642,6 +642,21 @@ body {
   }
 }
 
-.ct-filter[aria-busy='true'] {
-  opacity: 0.7;
+/* 같은 페이지 안의 이동(필터·탭·정렬 등)이 진행 중이면 결과만 흐린다.
+   바로 끝나는 이동에서 깜빡이지 않도록 흐려질 때만 잠깐 늦춘다 */
+.ct-pending-target,
+.ct-pending-list {
+  transition: opacity 0.15s ease;
+}
+
+:root:has([data-pending]) .ct-pending-target,
+:root:has([data-pending='list']) .ct-pending-list {
+  opacity: 0.5;
+  transition-delay: 0.12s;
+}
+
+/* 누른 항목을 응답 전에 먼저 선택된 것처럼 보이게 한다 */
+.ct-admin-queue li a:has([data-pending]),
+.ct-admin-nav a:has([data-pending]) {
+  background: var(--accent-a3);
 }

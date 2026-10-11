@@ -6,6 +6,7 @@ import { CollabCard } from '@/components/collab/CollabCard';
 import { FilterPanel } from '@/components/collab/FilterPanel';
 import { SortSelect } from '@/components/collab/SortSelect';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
+import { LinkPending } from '@/components/site/Pending';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
@@ -79,6 +80,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
         {PHASE_TABS.map((phase) => (
           <TabNav.Link key={phase ?? 'all'} asChild active={query.phase === phase}>
             <Link href={href({ phase, limit: 20 })} scroll={false}>
+              <LinkPending />
               {phase ? tPhase(phase) : tPhase('all')}
               {phase && stats.byPhase[phase] > 0 && (
                 <Text size="1" color="gray" ml="2" className="ct-mono">
@@ -99,6 +101,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
               {chips.map((chip) => (
                 <Badge key={chip.href} asChild size="2" radius="full" variant="soft">
                   <Link href={chip.href} scroll={false} aria-label={t('removeFilter', { label: chip.label })}>
+                    <LinkPending />
                     {chip.label}
                     <Cross2Icon aria-hidden="true" />
                   </Link>
@@ -118,46 +121,50 @@ export default async function CollabListPage({ params, searchParams }: PageProps
               <SortSelect query={query} />
             </Flex>
 
-            {list.items.length === 0 ? (
-              <Flex direction="column" align="center" gap="2" py="9" className="ct-panel">
-                <Text weight="medium">{t('empty')}</Text>
-                <Text size="2" color="gray">
-                  {t('emptyHint')}
-                </Text>
-              </Flex>
-            ) : query.sort === 'recent' ? (
-              <ul className="ct-grid">
-                {list.items.map((item) => (
-                  <li key={item.slug}>
-                    <CollabCard collab={item} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
-              groupByStartMonth(list.items).map((group) => (
-                <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
-                  <Heading as="h2" size="4" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
-                    {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
-                    <Text size="2" weight="regular" color="gray" className="ct-mono">
-                      {group.items.length}
-                    </Text>
-                  </Heading>
-                  <ul className="ct-grid">
-                    {group.items.map((item) => (
-                      <li key={item.slug}>
-                        <CollabCard collab={item} />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))
-            )}
+            {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
+            <Flex direction="column" gap="4" className="ct-pending-target">
+              {list.items.length === 0 ? (
+                <Flex direction="column" align="center" gap="2" py="9" className="ct-panel">
+                  <Text weight="medium">{t('empty')}</Text>
+                  <Text size="2" color="gray">
+                    {t('emptyHint')}
+                  </Text>
+                </Flex>
+              ) : query.sort === 'recent' ? (
+                <ul className="ct-grid">
+                  {list.items.map((item) => (
+                    <li key={item.slug}>
+                      <CollabCard collab={item} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
+                groupByStartMonth(list.items).map((group) => (
+                  <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
+                    <Heading as="h2" size="4" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
+                      {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
+                      <Text size="2" weight="regular" color="gray" className="ct-mono">
+                        {group.items.length}
+                      </Text>
+                    </Heading>
+                    <ul className="ct-grid">
+                      {group.items.map((item) => (
+                        <li key={item.slug}>
+                          <CollabCard collab={item} />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))
+              )}
+            </Flex>
 
             {list.nextCursor && query.limit < 100 && (
               <Flex justify="center">
                 <Button asChild variant="surface" color="gray" size="3">
                   <Link href={href({ limit: Math.min(query.limit + 20, 100) })} scroll={false}>
+                    <LinkPending spinner dim={false} />
                     {t('loadMore')}
                   </Link>
                 </Button>

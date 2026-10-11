@@ -144,7 +144,8 @@ function filterCollabs(query: CollabQuery): DbCollab[] {
   return result.sort((a, b) => compareStart(a, b, query.sort === 'start_asc' ? 1 : -1));
 }
 
-const delay = () => new Promise((r) => setTimeout(r, 0));
+// MOCK_LATENCY_MS로 실제 API 지연을 흉내 낸다(로딩·대기 화면 확인용). 기본 0
+const delay = () => new Promise((r) => setTimeout(r, Number(process.env.MOCK_LATENCY_MS) || 0));
 
 // ── 공개 API ─────────────────────────────────────────────────
 

@@ -1,9 +1,10 @@
 'use client';
 
 import { MagnifyingGlassIcon, PlusIcon } from '@radix-ui/react-icons';
-import { AlertDialog, Badge, Button, Callout, Dialog, Flex, Heading, Table, TabNav, Text, TextField } from '@radix-ui/themes';
+import { AlertDialog, Badge, Button, Callout, Dialog, Flex, Heading, Spinner, Table, TabNav, Text, TextField } from '@radix-ui/themes';
 import { useState, useTransition } from 'react';
 import { mergeEntities } from '@/app/[locale]/admin/actions';
+import { LinkPending, PendingMark } from '@/components/site/Pending';
 import { Link, useRouter } from '@/i18n/navigation';
 import type { AdminEntity, EntityKind } from '@/schema';
 import { EntityCombobox, type EntityChoice } from './EntityCombobox';
@@ -17,6 +18,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
   const [creating, setCreating] = useState(false);
   const [merging, setMerging] = useState<AdminEntity | null>(null);
   const [search, setSearch] = useState(q);
+  const [searching, startSearch] = useTransition();
   const noun = kind === 'property' ? '작품' : '회사';
   const kindLabel = new Map(kindOptions.map((o) => [o.key, o.label]));
 
@@ -32,10 +34,16 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
       </Flex>
       <TabNav.Root>
         <TabNav.Link asChild active={kind === 'property'}>
-          <Link href="/admin/entities">작품 (게임·IP)</Link>
+          <Link href="/admin/entities">
+            <LinkPending />
+            작품 (게임·IP)
+          </Link>
         </TabNav.Link>
         <TabNav.Link asChild active={kind === 'company'}>
-          <Link href="/admin/entities?kind=company">회사</Link>
+          <Link href="/admin/entities?kind=company">
+            <LinkPending />
+            회사
+          </Link>
         </TabNav.Link>
       </TabNav.Root>
       <form
@@ -45,17 +53,16 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
           const p = new URLSearchParams();
           if (kind === 'company') p.set('kind', 'company');
           if (search.trim()) p.set('q', search.trim());
-          router.replace(`/admin/entities${p.size ? `?${p}` : ''}`);
+          startSearch(() => router.replace(`/admin/entities${p.size ? `?${p}` : ''}`));
         }}
       >
         <TextField.Root aria-label={`${noun} 검색`} placeholder="이름·별칭·slug" value={search} onChange={(e) => setSearch(e.target.value)} style={{ maxWidth: 360 }}>
-          <TextField.Slot>
-            <MagnifyingGlassIcon />
-          </TextField.Slot>
+          <TextField.Slot>{searching ? <Spinner /> : <MagnifyingGlassIcon />}</TextField.Slot>
         </TextField.Root>
+        <PendingMark pending={searching} />
       </form>
 
-      <Table.Root variant="surface">
+      <Table.Root variant="surface" className="ct-pending-target">
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeaderCell>이름</Table.ColumnHeaderCell>

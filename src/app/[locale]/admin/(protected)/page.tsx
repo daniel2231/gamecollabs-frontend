@@ -1,9 +1,10 @@
 import { Badge, Button, Flex, Text } from '@radix-ui/themes';
 import { redirect } from 'next/navigation';
 import { CollabEditor } from '@/components/admin/CollabEditor';
+import { LinkPending } from '@/components/site/Pending';
 import { Link } from '@/i18n/navigation';
 import { adminApi } from '@/lib/api';
-import { loadEntityNames, loadTrees } from '@/lib/admin-data';
+import { loadEntityLists, loadTrees, pickEntityNames } from '@/lib/admin-data';
 import { getAdminSession } from '@/lib/auth/session';
 import { COLLAB_STATUSES, ORIGIN_TYPES, type CollabStatus, type OriginType } from '@/schema';
 
@@ -32,10 +33,19 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
   const status = (COLLAB_STATUSES as readonly string[]).includes(String(sp.status)) ? (sp.status as CollabStatus) : 'review';
   const origin = (ORIGIN_TYPES as readonly string[]).includes(String(sp.origin)) ? (sp.origin as OriginType) : undefined;
   const admin = adminApi(session.token);
-  const queue = await admin.listQueue({ status, origin });
-  const selectedId = typeof sp.id === 'string' ? sp.id : queue.items[0]?.id;
-  const [collab, trees] = await Promise.all([selectedId ? admin.getCollab(selectedId) : null, loadTrees()]);
-  const entities = await loadEntityNames(admin, collab);
+  // 서로 기다릴 필요 없는 조회는 한꺼번에 시작한다. 선택 항목은 id가 있으면 큐와 함께 읽고,
+  // 없으면 큐의 첫 항목을 고른 뒤 읽는다
+  const requestedId = typeof sp.id === 'string' ? sp.id : undefined;
+  const entityLists = loadEntityLists(admin);
+  entityLists.catch(() => {}); // 쓰지 않고 끝나는 경우의 unhandled rejection 방지. 쓸 때는 await에서 오류가 난다
+  const [queue, trees, requested] = await Promise.all([
+    admin.listQueue({ status, origin }),
+    loadTrees(),
+    requestedId ? admin.getCollab(requestedId) : null,
+  ]);
+  const selectedId = requestedId ?? queue.items[0]?.id;
+  const collab = requestedId ? requested : selectedId ? await admin.getCollab(selectedId) : null;
+  const entities = collab ? pickEntityNames(await entityLists, collab) : {};
 
   const qs = (extra: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
@@ -56,6 +66,7 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
             {ORIGIN_FILTERS.map((f) => (
               <Button key={f.label} asChild size="1" radius="full" variant={origin === f.value ? 'solid' : 'surface'} color="gray" highContrast={origin === f.value}>
                 <Link href={qs({ origin: f.value })} aria-current={origin === f.value ? 'true' : undefined}>
+                  <LinkPending scope="list" />
                   {f.label}
                 </Link>
               </Button>
@@ -67,10 +78,11 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
             항목이 없습니다.
           </Text>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          <ul className="ct-pending-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {queue.items.map((q) => (
               <li key={q.id}>
                 <Link href={qs({ id: q.id })} aria-current={q.id === collab?.id ? 'true' : undefined}>
+                  <LinkPending />
                   <Flex wrap="wrap" gap="1">
                     <Badge size="1" variant="soft" color={q.status === 'in_review' ? 'indigo' : 'gray'}>
                       {STATUS_LABEL[q.status]}
@@ -96,7 +108,7 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
           </ul>
         )}
       </section>
-      <main className="ct-admin-main">
+      <main className="ct-admin-main ct-pending-target">
         {collab ? (
           <CollabEditor key={collab.id} collab={collab} trees={trees} entities={entities} locale={locale} />
         ) : (
