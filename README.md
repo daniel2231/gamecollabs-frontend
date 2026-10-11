@@ -88,26 +88,22 @@ messages/{ko,en}.json
 | 저장 | `POST`·`PATCH /v1/admin/collabs[/:id]` (`If-Match: <rev>`) | 빈 메모는 `null`, 월 단위 날짜는 `YYYY-MM` |
 | 엔티티 | `GET /v1/admin/{properties,companies}[?q=]` | `q`가 없으면 전체 목록 |
 | 병합 | `POST /v1/admin/{…}/:targetId/merge` `{ from }` | `from`(원본)이 `:targetId`에 흡수된다 |
-| 커버 업로드 | `POST /v1/admin/media` (multipart, `file`) — **백엔드 추가 필요** | 응답 `url`이 없으면 `MEDIA_BASE_URL` + `storageKey` |
+| 커버 업로드 | `POST /v1/admin/media` (multipart, `file`) | 응답 `url`이 없으면(`null`) `MEDIA_BASE_URL` + `storageKey` |
 
-### 커버 이미지 업로드 (백엔드 준비 사항)
+### 커버 이미지 업로드
 
 편집기의 “커버 이미지”에서 끌어다 놓기·클릭·붙여넣기로 올린다. 브라우저가 긴 변 1600px 이하 WebP(안 되면 JPEG)로 줄인 뒤
 `POST /api/admin/media`(Next Route Handler, 세션·Origin·파일 형식·4MB 확인)로 보내고, 여기서 관리자 JWT를 붙여 Express로 넘긴다.
 관리자 토큰이 httpOnly 쿠키라 브라우저가 Express로 직접 보낼 수 없어서다. 목 모드에서는 메모리에 data: 주소로 둔다.
 
-Express에 필요한 것:
+Express(`gamecollabs-backend`의 `POST /v1/admin/media`)가 형식 확인(JPEG·PNG·WebP, 5MB, 4천만 픽셀), `sharp` 재인코딩(메타데이터 제거,
+긴 변 1600px, WebP), `covers/<sha256>.webp` 저장을 맡고 `{ storageKey, url, width, height }`를 돌려준다. 편집기는 저장할 때
+`PATCH`의 `cover`로 연결하고, 7일 넘게 어느 콜라보도 쓰지 않는 업로드는 백엔드 주간 작업이 지운다.
 
-1. `POST /v1/admin/media` — 관리자 JWT 필수, multipart 필드 `file`.
-   - JPEG·PNG·WebP만, 매직 바이트로 형식 확인, 5MB 이하, 픽셀 수 상한(디컴프레션 폭탄 방지).
-   - `sharp`로 다시 인코딩: EXIF·GPS 제거, WebP 변환, 긴 변 1600px 제한, 실제 `width`·`height` 측정.
-   - `mirror_cover`와 같은 저장소에 내용 해시 키로 저장(예: `covers/<sha256>.webp`).
-   - 응답 `201 { "data": { "storageKey", "url"?, "width", "height" } }`. 라우트가 없으면(404·405) 편집기에 “업로드 API가 아직 없습니다”로 보인다.
-2. `GET /v1/admin/collabs/:id`에 `cover: { storageKey, url?, originalUrl, credit, alt: { ko, en } | null, width, height } | null`을 넣는다.
-   이 필드가 응답에 없으면 편집기는 현재 커버를 “모름”으로 보고, 사용자가 커버를 건드리지 않는 한 저장 본문에서 `cover`를 빼서 기존 값을 지우지 않는다.
-3. `PATCH`의 `cover`는 지금 스키마 그대로(`storageKey`, `originalUrl`, `credit`, `alt`(한·영 모두 있을 때만), `width`, `height`, 지울 때 `null`). 바뀌면 revalidate 웹훅 호출.
-4. `MEDIA_BASE_URL` 응답에 `Cache-Control: public, max-age=31536000, immutable`(키가 내용 해시라 바뀌지 않는다).
-5. (선택) 어느 콜라보도 가리키지 않는 업로드 파일을 주기적으로 정리.
+- 관리자 조회 응답에 `cover` 필드가 없으면(이전 백엔드) 편집기는 현재 커버를 “모름”으로 보고, 사용자가 커버를 건드리지 않는 한
+  저장 본문에서 `cover`를 빼서 기존 값을 지우지 않는다.
+- 업로드 라우트가 없으면(404·405) 편집기에 “업로드 API가 아직 없습니다”로 보인다.
+- 저장소가 설정되지 않은 백엔드는 503(`storage_unavailable`)을 준다.
 
 ## 환경변수
 

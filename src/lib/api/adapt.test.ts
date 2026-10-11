@@ -148,6 +148,15 @@ describe('관리자 변환', () => {
     ).cover;
     expect(cover).toMatchObject({ url: 'https://media.example.com/covers/ab.webp', credit: '', alt: { ko: '', en: '' } });
     expect(adminCollabSchema.safeParse({ ...A.toAdminCollab(doc, []), cover }).success).toBe(true);
+    // 백엔드 collabAdmin 형태 그대로(미러링 오류 필드 포함, 원본 링크만 있는 커버)
+    const linkOnly = A.toAdminCollab(
+      {
+        ...doc,
+        cover: { storageKey: null, url: 'https://x.test/a.jpg', originalUrl: 'https://x.test/a.jpg', credit: null, alt: null, width: null, height: null, mirrorError: 'timeout' } as A.BeAdminCover,
+      },
+      [],
+    ).cover;
+    expect(linkOnly).toMatchObject({ storageKey: null, url: 'https://x.test/a.jpg', originalUrl: 'https://x.test/a.jpg' });
   });
 
   it('커버 저장 본문: 건드리지 않으면 빼고, 대체 텍스트는 한·영이 모두 있어야 보낸다', () => {

@@ -28,6 +28,18 @@ describe('커버 업로드(HTTP)', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer token');
   });
 
+  it('백엔드가 url을 null로 주면(저장소 공개 주소 미설정) MEDIA_BASE_URL로 만든다', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json(201, { data: { storageKey: 'covers/cd.webp', url: null, width: 1200, height: 1200 } })));
+    const media = await createHttpAdminApi('token').uploadMedia(file(), { width: 1, height: 1 });
+    expect(media.url).toBe('https://media.example.com/covers/cd.webp');
+  });
+
+  it('업로드 거절(415 등)은 백엔드 코드·메시지를 그대로 넘긴다', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json(415, { error: { code: 'unsupported_media_type', message: 'only JPEG, PNG and WebP images are accepted' } })));
+    const err = await createHttpAdminApi('token').uploadMedia(file(), { width: 1, height: 1 }).catch((e: unknown) => e);
+    expect(err).toMatchObject({ status: 415, code: 'unsupported_media_type' });
+  });
+
   it('백엔드에 업로드 라우트가 없으면(404) 알아보기 쉬운 오류로 바꾼다', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json(404, { error: { code: 'not_found' } })));
     const err = await createHttpAdminApi('token').uploadMedia(file(), { width: 1, height: 1 }).catch((e: unknown) => e);
