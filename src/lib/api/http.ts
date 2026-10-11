@@ -158,12 +158,15 @@ export function createHttpAdminApi(token: string): AdminApi {
 
   return {
     listQueue: async (filter) => {
-      const body = await envelope<A.BeAdminCollab[], { counts: Record<'draft' | 'in_review' | 'published' | 'archived', number> }>(
+      const body = await envelope<
+        A.BeAdminCollab[],
+        { counts: Record<'draft' | 'in_review' | 'published' | 'archived', number>; nextCursor?: string | null }
+      >(
         `/v1/admin/collabs?${A.queueParams(filter)}`,
         o(),
       );
       if (!body?.meta) throw new ApiError(502, 'bad_response');
-      const queue = A.toQueue(body.data, body.meta.counts, filter);
+      const queue = A.toQueue(body.data, body.meta.counts, filter, body.meta.nextCursor ?? null);
       return { ...queue, items: z.array(adminQueueItemSchema).parse(queue.items) };
     },
     getCollab: async (id) => {

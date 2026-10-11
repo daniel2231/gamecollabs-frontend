@@ -154,6 +154,9 @@ function filterCollabs(query: CollabQuery): DbCollab[] {
   return result.sort((a, b) => compareStart(a, b, query.sort === 'start_asc' ? 1 : -1));
 }
 
+/** 검수 큐 한 페이지 크기(백엔드와 같은 100). MOCK_QUEUE_PAGE_SIZE로 줄여 페이지 넘김을 확인할 수 있다 */
+const QUEUE_PAGE_SIZE = () => Number(process.env.MOCK_QUEUE_PAGE_SIZE) || 100;
+
 // MOCK_LATENCY_MS로 실제 API 지연을 흉내 낸다(로딩·대기 화면 확인용). 기본 0
 const delay = () => new Promise((r) => setTimeout(r, Number(process.env.MOCK_LATENCY_MS) || 0));
 
@@ -446,7 +449,7 @@ export const mockAdminApi: AdminApi = {
       counts[c.status]++;
       if (c.status === 'draft' || c.status === 'in_review') counts.review++;
     }
-    const items = db.collabs
+    const all = db.collabs
       .filter((c) =>
         filter.status === 'review' ? c.status === 'draft' || c.status === 'in_review' : c.status === filter.status,
       )
@@ -454,7 +457,12 @@ export const mockAdminApi: AdminApi = {
       .filter((c) => filter.cover !== 'missing' || !c.cover)
       // 백엔드는 모든 검색어가 들어 있는 것만 찾는다
       .filter((c) => !filter.q || filter.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => searchHaystack(c).includes(w)))
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    // 백엔드처럼 한 페이지씩 준다. 커서는 목 모드에서는 단순한 위치 값
+    const offset = Number(filter.cursor ?? 0) || 0;
+    const page = all.slice(offset, offset + QUEUE_PAGE_SIZE());
+    const nextCursor = offset + QUEUE_PAGE_SIZE() < all.length ? String(offset + QUEUE_PAGE_SIZE()) : null;
+    const items = page
       .map((c) => ({
         id: c.id,
         slug: c.slug,
@@ -466,7 +474,7 @@ export const mockAdminApi: AdminApi = {
         hasCover: Boolean(c.cover),
         updatedAt: c.updatedAt,
       }));
-    return { items, counts };
+    return { items, counts, nextCursor };
   },
 
   async getCollab(id) {

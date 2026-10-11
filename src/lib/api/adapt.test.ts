@@ -202,6 +202,13 @@ describe('관리자 변환', () => {
     expect(A.toQueue([withCover, without, unknown], counts, { status: 'published', cover: 'missing' }).items.map((i) => i.id)).toEqual(['b', 'c']);
   });
 
+  it('대기열 페이지: 커서를 보내고 다음 커서를 넘긴다', () => {
+    expect(A.queueParams({ status: 'published', cursor: 'abc' }).get('cursor')).toBe('abc');
+    const counts = { draft: 0, in_review: 0, published: 150, archived: 0 };
+    expect(A.toQueue([doc], counts, { status: 'published' }, 'next-1').nextCursor).toBe('next-1');
+    expect(A.toQueue([doc], counts).nextCursor).toBeNull();
+  });
+
   it('대기열 건수: review는 초안 + 검수 요청', () => {
     const q = A.toQueue([{ ...doc, duplicateCount: 1 }], { draft: 2, in_review: 1, published: 113, archived: 0 });
     expect(q.counts.review).toBe(3);

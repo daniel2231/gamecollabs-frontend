@@ -17,7 +17,7 @@ cp .env.example .env.local
 pnpm dev                 # http://localhost:3000/ko
 ```
 
-`API_BASE_URL`을 비워 두면 **메모리 목(mock) API**로 동작한다. 목 데이터는 PRD에 나온 콜라보 3건(태고의 달인 × 자가리코, Blood Strike / WePlay × 진격의 거인)과 검수용 초안 1건뿐이고, 확인되지 않은 값은 비워 두었다. 관리자에서 수정한 내용은 서버를 재시작하면 사라진다. `MOCK_LATENCY_MS=800`처럼 지정하면 목 API 호출마다 그만큼 지연을 넣어, 로딩·대기 화면을 실제 API와 비슷하게 확인할 수 있다.
+`API_BASE_URL`을 비워 두면 **메모리 목(mock) API**로 동작한다. 목 데이터는 PRD에 나온 콜라보 3건(태고의 달인 × 자가리코, Blood Strike / WePlay × 진격의 거인)과 검수용 초안 1건뿐이고, 확인되지 않은 값은 비워 두었다. 관리자에서 수정한 내용은 서버를 재시작하면 사라진다. `MOCK_LATENCY_MS=800`처럼 지정하면 목 API 호출마다 그만큼 지연을 넣어, 로딩·대기 화면을 실제 API와 비슷하게 확인할 수 있다. `MOCK_QUEUE_PAGE_SIZE=1`처럼 검수 큐 한 페이지 크기(기본 100, 백엔드와 같음)를 줄이면 “더 보기”를 확인할 수 있다.
 
 개발 중에는 `ADMIN_DEV_BYPASS=1`이면 로그인 없이 `/ko/admin`에 들어갈 수 있다(production에서는 무시).
 

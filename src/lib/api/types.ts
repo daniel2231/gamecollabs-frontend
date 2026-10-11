@@ -44,10 +44,14 @@ export type QueueFilter = {
   cover?: 'missing';
   /** 제목·작품·회사 이름 검색(백엔드 검색 토큰) */
   q?: string;
+  /** 다음 페이지: 앞 응답의 nextCursor */
+  cursor?: string;
 };
 export type QueueResponse = {
   items: AdminQueueItem[];
   counts: Record<'review' | CollabStatus, number>;
+  /** 한 번에 100건까지. 더 있으면 다음 페이지 커서 */
+  nextCursor: string | null;
 };
 
 export type EntityInput = {

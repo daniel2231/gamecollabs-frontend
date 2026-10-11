@@ -3,11 +3,13 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { adminApi, ApiError, isMockApi } from '@/lib/api';
-import type { EntityInput, TermInput } from '@/lib/api/types';
+import type { EntityInput, QueueFilter, QueueResponse, TermInput } from '@/lib/api/types';
 import { getAdminSession } from '@/lib/auth/session';
 import {
+  COLLAB_STATUSES,
   collabInputSchema,
   entityKindSchema,
+  ORIGIN_TYPES,
   taxonomySchema,
   TRANSITIONS,
   type AdminCollab,
@@ -47,6 +49,22 @@ export async function saveCollab(id: string | null, input: CollabInput, rev: num
   return run(async (api) => {
     const parsed = collabInputSchema.parse(input);
     return id ? api.updateCollab(id, parsed, rev ?? 0) : api.createCollab(parsed);
+  });
+}
+
+const queueFilterSchema = z.object({
+  status: z.enum(['review', ...COLLAB_STATUSES]),
+  origin: z.enum(ORIGIN_TYPES).optional(),
+  cover: z.literal('missing').optional(),
+  q: z.string().trim().max(100).optional(),
+  cursor: z.string().min(1).max(200),
+});
+
+/** 검수 큐 다음 페이지(한 번에 100건) */
+export async function loadQueuePage(filter: QueueFilter): Promise<ActionResult<Pick<QueueResponse, 'items' | 'nextCursor'>>> {
+  return run(async (api) => {
+    const { items, nextCursor } = await api.listQueue(queueFilterSchema.parse(filter));
+    return { items, nextCursor };
   });
 }
 

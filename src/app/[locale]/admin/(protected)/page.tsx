@@ -1,32 +1,25 @@
 import { ImageIcon } from '@radix-ui/react-icons';
-import { Badge, Button, Flex, Text } from '@radix-ui/themes';
+import { Button, Flex, Text } from '@radix-ui/themes';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { CollabEditor } from '@/components/admin/CollabEditor';
+import { QueueList } from '@/components/admin/QueueList';
 import { QueueSearch } from '@/components/admin/QueueSearch';
 import { LinkPending } from '@/components/site/Pending';
 import { Link } from '@/i18n/navigation';
 import { adminApi } from '@/lib/api';
+import type { QueueFilter } from '@/lib/api/types';
 import { loadEntityLists, loadTrees, pickEntityNames } from '@/lib/admin-data';
 import { getAdminSession } from '@/lib/auth/session';
 import { COLLAB_STATUSES, ORIGIN_TYPES, type CollabStatus, type OriginType } from '@/schema';
 
 const STATUS_TITLE = { review: '검수 대기', draft: '초안', in_review: '검수 요청됨', published: '발행됨', archived: '보관' } as const;
-const STATUS_LABEL = { draft: 'draft', in_review: 'in_review', published: 'published', archived: 'archived' } as const;
 const ORIGIN_FILTERS: { value?: OriginType; label: string }[] = [
   { label: '전체' },
   { value: 'gpt', label: 'GPT 수집' },
   { value: 'agent', label: '에이전트' },
   { value: 'manual', label: '수동' },
 ];
-
-function relative(iso: string): string {
-  const diff = (Date.now() - Date.parse(iso)) / 60000;
-  if (diff < 60) return `${Math.max(1, Math.round(diff))}분 전`;
-  if (diff < 60 * 24) return `${Math.round(diff / 60)}시간 전`;
-  if (diff < 60 * 48) return '어제';
-  return iso.slice(0, 10);
-}
 
 export default async function AdminQueuePage({ params, searchParams }: PageProps<'/[locale]/admin'>) {
   const { locale } = await params;
@@ -43,8 +36,9 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
   const requestedId = typeof sp.id === 'string' ? sp.id : undefined;
   const entityLists = loadEntityLists(admin);
   entityLists.catch(() => {}); // 쓰지 않고 끝나는 경우의 unhandled rejection 방지. 쓸 때는 await에서 오류가 난다
+  const filter: QueueFilter = { status, origin, cover, q: q || undefined };
   const [queue, trees, requested] = await Promise.all([
-    admin.listQueue({ status, origin, cover, q: q || undefined }),
+    admin.listQueue(filter),
     loadTrees(),
     requestedId ? admin.getCollab(requestedId) : null,
   ]);
@@ -69,7 +63,10 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
               {STATUS_TITLE[status]}
             </Text>
             <Text size="1" color="gray">
-              {cover ? `커버 없음 ${queue.items.length}건` : `${queue.items.length}건`}
+              {/* 조건이 없으면 상태별 전체 건수, 있으면 불러온 건수(더 있으면 +) */}
+              {origin || cover || q
+                ? `${cover ? '커버 없음 ' : ''}${queue.items.length}건${queue.nextCursor ? ' 이상' : ''}`
+                : `${queue.counts[status]}건`}
             </Text>
           </Flex>
           <Suspense fallback={<div style={{ height: 32 }} />}>
@@ -96,45 +93,17 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
             </Button>
           </div>
         </Flex>
-        {queue.items.length === 0 ? (
-          <Text as="p" color="gray" size="2" m="4">
-            {q ? `“${q}” 검색 결과가 없습니다. 다른 상태에서 찾아보거나 검색어를 줄여 보세요.` : cover ? '커버가 없는 항목이 없습니다.' : '항목이 없습니다.'}
-          </Text>
-        ) : (
-          <ul className="ct-pending-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {queue.items.map((q) => (
-              <li key={q.id}>
-                <Link href={qs({ id: q.id })} aria-current={q.id === collab?.id ? 'true' : undefined}>
-                  <LinkPending />
-                  <Flex wrap="wrap" gap="1">
-                    <Badge size="1" variant="soft" color={q.status === 'in_review' ? 'indigo' : 'gray'}>
-                      {STATUS_LABEL[q.status]}
-                    </Badge>
-                    <Badge size="1" variant="soft" color="gray" className="ct-mono">
-                      {q.origin}
-                    </Badge>
-                    {q.duplicateCandidate && (
-                      <Badge size="1" variant="soft" color="amber">
-                        중복 후보
-                      </Badge>
-                    )}
-                    {!cover && q.hasCover === false && (
-                      <Badge size="1" variant="outline" color="gray">
-                        커버 없음
-                      </Badge>
-                    )}
-                  </Flex>
-                  <Text weight="bold" size="2">
-                    {q.title}
-                  </Text>
-                  <Text size="1" color="gray">
-                    {relative(q.updatedAt)} · 출처 {q.sourceCount}
-                  </Text>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+        <QueueList
+          key={JSON.stringify(filter)}
+          items={queue.items}
+          nextCursor={queue.nextCursor}
+          filter={filter}
+          query={Object.fromEntries(new URLSearchParams(qs({}).split('?')[1] ?? ''))}
+          selectedId={collab?.id ?? null}
+          emptyMessage={
+            q ? `“${q}” 검색 결과가 없습니다. 다른 상태에서 찾아보거나 검색어를 줄여 보세요.` : cover ? '커버가 없는 항목이 없습니다.' : '항목이 없습니다.'
+          }
+        />
       </section>
       <main className="ct-admin-main ct-pending-target">
         {collab ? (
