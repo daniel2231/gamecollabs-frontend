@@ -50,6 +50,11 @@ export async function saveCollab(id: string | null, input: CollabInput, rev: num
   });
 }
 
+/** 저장된 커버의 원본 주소를 우리 저장소로 복사한다(다른 사이트에서 끌어온 이미지) */
+export async function mirrorCollabCover(id: string): Promise<ActionResult<{ result: 'mirrored' | 'skipped' | 'failed'; collab: AdminCollab }>> {
+  return run((api) => api.mirrorCover(z.string().min(1).max(64).parse(id)));
+}
+
 export async function transitionCollab(id: string, action: Transition, reason?: string): Promise<ActionResult<AdminCollab>> {
   return run(async (api) => {
     z.enum(TRANSITIONS).parse(action);

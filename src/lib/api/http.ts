@@ -211,6 +211,13 @@ export function createHttpAdminApi(token: string): AdminApi {
     // Express: :id가 남고 from이 흡수된다
     mergeEntities: async (kind, sourceId, targetId) =>
       entity(kind, await data(`/v1/admin/${entityPath(kind)}/${targetId}/merge`, o({ method: 'POST', body: { from: sourceId } }))),
+    mirrorCover: async (id) => {
+      const res = await data<{ result: 'mirrored' | 'skipped' | 'failed'; collab: A.BeAdminCollab }>(
+        `/v1/admin/collabs/${id}/cover/mirror`,
+        o({ method: 'POST' }),
+      );
+      return { result: res.result, collab: await full(res.collab) };
+    },
     uploadMedia: async (file) => {
       const form = new FormData();
       form.set('file', file, file.name);

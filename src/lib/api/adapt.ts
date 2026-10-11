@@ -153,6 +153,7 @@ export type BeAdminCover = {
   alt: { ko: string; en: string } | null;
   width: number | null;
   height: number | null;
+  mirrorError?: string | null;
 };
 
 /** POST /v1/admin/media 응답 */
@@ -401,6 +402,7 @@ export function toAdminCover(c: BeAdminCover, mediaBase: string | null): AdminCo
     alt: { ko: c.alt?.ko ?? '', en: c.alt?.en ?? '' },
     width: c.width,
     height: c.height,
+    mirrorError: c.mirrorError ?? null,
   };
 }
 

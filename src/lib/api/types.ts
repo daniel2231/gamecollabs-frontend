@@ -71,6 +71,8 @@ export interface AdminApi {
    * size는 브라우저가 줄인 뒤 잰 크기로, 크기를 직접 읽지 못하는 목 API만 쓴다.
    */
   uploadMedia(file: File, size: { width: number; height: number }): Promise<UploadedMedia>;
+  /** 커버의 원본 주소(originalUrl)를 저장소로 복사: POST /v1/admin/collabs/:id/cover/mirror (rev는 바뀌지 않는다) */
+  mirrorCover(id: string): Promise<{ result: 'mirrored' | 'skipped' | 'failed'; collab: AdminCollab }>;
 }
 
 export class ApiError extends Error {

@@ -636,6 +636,15 @@ export const mockAdminApi: AdminApi = {
     return term;
   },
 
+  // 원본을 내려받지 않고 주소를 그대로 쓴다(목 모드). 키만 채워 복사된 것으로 표시한다
+  async mirrorCover(id) {
+    await delay();
+    const c = requireCollab(id);
+    if (!c.cover?.originalUrl || c.cover.storageKey) return { result: 'skipped' as const, collab: toAdmin(c) };
+    c.cover = { ...c.cover, storageKey: `collabs/${c.slug}/cover-${Date.now().toString(36)}`, mirrorError: null };
+    return { result: 'mirrored' as const, collab: toAdmin(c) };
+  },
+
   // 저장소 대신 data: 주소로 메모리에 둔다(서버를 재시작하면 사라진다). 크기는 브라우저가 잰 값을 믿는다
   async uploadMedia(file, size) {
     await delay();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { coverFit, fitWithin } from './cover';
+import { coverFit, fitWithin, imageUrlFromTransfer } from './cover';
 
 describe('coverFit', () => {
   it('16:9에 가까우면 꽉 채우고, 크기를 모르면 꽉 채운다', () => {
@@ -22,5 +22,28 @@ describe('fitWithin', () => {
 
   it('작은 이미지는 키우지 않는다', () => {
     expect(fitWithin(800, 450)).toEqual({ width: 800, height: 450 });
+  });
+});
+
+describe('imageUrlFromTransfer', () => {
+  it('링크로 감싼 이미지는 링크가 아니라 <img src>를 고른다', () => {
+    expect(
+      imageUrlFromTransfer({
+        html: '<a href="https://news.example.com/article"><img alt="x" src="https://cdn.example.com/a.jpg?w=1&amp;h=2"></a>',
+        uriList: 'https://news.example.com/article',
+      }),
+    ).toBe('https://cdn.example.com/a.jpg?w=1&h=2');
+  });
+
+  it('HTML이 없으면 uri-list(주석 줄 제외), 그다음 일반 텍스트', () => {
+    expect(imageUrlFromTransfer({ uriList: '# comment\r\nhttps://cdn.example.com/b.png' })).toBe('https://cdn.example.com/b.png');
+    expect(imageUrlFromTransfer({ text: '  https://cdn.example.com/c.webp ' })).toBe('https://cdn.example.com/c.webp');
+  });
+
+  it('data: 이미지는 받고, 상대 주소나 다른 스킴은 받지 않는다', () => {
+    expect(imageUrlFromTransfer({ html: "<img src='data:image/png;base64,AAAA'>" })).toBe('data:image/png;base64,AAAA');
+    expect(imageUrlFromTransfer({ html: '<img src="/a.jpg">' })).toBeNull();
+    expect(imageUrlFromTransfer({ text: 'javascript:alert(1)' })).toBeNull();
+    expect(imageUrlFromTransfer({ text: '그냥 글자' })).toBeNull();
   });
 });

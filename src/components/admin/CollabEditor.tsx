@@ -29,7 +29,7 @@ import {
   VisuallyHidden,
 } from '@radix-ui/themes';
 import { useMemo, useState, useTransition } from 'react';
-import { getCollabForCompare, saveCollab, transitionCollab } from '@/app/[locale]/admin/actions';
+import { getCollabForCompare, mirrorCollabCover, saveCollab, transitionCollab } from '@/app/[locale]/admin/actions';
 import { useRouter } from '@/i18n/navigation';
 import type { TermNode } from '@/lib/taxonomy';
 import { flatten } from '@/lib/taxonomy';
@@ -190,6 +190,21 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
     setRev(res.data.rev);
     setDirty(false);
     setCoverTouched(false);
+    // 다른 사이트에서 끌어온 이미지는 원본 주소로만 저장되므로, 바로 우리 저장소로 복사한다(실패해도 저장은 된 상태).
+    // 백엔드의 시간별 작업도 다시 시도하지만, 여기서 하면 결과를 바로 보여줄 수 있다
+    const cover = res.data.cover;
+    if (cover?.originalUrl && !cover.storageKey) {
+      const mirrored = await mirrorCollabCover(res.data.id);
+      const next = mirrored.ok ? mirrored.data.collab.cover : undefined;
+      if (next !== undefined) setFormState((f) => ({ ...f, cover: next }));
+      if (!mirrored.ok || mirrored.data.result === 'failed') {
+        setError({
+          code: 'mirror_failed',
+          message: `저장했지만 원본 이미지를 우리 저장소로 복사하지 못했습니다${next?.mirrorError ? `(${next.mirrorError})` : ''}. 이미지를 내려받아 파일로 올려 주세요.`,
+        });
+      }
+      if (mirrored.ok) return mirrored.data.collab;
+    }
     return res.data;
   }
 

@@ -249,6 +249,8 @@ export const adminCoverSchema = z.object({
   alt: z.object({ ko: z.string().max(300, '300자 이하'), en: z.string().max(300, '300자 이하') }),
   width: z.number().int().positive().nullable(),
   height: z.number().int().positive().nullable(),
+  /** 원본 주소를 저장소로 복사하지 못한 이유(조회 전용, 저장할 때는 보내지 않는다) */
+  mirrorError: z.string().nullable().optional(),
 });
 export type AdminCover = z.infer<typeof adminCoverSchema>;
 

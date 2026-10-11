@@ -3,7 +3,7 @@
 import { ExclamationTriangleIcon, ImageIcon, InfoCircledIcon, TrashIcon, UploadIcon } from '@radix-ui/react-icons';
 import { Button, Callout, Flex, Spinner, Text, TextField } from '@radix-ui/themes';
 import { useEffect, useId, useRef, useState, type ClipboardEvent, type DragEvent } from 'react';
-import { coverFit, COVER_MAX_EDGE, fitWithin } from '@/lib/cover';
+import { coverFit, COVER_MAX_EDGE, fitWithin, imageUrlFromTransfer } from '@/lib/cover';
 import type { AdminCover, UploadedMedia } from '@/schema';
 
 /** 브라우저에서 고를 수 있는 원본 상한. 줄인 뒤 보내므로 넉넉하게 둔다 */
@@ -40,6 +40,17 @@ async function prepare(file: File): Promise<{ blob: Blob; width: number; height:
   return { blob, width, height };
 }
 
+/** 다른 사이트 이미지는 브라우저에서 읽을 수 없으니(CORS) <img>로 불러 크기만 잰다 */
+function measure(url: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => reject(new Error('이미지를 불러오지 못했습니다. 이미지 주소가 아니거나 사이트가 막고 있으면, 내려받아 파일로 올려 주세요.'));
+    img.src = url;
+  });
+}
+
 async function upload(blob: Blob, width: number, height: number): Promise<UploadedMedia> {
   const body = new FormData();
   body.set('file', new File([blob], blob.type === 'image/webp' ? 'cover.webp' : 'cover.jpg', { type: blob.type }));
@@ -64,10 +75,13 @@ export function CoverField({ value, onChange }: Props) {
     latest.current = value;
   });
 
-  // 영역 밖에 떨어뜨린 파일을 브라우저가 열어 버리면 저장 안 한 편집이 날아간다
+  // 영역 밖에 떨어뜨린 파일·이미지를 브라우저가 열어 버리면 저장 안 한 편집이 날아간다.
+  // 입력란에 주소를 끌어다 놓는 것(출처 URL 등)은 그대로 둔다
   useEffect(() => {
     const block = (e: globalThis.DragEvent) => {
-      if (e.dataTransfer?.types.includes('Files')) e.preventDefault();
+      if ((e.target as Element | null)?.closest?.('input, textarea, [contenteditable="true"]')) return;
+      const types = e.dataTransfer?.types ?? [];
+      if (types.includes('Files') || types.includes('text/uri-list')) e.preventDefault();
     };
     window.addEventListener('dragover', block);
     window.addEventListener('drop', block);
@@ -112,17 +126,64 @@ export function CoverField({ value, onChange }: Props) {
     }
   }
 
+  /**
+   * 다른 웹페이지의 이미지: data: 주소면 파일로 바꿔 올리고, http(s) 주소면 원본 주소로 두고
+   * 저장할 때 백엔드가 우리 저장소로 복사한다(브라우저는 다른 사이트 이미지를 읽을 수 없다)
+   */
+  async function handleUrl(url: string) {
+    if (busy) return;
+    setError(null);
+    if (url.startsWith('data:')) {
+      const blob = await fetch(url).then((r) => r.blob()).catch(() => null);
+      if (!blob) return setError('이미지를 읽지 못했습니다');
+      return handle(new File([blob], 'dropped', { type: blob.type }));
+    }
+    setBusy({ preview: url, width: 0, height: 0 });
+    try {
+      const size = await measure(url);
+      const current = latest.current;
+      onChange({
+        storageKey: null,
+        url,
+        originalUrl: url,
+        credit: '',
+        alt: current?.alt ?? { ko: '', en: '' },
+        width: size.width,
+        height: size.height,
+        mirrorError: null,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '이미지를 불러오지 못했습니다');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   function onDrop(e: DragEvent) {
     e.preventDefault();
     setOver(false);
-    void handle(e.dataTransfer.files[0]);
+    const file = [...e.dataTransfer.files].find((f) => f.type.startsWith('image/'));
+    if (file) return void handle(file);
+    const url = imageUrlFromTransfer({
+      html: e.dataTransfer.getData('text/html'),
+      uriList: e.dataTransfer.getData('text/uri-list'),
+      text: e.dataTransfer.getData('text/plain'),
+    });
+    if (url) return void handleUrl(url);
+    setError('이미지를 찾지 못했습니다. 이미지 파일이나 웹페이지의 이미지를 끌어다 놓으세요.');
   }
 
   function onPaste(e: ClipboardEvent) {
     const file = [...e.clipboardData.files].find((f) => f.type.startsWith('image/'));
-    if (!file) return;
+    if (file) {
+      e.preventDefault();
+      return void handle(file);
+    }
+    // 이미지 주소를 복사해 붙여넣은 경우
+    const url = imageUrlFromTransfer({ html: e.clipboardData.getData('text/html'), text: e.clipboardData.getData('text/plain') });
+    if (!url) return;
     e.preventDefault();
-    void handle(file);
+    void handleUrl(url);
   }
 
   const shown = busy ? { url: busy.preview, width: busy.width, height: busy.height } : value;
@@ -170,7 +231,7 @@ export function CoverField({ value, onChange }: Props) {
         onDrop={onDrop}
       >
         {shown ? (
-          <img src={shown.url} alt="" data-fit={coverFit(shown)} />
+          <img src={shown.url} alt="" data-fit={coverFit(shown)} referrerPolicy="no-referrer" />
         ) : over ? null : (
           <Flex direction="column" align="center" gap="2" p="4">
             <ImageIcon width="28" height="28" aria-hidden="true" />
@@ -183,7 +244,7 @@ export function CoverField({ value, onChange }: Props) {
           <div className="ct-dropzone-overlay" aria-hidden="true">
             {busy ? (
               <Flex align="center" gap="2">
-                <Spinner /> 업로드 중…
+                <Spinner /> {busy.width ? '업로드 중…' : '이미지 불러오는 중…'}
               </Flex>
             ) : (
               <Flex align="center" gap="2">
@@ -204,7 +265,7 @@ export function CoverField({ value, onChange }: Props) {
         }}
       />
       <Text id={helpId} size="1" color="gray">
-        JPEG·PNG·WebP. 영역을 선택한 뒤 붙여넣기(Ctrl+V)도 됩니다. 긴 변 {COVER_MAX_EDGE}px 이하 WebP로 줄여 올리고, 카드에서는 16:9로
+        JPEG·PNG·WebP 파일이나 다른 웹페이지의 이미지를 끌어다 놓으세요. 영역을 선택한 뒤 이미지나 이미지 주소를 붙여넣어도(Ctrl+V) 됩니다. 긴 변 {COVER_MAX_EDGE}px 이하 WebP로 줄여 올리고, 카드에서는 16:9로
         보입니다.
         {value?.width && value.height && (
           <>
@@ -232,7 +293,9 @@ export function CoverField({ value, onChange }: Props) {
                 <ExclamationTriangleIcon />
               </Callout.Icon>
               <Callout.Text>
-                아직 우리 저장소에 복사되지 않은 원본 링크입니다. 원본이 지워지면 보이지 않게 되니 이미지를 직접 올리는 것을 권합니다.
+                {value.mirrorError
+                  ? `원본 이미지를 우리 저장소로 복사하지 못했습니다(${value.mirrorError}). 원본 링크로만 보이므로, 원본이 지워지면 사라집니다. 이미지를 내려받아 파일로 올려 주세요.`
+                  : '다른 사이트의 이미지 주소입니다. 저장하면 우리 저장소로 복사합니다. 출처 표기를 꼭 적어 주세요.'}
               </Callout.Text>
             </Callout.Root>
           )}
