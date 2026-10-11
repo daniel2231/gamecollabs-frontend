@@ -59,6 +59,7 @@
       "start_asc": "Start date, oldest",
       "recent": "Recently added"
     },
+    "unknownMonth": "Date unknown",
     "loadMore": "Load more",
     "empty": "No collabs match these filters.",
     "emptyHint": "Try removing a filter or changing the search.",

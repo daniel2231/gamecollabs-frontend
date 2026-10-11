@@ -141,6 +141,25 @@ body {
   gap: 16px;
 }
 
+.ct-month {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ct-month + .ct-month {
+  margin-top: 12px;
+}
+
+/* 월 제목: 아래 구분선 + 개수 */
+.ct-month-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--gray-a5);
+}
+
 .ct-grid > li {
   display: flex;
   min-width: 0;

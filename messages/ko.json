@@ -59,6 +59,7 @@
       "start_asc": "시작일 오래된순",
       "recent": "최근 등록순"
     },
+    "unknownMonth": "시기 미상",
     "loadMore": "더 보기",
     "empty": "조건에 맞는 콜라보가 없습니다.",
     "emptyHint": "필터를 줄이거나 검색어를 바꿔 보세요.",

@@ -9,6 +9,7 @@ import { CopyLinkButton } from '@/components/site/CopyLinkButton';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
+import { groupByStartMonth } from '@/lib/format';
 import { hasActiveFilters, parseCollabQuery, serializeCollabQuery } from '@/lib/filters';
 import { buildTree, labelMap } from '@/lib/taxonomy';
 import { FACET_PARAMS, type CollabQuery } from '@/schema';
@@ -42,6 +43,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   const labels = labelMap(terms, locale);
   const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
+  const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
   const href = (q: Partial<CollabQuery>) => `/${serializeCollabQuery({ ...query, ...q })}`;
 
   const chips: { label: string; href: string }[] = [
@@ -123,7 +125,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                   {t('emptyHint')}
                 </Text>
               </Flex>
-            ) : (
+            ) : query.sort === 'recent' ? (
               <ul className="ct-grid">
                 {list.items.map((item) => (
                   <li key={item.slug}>
@@ -131,6 +133,25 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                   </li>
                 ))}
               </ul>
+            ) : (
+              // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
+              groupByStartMonth(list.items).map((group) => (
+                <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
+                  <Heading as="h2" size="4" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
+                    {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
+                    <Text size="2" weight="regular" color="gray" className="ct-mono">
+                      {group.items.length}
+                    </Text>
+                  </Heading>
+                  <ul className="ct-grid">
+                    {group.items.map((item) => (
+                      <li key={item.slug}>
+                        <CollabCard collab={item} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))
             )}
 
             {list.nextCursor && query.limit < 100 && (

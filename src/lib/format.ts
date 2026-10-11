@@ -23,3 +23,16 @@ export function formatMonth(date: string | null): string | null {
   const [y, m] = date.split('-');
   return `${y}.${m}`;
 }
+
+/** 시작 월(YYYY-MM)로 연속 구간을 묶는다. 입력 순서를 그대로 유지하고, 시기 미상은 key ''로 묶는다 */
+export function groupByStartMonth<T extends { period: Period }>(items: T[]): { key: string; items: T[] }[] {
+  const groups: { key: string; items: T[] }[] = [];
+  for (const item of items) {
+    const { start, precision } = item.period;
+    const key = start && precision !== 'unknown' ? start.slice(0, 7) : '';
+    const last = groups.at(-1);
+    if (last?.key === key) last.items.push(item);
+    else groups.push({ key, items: [item] });
+  }
+  return groups;
+}
