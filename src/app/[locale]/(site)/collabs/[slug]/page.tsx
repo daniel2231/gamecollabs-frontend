@@ -1,5 +1,5 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import { Badge, Button, Card, DataList, Flex, Heading, Link as RadixLink, Table, Text, Tooltip } from '@radix-ui/themes';
+import { Badge, Button, Card, Flex, Heading, Link as RadixLink, Table, Text, Tooltip } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -146,6 +146,16 @@ export default async function CollabDetailPage({ params }: Props) {
               </div>
             </section>
 
+            <Section title={t('classification')}>
+              <dl className="ct-facts">
+                <Fact label={t('labels.category')} values={collab.category ? [collab.category.label] : []} none={t('none')} />
+                <Fact label={t('labels.partner')} values={partner ? [partner.kind.label] : []} none={t('none')} />
+                <Fact label={t('labels.region')} values={collab.regions.map((r) => r.label)} none={t('none')} />
+                <Fact label={t('labels.platform')} values={collab.platforms.map((r) => r.label)} none={t('none')} />
+                <Fact label={t('labels.type')} values={collab.collabTypes.map((r) => r.label)} none={t('none')} />
+              </dl>
+            </Section>
+
             <Section title={t('summary')}>
               {collab.summary ? (
                 <Text as="p" style={{ whiteSpace: 'pre-line', margin: 0 }} lang={collab.summaryFallback ? 'ko' : undefined}>
@@ -221,18 +231,6 @@ export default async function CollabDetailPage({ params }: Props) {
 
         <aside className="ct-side">
           <Flex direction="column" gap="4">
-            <Card size="2">
-              <Text as="div" weight="bold" mb="3">
-                {t('classification')}
-              </Text>
-              <DataList.Root size="2" orientation="horizontal">
-                <Item label={t('labels.category')} value={collab.category?.label} none={t('none')} />
-                <Item label={t('labels.partner')} value={partner?.kind.label} none={t('none')} />
-                <Item label={t('labels.region')} value={collab.regions.map((r) => r.label).join(', ')} none={t('none')} />
-                <Item label={t('labels.platform')} value={collab.platforms.map((r) => r.label).join(', ')} none={t('none')} />
-                <Item label={t('labels.type')} value={collab.collabTypes.map((r) => r.label).join(', ')} none={t('none')} />
-              </DataList.Root>
-            </Card>
             {/* 공간이 모자라면 줄바꿈 대신 버튼을 아래로 쌓는다 */}
             <Flex gap="2" wrap="wrap">
               <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} fullWidth />
@@ -281,12 +279,31 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Item({ label, value, none }: { label: string; value?: string; none: string }) {
+/** 분류 한 줄: 왼쪽 라벨, 오른쪽 값(여러 개면 배지로 나열) */
+function Fact({ label, values, none }: { label: string; values: string[]; none: string }) {
   return (
-    <DataList.Item>
-      <DataList.Label minWidth="88px">{label}</DataList.Label>
-      <DataList.Value>{value || <Text color="gray">{none}</Text>}</DataList.Value>
-    </DataList.Item>
+    <div>
+      <dt>
+        <Text size="2" color="gray">
+          {label}
+        </Text>
+      </dt>
+      <dd>
+        {values.length === 0 ? (
+          <Text size="2" color="gray">
+            {none}
+          </Text>
+        ) : (
+          <Flex wrap="wrap" gap="1">
+            {values.map((v) => (
+              <Badge key={v} variant="soft" color="gray" size="2" highContrast>
+                {v}
+              </Badge>
+            ))}
+          </Flex>
+        )}
+      </dd>
+    </div>
   );
 }
 
