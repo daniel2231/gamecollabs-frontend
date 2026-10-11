@@ -51,7 +51,6 @@ export default async function CollabDetailPage({ params }: Props) {
     getTranslations('Role'),
   ]);
   const partner = collab.parties.find((p) => p.role === 'partner');
-  const tags = [...collab.regions, ...collab.platforms, ...collab.collabTypes];
   const start = formatDate(collab.period.start, collab.period.precision);
   const end =
     collab.period.endKind === 'permanent'
@@ -73,196 +72,188 @@ export default async function CollabDetailPage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: (await getTranslations('Site.nav'))('collabs') }, { label: collab.title }]} />
-
-      <div className="ct-split">
-        <article className="ct-main">
+      {/* 가운데 한 열: 머리 → 핵심 정보 → 내용 → 출처 → 다음에 볼 것 */}
+      <div className="ct-article">
+        <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: (await getTranslations('Site.nav'))('collabs') }, { label: collab.title }]} />
+        <article>
           <Flex direction="column" gap="7">
-            <Flex direction="column" gap="3">
-              <Flex wrap="wrap" align="center" gap="2">
-                <PhaseBadge phase={collab.phase} size="2" />
-                {tags.map((tag) => (
-                  <Badge key={tag.key} color="gray" variant="soft" size="2">
-                    {tag.label}
-                  </Badge>
-                ))}
-              </Flex>
-              <Flex align="center" gap="3" wrap="wrap">
-                <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }} lang={collab.fallback ? 'ko' : undefined}>
-                  {collab.title}
-                </Heading>
-              </Flex>
-            </Flex>
+              <header>
+                <Flex direction="column" gap="3">
+                  <Flex align="center" gap="2" wrap="wrap">
+                    <PhaseBadge phase={collab.phase} size="2" />
+                    <Text size="1" color="gray">
+                      {t('updated', { date: collab.updatedAt.slice(0, 10) })}
+                    </Text>
+                  </Flex>
+                  <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }} lang={collab.fallback ? 'ko' : undefined}>
+                    {collab.title}
+                  </Heading>
+                  <Flex gap="2" wrap="wrap" mt="1">
+                    <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
+                    <Tooltip content={t('reportSoon')}>
+                      <Button variant="surface" color="gray" size="2" style={{ whiteSpace: 'nowrap' }} disabled>
+                        <ExclamationTriangleIcon />
+                        {t('report')}
+                      </Button>
+                    </Tooltip>
+                  </Flex>
+                </Flex>
+              </header>
 
-            {collab.cover && (
-              <figure style={{ margin: 0 }}>
-                <img
-                  src={collab.cover.url}
-                  alt={collab.cover.alt}
-                  width={collab.cover.width ?? undefined}
-                  height={collab.cover.height ?? undefined}
-                  style={{ width: '100%', height: 'auto', borderRadius: 8, border: '1px solid var(--ct-line)' }}
-                />
-                {collab.cover.credit && (
-                  <Text as="p" size="1" color="gray" mt="2">
-                    {t('coverCredit', { credit: collab.cover.credit })}
-                    {collab.cover.originalUrl && (
-                      <>
-                        {' · '}
-                        <RadixLink href={collab.cover.originalUrl} target="_blank" rel="noopener noreferrer" color="gray">
-                          ↗
-                        </RadixLink>
-                      </>
-                    )}
+              {collab.cover && (
+                <figure style={{ margin: 0 }}>
+                  <img
+                    src={collab.cover.url}
+                    alt={collab.cover.alt}
+                    width={collab.cover.width ?? undefined}
+                    height={collab.cover.height ?? undefined}
+                    style={{ width: '100%', height: 'auto', borderRadius: 8, border: '1px solid var(--ct-line)' }}
+                  />
+                  {collab.cover.credit && (
+                    <Text as="p" size="1" color="gray" mt="2">
+                      {t('coverCredit', { credit: collab.cover.credit })}
+                      {collab.cover.originalUrl && (
+                        <>
+                          {' · '}
+                          <RadixLink href={collab.cover.originalUrl} target="_blank" rel="noopener noreferrer" color="gray">
+                            ↗
+                          </RadixLink>
+                        </>
+                      )}
+                    </Text>
+                  )}
+                </figure>
+              )}
+
+              <section className="ct-stat-grid" aria-label={t('status')}>
+                <div>
+                  <Text as="div" size="1" color="gray">
+                    {t('start')}
+                  </Text>
+                  <Text as="div" size="5" weight="medium" className={start ? 'ct-mono' : undefined}>
+                    {start ?? tPeriod('unknown')}
+                  </Text>
+                </div>
+                <div>
+                  <Text as="div" size="1" color="gray">
+                    {t('end')}
+                  </Text>
+                  <Text as="div" size="5" weight="medium" className={collab.period.endKind === 'fixed' && start ? 'ct-mono' : undefined}>
+                    {start ? end : tPeriod('unknown')}
+                  </Text>
+                </div>
+                <div>
+                  <Text as="div" size="1" color="gray">
+                    {t('status')}
+                  </Text>
+                  <Text as="div" size="5" weight="medium" color={collab.phase === 'ongoing' ? 'grass' : undefined}>
+                    {tPhase(collab.phase)}
+                  </Text>
+                </div>
+              </section>
+
+              <Section title={t('summary')}>
+                {collab.summary ? (
+                  <Text as="p" style={{ whiteSpace: 'pre-line', margin: 0 }} lang={collab.summaryFallback ? 'ko' : undefined}>
+                    {collab.summary}
+                  </Text>
+                ) : (
+                  <Text as="p" color="gray" m="0">
+                    {t('summaryEmpty')}
                   </Text>
                 )}
-              </figure>
-            )}
+                {collab.note && (
+                  <Text as="p" size="2" color="gray" mt="2">
+                    {collab.note}
+                  </Text>
+                )}
+              </Section>
 
-            <section className="ct-stat-grid" aria-label={t('status')}>
-              <div>
-                <Text as="div" size="1" color="gray">
-                  {t('start')}
-                </Text>
-                <Text as="div" size="5" weight="medium" className={start ? 'ct-mono' : undefined}>
-                  {start ?? tPeriod('unknown')}
-                </Text>
-              </div>
-              <div>
-                <Text as="div" size="1" color="gray">
-                  {t('end')}
-                </Text>
-                <Text as="div" size="5" weight="medium" className={collab.period.endKind === 'fixed' && start ? 'ct-mono' : undefined}>
-                  {start ? end : tPeriod('unknown')}
-                </Text>
-              </div>
-              <div>
-                <Text as="div" size="1" color="gray">
-                  {t('status')}
-                </Text>
-                <Text as="div" size="5" weight="medium" color={collab.phase === 'ongoing' ? 'grass' : undefined}>
-                  {tPhase(collab.phase)}
-                </Text>
-              </div>
-            </section>
+              <Section title={t('classification')}>
+                <dl className="ct-facts">
+                  <Fact label={t('labels.category')} values={collab.category ? [collab.category.label] : []} none={t('none')} />
+                  <Fact label={t('labels.partner')} values={partner ? [partner.kind.label] : []} none={t('none')} />
+                  <Fact label={t('labels.region')} values={collab.regions.map((r) => r.label)} none={t('none')} />
+                  <Fact label={t('labels.platform')} values={collab.platforms.map((r) => r.label)} none={t('none')} />
+                  <Fact label={t('labels.type')} values={collab.collabTypes.map((r) => r.label)} none={t('none')} />
+                </dl>
+              </Section>
 
-            <Section title={t('classification')}>
-              <dl className="ct-facts">
-                <Fact label={t('labels.category')} values={collab.category ? [collab.category.label] : []} none={t('none')} />
-                <Fact label={t('labels.partner')} values={partner ? [partner.kind.label] : []} none={t('none')} />
-                <Fact label={t('labels.region')} values={collab.regions.map((r) => r.label)} none={t('none')} />
-                <Fact label={t('labels.platform')} values={collab.platforms.map((r) => r.label)} none={t('none')} />
-                <Fact label={t('labels.type')} values={collab.collabTypes.map((r) => r.label)} none={t('none')} />
-              </dl>
-            </Section>
-
-            <Section title={t('summary')}>
-              {collab.summary ? (
-                <Text as="p" style={{ whiteSpace: 'pre-line', margin: 0 }} lang={collab.summaryFallback ? 'ko' : undefined}>
-                  {collab.summary}
-                </Text>
-              ) : (
-                <Text as="p" color="gray" m="0">
-                  {t('summaryEmpty')}
-                </Text>
-              )}
-              {collab.note && (
-                <Text as="p" size="2" color="gray" mt="2">
-                  {collab.note}
-                </Text>
-              )}
-            </Section>
-
-            {collab.parties.length > 0 && (
-              <Section title={t('parties')}>
-                <div className="ct-two">
-                  {collab.parties.map((p) => (
-                    <Link key={p.slug} href={`/properties/${p.slug}`} className="ct-card-link">
-                      <Text size="1" color="gray">
-                        {tRole(p.role)} · {p.kind.label}
-                      </Text>
-                      <Text size="4" weight="bold">
-                        {p.name.value}
-                      </Text>
-                      {p.name.original && (
-                        <Text size="2" color="gray">
-                          {p.name.original}
+              {collab.parties.length > 0 && (
+                <Section title={t('parties')}>
+                  <div className="ct-two">
+                    {collab.parties.map((p) => (
+                      <Link key={p.slug} href={`/properties/${p.slug}`} className="ct-card-link">
+                        <Text size="1" color="gray">
+                          {tRole(p.role)} · {p.kind.label}
                         </Text>
-                      )}
-                      <Text size="2" weight="medium" mt="1">
-                        {t('seeAll')}
-                      </Text>
-                    </Link>
-                  ))}
-                </div>
-              </Section>
-            )}
+                        <Text size="4" weight="bold">
+                          {p.name.value}
+                        </Text>
+                        {p.name.original && (
+                          <Text size="2" color="gray">
+                            {p.name.original}
+                          </Text>
+                        )}
+                        <Text size="2" weight="medium" mt="1">
+                          {t('seeAll')}
+                        </Text>
+                      </Link>
+                    ))}
+                  </div>
+                </Section>
+              )}
 
-            {collab.companies.length > 0 && (
-              <Section title={t('companies')}>
-                <Card size="1" style={{ padding: 0 }}>
-                  {collab.companies.map((c, i) => (
-                    <Flex
-                      key={`${c.slug}-${c.role}`}
-                      wrap="wrap"
-                      justify="between"
-                      gap="2"
-                      px="4"
-                      py="3"
-                      style={i ? { borderTop: '1px solid var(--ct-line-soft)' } : undefined}
-                    >
-                      <RadixLink asChild weight="medium" highContrast underline="hover">
-                        <Link href={`/companies/${c.slug}`}>{c.name.value}</Link>
-                      </RadixLink>
-                      <Badge variant="soft" size="2">
-                        {tRole(c.role)}
-                      </Badge>
-                    </Flex>
-                  ))}
-                </Card>
-              </Section>
-            )}
+              {collab.companies.length > 0 && (
+                <Section title={t('companies')}>
+                  <Card size="1" style={{ padding: 0 }}>
+                    {collab.companies.map((c, i) => (
+                      <Flex
+                        key={`${c.slug}-${c.role}`}
+                        wrap="wrap"
+                        justify="between"
+                        gap="2"
+                        px="4"
+                        py="3"
+                        style={i ? { borderTop: '1px solid var(--ct-line-soft)' } : undefined}
+                      >
+                        <RadixLink asChild weight="medium" highContrast underline="hover">
+                          <Link href={`/companies/${c.slug}`}>{c.name.value}</Link>
+                        </RadixLink>
+                        <Badge variant="soft" size="2">
+                          {tRole(c.role)}
+                        </Badge>
+                      </Flex>
+                    ))}
+                  </Card>
+                </Section>
+              )}
 
-            <Section title={t('sources')}>
-              <Sources collab={collab} />
-            </Section>
+              <Section title={t('sources')}>
+                <Sources collab={collab} />
+              </Section>
+
+              {collab.related.length > 0 && (
+                <Section title={t('related')}>
+                  <div className="ct-two">
+                    {collab.related.map((r) => (
+                      <Link key={r.slug} href={`/collabs/${r.slug}`} className="ct-card-link">
+                        <Text size="1" color="gray">
+                          {t(`relation.${r.relation}`)}
+                        </Text>
+                        <Text size="3" weight="bold">
+                          {r.title}
+                        </Text>
+                        <Text size="2" color="gray" className={r.period.start && r.period.precision !== 'unknown' ? 'ct-mono' : undefined}>
+                          {formatPeriod(r.period, { unknown: tPeriod('unknown'), permanent: tPeriod('permanent'), tba: tPeriod('tba') })}
+                        </Text>
+                      </Link>
+                    ))}
+                  </div>
+                </Section>
+              )}
           </Flex>
         </article>
-
-        <aside className="ct-side">
-          <Flex direction="column" gap="4">
-            {/* 공간이 모자라면 줄바꿈 대신 버튼을 아래로 쌓는다 */}
-            <Flex gap="2" wrap="wrap">
-              <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} fullWidth />
-              <Tooltip content={t('reportSoon')}>
-                <Button variant="surface" color="gray" size="2" style={{ flex: '1 1 auto', whiteSpace: 'nowrap' }} disabled>
-                  <ExclamationTriangleIcon />
-                  {t('report')}
-                </Button>
-              </Tooltip>
-            </Flex>
-            <Text as="p" size="1" color="gray" m="0">
-              {t('updated', { date: collab.updatedAt.slice(0, 10) })}
-            </Text>
-
-            {collab.related.length > 0 && (
-              <Flex direction="column" gap="2" mt="2">
-                <Text weight="bold">{t('related')}</Text>
-                {collab.related.map((r) => (
-                  <Link key={r.slug} href={`/collabs/${r.slug}`} className="ct-card-link" style={{ padding: '12px 14px', gap: 2 }}>
-                    <Text size="1" color="gray">
-                      {t(`relation.${r.relation}`)}
-                    </Text>
-                    <Text weight="medium">{r.title}</Text>
-                    <Text size="1" color="gray" className="ct-mono">
-                      {formatPeriod(r.period, { unknown: tPeriod('unknown'), permanent: tPeriod('permanent'), tba: tPeriod('tba') })}
-                    </Text>
-                  </Link>
-                ))}
-              </Flex>
-            )}
-          </Flex>
-        </aside>
       </div>
     </>
   );

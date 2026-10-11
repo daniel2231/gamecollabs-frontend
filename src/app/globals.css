@@ -311,6 +311,12 @@ body {
   }
 }
 
+/* 상세 페이지: 가운데 한 열, 읽기 좋은 폭 */
+.ct-article {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
 /* 상세 분류: 라벨 | 값 두 칸, 줄마다 구분선 */
 .ct-facts {
   margin: 0;
