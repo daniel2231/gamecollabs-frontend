@@ -42,6 +42,8 @@ export type QueueFilter = {
   origin?: OriginType;
   /** 커버 이미지가 없는 것만 */
   cover?: 'missing';
+  /** 제목·작품·회사 이름 검색(백엔드 검색 토큰) */
+  q?: string;
 };
 export type QueueResponse = {
   items: AdminQueueItem[];

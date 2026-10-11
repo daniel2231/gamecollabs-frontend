@@ -452,6 +452,8 @@ export const mockAdminApi: AdminApi = {
       )
       .filter((c) => !filter.origin || c.origin.type === filter.origin)
       .filter((c) => filter.cover !== 'missing' || !c.cover)
+      // 백엔드는 모든 검색어가 들어 있는 것만 찾는다
+      .filter((c) => !filter.q || filter.q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => searchHaystack(c).includes(w)))
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .map((c) => ({
         id: c.id,

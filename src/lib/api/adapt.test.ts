@@ -188,6 +188,7 @@ describe('관리자 변환', () => {
 
   it('커버 없음만: 백엔드에 cover=missing을 보내고, 백엔드가 무시해도 커버 있는 항목은 거른다', () => {
     expect(A.queueParams({ status: 'published', cover: 'missing' }).get('cover')).toBe('missing');
+    expect(A.queueParams({ status: 'published', q: '진격 거인' }).toString()).toBe('status=published&limit=100&q=%EC%A7%84%EA%B2%A9+%EA%B1%B0%EC%9D%B8');
     const withCover = { ...doc, id: 'a', cover: { storageKey: 'covers/a.webp', originalUrl: null, credit: null, alt: null, width: 1, height: 1 } };
     const without = { ...doc, id: 'b', cover: null };
     const unknown = { ...doc, id: 'c' }; // 커버 필드를 주지 않는 백엔드

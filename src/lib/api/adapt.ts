@@ -487,6 +487,7 @@ export function queueParams(filter: QueueFilter): URLSearchParams {
   });
   if (filter.origin) sp.set('origin', filter.origin);
   if (filter.cover) sp.set('cover', filter.cover);
+  if (filter.q) sp.set('q', filter.q);
   return sp;
 }
 
