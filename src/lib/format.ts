@@ -36,3 +36,9 @@ export function groupByStartMonth<T extends { period: Period }>(items: T[]): { k
   }
   return groups;
 }
+
+/** 제목 아래 보조 표기: 원어 이름이 한국어·영어 이름과 다를 때만(예: 進撃の巨人). 다른 언어 이름은 보여주지 않는다 */
+export function originalName(entity: { name: { original?: string | null }; nameKo: string; nameEn: string | null }): string | null {
+  const original = entity.name.original;
+  return original && original !== entity.nameKo && original !== entity.nameEn ? original : null;
+}

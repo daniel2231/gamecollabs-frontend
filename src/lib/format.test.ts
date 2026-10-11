@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupByStartMonth } from './format';
+import { groupByStartMonth, originalName } from './format';
 
 const item = (slug: string, start: string | null, precision: 'day' | 'month' | 'unknown' = 'day') => ({
   slug,
@@ -18,5 +18,16 @@ describe('groupByStartMonth', () => {
 
   it('정밀도가 unknown이면 날짜가 있어도 시기 미상으로 본다', () => {
     expect(groupByStartMonth([item('a', '2026-10-01', 'unknown')])[0]!.key).toBe('');
+  });
+});
+
+describe('originalName', () => {
+  it('원어 이름이 한국어·영어 이름과 같으면 숨긴다', () => {
+    expect(originalName({ name: { original: 'Blizzard Entertainment' }, nameKo: '블리자드 엔터테인먼트', nameEn: 'Blizzard Entertainment' })).toBeNull();
+    expect(originalName({ name: { original: null }, nameKo: '가루비', nameEn: 'Calbee' })).toBeNull();
+  });
+
+  it('다른 언어의 원어 이름은 보여준다', () => {
+    expect(originalName({ name: { original: '進撃の巨人' }, nameKo: '진격의 거인', nameEn: 'Attack on Titan' })).toBe('進撃の巨人');
   });
 });

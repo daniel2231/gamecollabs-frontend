@@ -7,7 +7,7 @@ import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { formatMonth } from '@/lib/format';
+import { formatMonth, originalName } from '@/lib/format';
 
 type Props = PageProps<'/[locale]/companies/[slug]'>;
 
@@ -47,7 +47,7 @@ export default async function CompanyPage({ params }: Props) {
             {c.name.value}
           </Heading>
           <Flex wrap="wrap" gap="3">
-            {[locale === 'ko' ? c.nameEn : c.nameKo, c.name.original, regionName].filter(Boolean).map((n, i) => (
+            {[originalName(c), regionName].filter(Boolean).map((n, i) => (
               <Text key={i} color="gray" size="3">
                 {i > 0 && <span aria-hidden="true">· </span>}
                 {n}

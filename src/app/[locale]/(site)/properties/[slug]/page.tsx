@@ -8,7 +8,7 @@ import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { formatMonth } from '@/lib/format';
+import { formatMonth, originalName } from '@/lib/format';
 
 type Props = PageProps<'/[locale]/properties/[slug]'>;
 
@@ -55,7 +55,7 @@ export default async function PropertyPage({ params }: Props) {
             </Heading>
           </Flex>
           <Flex wrap="wrap" gap="3">
-            {[locale === 'ko' ? p.nameEn : p.nameKo, p.name.original].filter(Boolean).map((n, i) => (
+            {[originalName(p)].filter(Boolean).map((n, i) => (
               <Text key={i} color="gray" size="3">
                 {i > 0 && <span aria-hidden="true">· </span>}
                 {n}
