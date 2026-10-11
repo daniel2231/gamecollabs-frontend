@@ -561,6 +561,36 @@ body {
   padding: 24px 32px 48px;
 }
 
+/* 편집기 머리말(상태·제목·저장/발행 버튼, 저장 결과): 편집기를 스크롤해도 위에 붙어 있다.
+   main의 안쪽 여백만큼 바깥으로 넓혀 내용이 뒤로 비치지 않게 한다 */
+.ct-editor-bar {
+  --bar-x: 32px;
+  --bar-top: 24px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: calc(-1 * var(--bar-top)) calc(-1 * var(--bar-x)) 0;
+  padding: var(--bar-top) var(--bar-x) 14px;
+  background: var(--gray-1);
+  border-bottom: 1px solid var(--ct-line);
+}
+
+/* 오류 목록이 길어도 화면을 다 덮지 않게 */
+.ct-editor-bar [role='alert'] {
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .ct-editor-bar {
+    --bar-x: 16px;
+    --bar-top: 20px;
+  }
+}
+
 /* 넓은 화면: 메뉴와 검수 큐는 화면에 고정하고 각자 스크롤한다. 편집기만 페이지와 함께 내려간다 */
 @media (min-width: 901px) {
   .ct-admin {

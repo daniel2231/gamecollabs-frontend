@@ -28,7 +28,7 @@ import {
   Tooltip,
   VisuallyHidden,
 } from '@radix-ui/themes';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { getCollabForCompare, mirrorCollabCover, saveCollab, transitionCollab } from '@/app/[locale]/admin/actions';
 import { useRouter } from '@/i18n/navigation';
 import type { TermNode } from '@/lib/taxonomy';
@@ -121,6 +121,12 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState<{ code: string; message?: string; fields?: Record<string, string> } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // 성공 안내는 고정된 머리말 자리를 차지하므로 잠시 뒤 걷는다(오류는 고칠 때까지 둔다)
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
   const [pending, start] = useTransition();
   const [slugTouched, setSlugTouched] = useState(Boolean(collab));
   // 커버는 손댄 경우에만 보낸다. 백엔드가 현재 커버를 주지 않을 때 저장으로 지워 버리지 않게 하려는 것
@@ -250,91 +256,93 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
 
   return (
     <Flex direction="column" gap="5">
-      {/* 머리말 */}
-      <Flex wrap="wrap" align="start" justify="between" gap="4">
-        <Flex direction="column" gap="2" style={{ minWidth: 0 }}>
-          <Flex wrap="wrap" align="center" gap="2">
-            <Badge color={status === 'published' ? 'grass' : status === 'in_review' ? 'indigo' : 'gray'} variant="soft">
-              {STATUS_LABEL[status]}
-            </Badge>
-            {collab && (
-              <Text size="1" color="gray">
-                {ORIGIN_LABEL[collab.origin.type]}
-                {collab.origin.runId && (
-                  <>
-                    {' · run '}
-                    <span className="ct-mono">{collab.origin.runId}</span>
-                  </>
-                )}
-                {collab.origin.confidence !== null && ` · 신뢰도 ${collab.origin.confidence.toFixed(2)}`}
-                {' · '}
-                <span className="ct-mono">rev {rev}</span>
+      {/* 머리말: 스크롤해도 저장·발행 버튼과 저장 결과 안내가 보이도록 위에 고정한다 */}
+      <div className="ct-editor-bar">
+        <Flex wrap="wrap" align="start" justify="between" gap="4">
+          <Flex direction="column" gap="2" style={{ minWidth: 0 }}>
+            <Flex wrap="wrap" align="center" gap="2">
+              <Badge color={status === 'published' ? 'grass' : status === 'in_review' ? 'indigo' : 'gray'} variant="soft">
+                {STATUS_LABEL[status]}
+              </Badge>
+              {collab && (
+                <Text size="1" color="gray">
+                  {ORIGIN_LABEL[collab.origin.type]}
+                  {collab.origin.runId && (
+                    <>
+                      {' · run '}
+                      <span className="ct-mono">{collab.origin.runId}</span>
+                    </>
+                  )}
+                  {collab.origin.confidence !== null && ` · 신뢰도 ${collab.origin.confidence.toFixed(2)}`}
+                  {' · '}
+                  <span className="ct-mono">rev {rev}</span>
+                </Text>
+              )}
+              {dirty && (
+                <Badge color="amber" variant="soft">
+                  저장 안 됨
+                </Badge>
+              )}
+            </Flex>
+            <Heading as="h1" size="6">
+              {form.ko.title || (collab ? collab.slug : '새 콜라보')}
+            </Heading>
+            {status === 'published' && collab && (
+              <Text size="2">
+                <a href={`/${locale}/collabs/${collab.slug}`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-11)' }}>
+                  공개 페이지 보기 <ExternalLinkIcon style={{ verticalAlign: 'middle' }} />
+                </a>
               </Text>
             )}
-            {dirty && (
-              <Badge color="amber" variant="soft">
-                저장 안 됨
-              </Badge>
+          </Flex>
+          <Flex wrap="wrap" gap="2">
+            {collab && status !== 'archived' && <ArchiveButton disabled={pending} onConfirm={(reason) => onTransition('archive', reason)} published={status === 'published'} />}
+            <Button variant="surface" color="gray" onClick={onSave} loading={pending} disabled={!dirty && Boolean(collab)}>
+              {collab ? '임시 저장' : '초안 만들기'}
+            </Button>
+            {status === 'draft' && collab && (
+              <Button variant="soft" onClick={() => onTransition('submit')} disabled={pending}>
+                검수 요청
+              </Button>
+            )}
+            {collab && (status === 'draft' || status === 'in_review') && (
+              <Tooltip content={canPublish ? '저장 후 발행합니다' : '발행 조건을 먼저 충족하세요'}>
+                <Button onClick={() => onTransition('publish')} disabled={!canPublish || pending} aria-describedby="publish-checklist">
+                  발행
+                </Button>
+              </Tooltip>
             )}
           </Flex>
-          <Heading as="h1" size="6">
-            {form.ko.title || (collab ? collab.slug : '새 콜라보')}
-          </Heading>
-          {status === 'published' && collab && (
-            <Text size="2">
-              <a href={`/${locale}/collabs/${collab.slug}`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-11)' }}>
-                공개 페이지 보기 <ExternalLinkIcon style={{ verticalAlign: 'middle' }} />
-              </a>
-            </Text>
-          )}
         </Flex>
-        <Flex wrap="wrap" gap="2">
-          {collab && status !== 'archived' && <ArchiveButton disabled={pending} onConfirm={(reason) => onTransition('archive', reason)} published={status === 'published'} />}
-          <Button variant="surface" color="gray" onClick={onSave} loading={pending} disabled={!dirty && Boolean(collab)}>
-            {collab ? '임시 저장' : '초안 만들기'}
-          </Button>
-          {status === 'draft' && collab && (
-            <Button variant="soft" onClick={() => onTransition('submit')} disabled={pending}>
-              검수 요청
-            </Button>
-          )}
-          {collab && (status === 'draft' || status === 'in_review') && (
-            <Tooltip content={canPublish ? '저장 후 발행합니다' : '발행 조건을 먼저 충족하세요'}>
-              <Button onClick={() => onTransition('publish')} disabled={!canPublish || pending} aria-describedby="publish-checklist">
-                발행
-              </Button>
-            </Tooltip>
-          )}
-        </Flex>
-      </Flex>
 
-      {notice && (
-        <Callout.Root color="grass" size="1" role="status">
-          <Callout.Icon>
-            <CheckIcon />
-          </Callout.Icon>
-          <Callout.Text>{notice}</Callout.Text>
-        </Callout.Root>
-      )}
-      {error && (
-        <Callout.Root color="red" size="1" role="alert">
-          <Callout.Icon>
-            <ExclamationTriangleIcon />
-          </Callout.Icon>
-          <Callout.Text>
-            {error.message ?? (error.code === 'validation_failed' ? '입력값을 확인하세요' : error.code)}
-            {error.fields && (
-              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
-                {Object.entries(error.fields).map(([k, v]) => (
-                  <li key={k}>
-                    <span className="ct-mono">{k}</span>: {v}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Callout.Text>
-        </Callout.Root>
-      )}
+        {notice && (
+          <Callout.Root color="grass" size="1" role="status">
+            <Callout.Icon>
+              <CheckIcon />
+            </Callout.Icon>
+            <Callout.Text>{notice}</Callout.Text>
+          </Callout.Root>
+        )}
+        {error && (
+          <Callout.Root color="red" size="1" role="alert">
+            <Callout.Icon>
+              <ExclamationTriangleIcon />
+            </Callout.Icon>
+            <Callout.Text>
+              {error.message ?? (error.code === 'validation_failed' ? '입력값을 확인하세요' : error.code)}
+              {error.fields && (
+                <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                  {Object.entries(error.fields).map(([k, v]) => (
+                    <li key={k}>
+                      <span className="ct-mono">{k}</span>: {v}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Callout.Text>
+          </Callout.Root>
+        )}
+      </div>
 
       {collab && collab.duplicates.length > 0 && (
         <Callout.Root color="amber" role="status">
