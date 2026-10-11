@@ -83,7 +83,7 @@ messages/{ko,en}.json
 | 필터·편집기 분류 | `GET /v1/taxonomies` | 트리 → 평면 목록 |
 | 홈 요약 | `GET /v1/stats` | `total`, `byPhase` |
 | sitemap | `GET /v1/sitemap` | 그대로 |
-| 검수 대기열 | `GET /v1/admin/collabs?status=draft,in_review` | `meta.counts`(상태별 건수), 항목별 `duplicateCount` |
+| 검수 대기열 | `GET /v1/admin/collabs?status=draft,in_review[&cover=missing]` | `meta.counts`(상태별 건수), 항목별 `duplicateCount`. `cover=missing`(커버 없음만)을 백엔드가 모르면 받은 100건 안에서 프론트가 거른다 |
 | 편집기 | `GET /v1/admin/collabs/:id` + `/duplicates` | `origin.unmapped` → 필드별 미해결 값 |
 | 저장 | `POST`·`PATCH /v1/admin/collabs[/:id]` (`If-Match: <rev>`) | 빈 메모는 `null`, 월 단위 날짜는 `YYYY-MM` |
 | 엔티티 | `GET /v1/admin/{properties,companies}[?q=]` | `q`가 없으면 전체 목록 |

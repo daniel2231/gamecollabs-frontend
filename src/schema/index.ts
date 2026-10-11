@@ -319,6 +319,8 @@ export const adminQueueItemSchema = z.object({
   origin: z.enum(ORIGIN_TYPES),
   sourceCount: z.number().int(),
   duplicateCandidate: z.boolean(),
+  /** 우리 저장소에 올렸거나 원본 주소가 있는 커버가 있는지. null이면 백엔드가 알려주지 않음 */
+  hasCover: z.boolean().nullable(),
   updatedAt: z.iso.datetime(),
 });
 export type AdminQueueItem = z.infer<typeof adminQueueItemSchema>;

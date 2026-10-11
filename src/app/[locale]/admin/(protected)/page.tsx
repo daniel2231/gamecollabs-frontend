@@ -1,3 +1,4 @@
+import { ImageIcon } from '@radix-ui/react-icons';
 import { Badge, Button, Flex, Text } from '@radix-ui/themes';
 import { redirect } from 'next/navigation';
 import { CollabEditor } from '@/components/admin/CollabEditor';
@@ -32,6 +33,7 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
   const sp = await searchParams;
   const status = (COLLAB_STATUSES as readonly string[]).includes(String(sp.status)) ? (sp.status as CollabStatus) : 'review';
   const origin = (ORIGIN_TYPES as readonly string[]).includes(String(sp.origin)) ? (sp.origin as OriginType) : undefined;
+  const cover = sp.cover === 'missing' ? ('missing' as const) : undefined;
   const admin = adminApi(session.token);
   // 서로 기다릴 필요 없는 조회는 한꺼번에 시작한다. 선택 항목은 id가 있으면 큐와 함께 읽고,
   // 없으면 큐의 첫 항목을 고른 뒤 읽는다
@@ -39,7 +41,7 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
   const entityLists = loadEntityLists(admin);
   entityLists.catch(() => {}); // 쓰지 않고 끝나는 경우의 unhandled rejection 방지. 쓸 때는 await에서 오류가 난다
   const [queue, trees, requested] = await Promise.all([
-    admin.listQueue({ status, origin }),
+    admin.listQueue({ status, origin, cover }),
     loadTrees(),
     requestedId ? admin.getCollab(requestedId) : null,
   ]);
@@ -49,7 +51,7 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
 
   const qs = (extra: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    const merged = { status: status === 'review' ? undefined : status, origin, ...extra };
+    const merged = { status: status === 'review' ? undefined : status, origin, cover, ...extra };
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v);
     const s = p.toString();
     return s ? `/admin?${s}` : '/admin';
@@ -59,9 +61,14 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
     <>
       <section aria-label={`${STATUS_TITLE[status]} 목록`} className="ct-admin-queue">
         <Flex direction="column" gap="3" p="4" style={{ borderBottom: '1px solid var(--ct-line)' }}>
-          <Text size="4" weight="bold">
-            {STATUS_TITLE[status]}
-          </Text>
+          <Flex align="baseline" justify="between" gap="2">
+            <Text size="4" weight="bold">
+              {STATUS_TITLE[status]}
+            </Text>
+            <Text size="1" color="gray">
+              {cover ? `커버 없음 ${queue.items.length}건` : `${queue.items.length}건`}
+            </Text>
+          </Flex>
           <Flex role="group" aria-label="출처 필터" wrap="wrap" gap="2">
             {ORIGIN_FILTERS.map((f) => (
               <Button key={f.label} asChild size="1" radius="full" variant={origin === f.value ? 'solid' : 'surface'} color="gray" highContrast={origin === f.value}>
@@ -72,10 +79,20 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
               </Button>
             ))}
           </Flex>
+          {/* 커버 없는 것만: 상태·출처 필터와 함께 쓴다 */}
+          <div>
+            <Button asChild size="1" radius="full" variant={cover ? 'solid' : 'surface'} color={cover ? 'amber' : 'gray'}>
+              <Link href={qs({ cover: cover ? undefined : 'missing' })} aria-pressed={Boolean(cover)}>
+                <LinkPending scope="list" />
+                <ImageIcon aria-hidden="true" />
+                커버 없음만
+              </Link>
+            </Button>
+          </div>
         </Flex>
         {queue.items.length === 0 ? (
           <Text as="p" color="gray" size="2" m="4">
-            항목이 없습니다.
+            {cover ? '커버가 없는 항목이 없습니다.' : '항목이 없습니다.'}
           </Text>
         ) : (
           <ul className="ct-pending-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
@@ -93,6 +110,11 @@ export default async function AdminQueuePage({ params, searchParams }: PageProps
                     {q.duplicateCandidate && (
                       <Badge size="1" variant="soft" color="amber">
                         중복 후보
+                      </Badge>
+                    )}
+                    {!cover && q.hasCover === false && (
+                      <Badge size="1" variant="outline" color="gray">
+                        커버 없음
                       </Badge>
                     )}
                   </Flex>

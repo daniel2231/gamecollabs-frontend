@@ -163,7 +163,7 @@ export function createHttpAdminApi(token: string): AdminApi {
         o(),
       );
       if (!body?.meta) throw new ApiError(502, 'bad_response');
-      const queue = A.toQueue(body.data, body.meta.counts);
+      const queue = A.toQueue(body.data, body.meta.counts, filter);
       return { ...queue, items: z.array(adminQueueItemSchema).parse(queue.items) };
     },
     getCollab: async (id) => {

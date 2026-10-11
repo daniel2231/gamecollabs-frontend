@@ -219,8 +219,17 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       const saved = await persist();
       if (!saved) return;
       setNotice('저장했습니다');
-      if (!collab) router.push(`/admin?id=${saved.id}`);
-      else router.refresh();
+      if (!collab) {
+        router.push(`/admin?id=${saved.id}`);
+        return;
+      }
+      // 저장으로 목록 조건(예: 커버 없음만)에서 빠져도 지금 편집하던 항목을 계속 보여준다
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get('id') !== collab.id) {
+        sp.set('id', collab.id);
+        router.replace(`/admin?${sp}`, { scroll: false });
+      }
+      router.refresh();
     });
   }
 

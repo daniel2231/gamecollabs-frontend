@@ -186,6 +186,21 @@ describe('관리자 변환', () => {
     expect(A.toCollabBody({ ...input, cover: { ...cover, alt: { ko: '설명', en: 'Alt' } } }).cover?.alt).toEqual({ ko: '설명', en: 'Alt' });
   });
 
+  it('커버 없음만: 백엔드에 cover=missing을 보내고, 백엔드가 무시해도 커버 있는 항목은 거른다', () => {
+    expect(A.queueParams({ status: 'published', cover: 'missing' }).get('cover')).toBe('missing');
+    const withCover = { ...doc, id: 'a', cover: { storageKey: 'covers/a.webp', originalUrl: null, credit: null, alt: null, width: 1, height: 1 } };
+    const without = { ...doc, id: 'b', cover: null };
+    const unknown = { ...doc, id: 'c' }; // 커버 필드를 주지 않는 백엔드
+    const counts = { draft: 0, in_review: 0, published: 3, archived: 0 };
+    expect(A.toQueue([withCover, without, unknown], counts).items.map((i) => [i.id, i.hasCover])).toEqual([
+      ['a', true],
+      ['b', false],
+      ['c', null],
+    ]);
+    // 모르는 것은 숨기지 않는다
+    expect(A.toQueue([withCover, without, unknown], counts, { status: 'published', cover: 'missing' }).items.map((i) => i.id)).toEqual(['b', 'c']);
+  });
+
   it('대기열 건수: review는 초안 + 검수 요청', () => {
     const q = A.toQueue([{ ...doc, duplicateCount: 1 }], { draft: 2, in_review: 1, published: 113, archived: 0 });
     expect(q.counts.review).toBe(3);

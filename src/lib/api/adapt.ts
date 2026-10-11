@@ -475,6 +475,7 @@ export function toQueueItem(c: BeAdminCollab): AdminQueueItem {
     origin: c.origin.type,
     sourceCount: c.sources.length,
     duplicateCandidate: (c.duplicateCount ?? 0) > 0,
+    hasCover: c.cover === undefined ? null : Boolean(c.cover),
     updatedAt: c.updatedAt,
   };
 }
@@ -485,11 +486,17 @@ export function queueParams(filter: QueueFilter): URLSearchParams {
     limit: '100',
   });
   if (filter.origin) sp.set('origin', filter.origin);
+  if (filter.cover) sp.set('cover', filter.cover);
   return sp;
 }
 
-export function toQueue(data: BeAdminCollab[], counts: Record<AdminCollab['status'], number>): QueueResponse {
-  return { items: data.map(toQueueItem), counts: { ...counts, review: counts.draft + counts.in_review } };
+export function toQueue(data: BeAdminCollab[], counts: Record<AdminCollab['status'], number>, filter?: QueueFilter): QueueResponse {
+  const items = data.map(toQueueItem);
+  return {
+    // 백엔드가 cover 필터를 모르면 무시하고 다 주므로 여기서도 거른다(커버 정보가 없는 항목은 숨기지 않는다)
+    items: filter?.cover === 'missing' ? items.filter((i) => i.hasCover !== true) : items,
+    counts: { ...counts, review: counts.draft + counts.in_review },
+  };
 }
 
 /**

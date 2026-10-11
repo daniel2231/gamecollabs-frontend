@@ -37,7 +37,12 @@ export type SitemapData = {
   companies: { slug: string }[];
 };
 
-export type QueueFilter = { status: 'review' | CollabStatus; origin?: OriginType };
+export type QueueFilter = {
+  status: 'review' | CollabStatus;
+  origin?: OriginType;
+  /** 커버 이미지가 없는 것만 */
+  cover?: 'missing';
+};
 export type QueueResponse = {
   items: AdminQueueItem[];
   counts: Record<'review' | CollabStatus, number>;

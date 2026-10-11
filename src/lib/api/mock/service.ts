@@ -451,6 +451,7 @@ export const mockAdminApi: AdminApi = {
         filter.status === 'review' ? c.status === 'draft' || c.status === 'in_review' : c.status === filter.status,
       )
       .filter((c) => !filter.origin || c.origin.type === filter.origin)
+      .filter((c) => filter.cover !== 'missing' || !c.cover)
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .map((c) => ({
         id: c.id,
@@ -460,6 +461,7 @@ export const mockAdminApi: AdminApi = {
         origin: c.origin.type,
         sourceCount: c.sources.length,
         duplicateCandidate: findDuplicates(c).length > 0,
+        hasCover: Boolean(c.cover),
         updatedAt: c.updatedAt,
       }));
     return { items, counts };
