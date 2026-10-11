@@ -561,6 +561,24 @@ body {
   padding: 24px 32px 48px;
 }
 
+/* 넓은 화면: 메뉴와 검수 큐는 화면에 고정하고 각자 스크롤한다. 편집기만 페이지와 함께 내려간다 */
+@media (min-width: 901px) {
+  .ct-admin {
+    flex-wrap: nowrap;
+  }
+
+  .ct-admin-nav,
+  .ct-admin-queue {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
 @media (max-width: 900px) {
   .ct-admin-nav,
   .ct-admin-queue {
