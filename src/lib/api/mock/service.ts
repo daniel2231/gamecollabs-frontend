@@ -2,6 +2,7 @@
  * Express /v1 동작을 흉내 내는 메모리 구현. 서버 재시작 시 수정 사항은 사라진다.
  * 규칙(facetKeys 펼치기, phase 계산, en→ko 대체, 중복 판정)은 PRD 그대로 따른다.
  */
+import { createHash } from 'node:crypto';
 import { computePhase } from '@/lib/phase';
 import type {
   AdminCollab,
@@ -97,7 +98,16 @@ function toSummary(c: DbCollab, locale: Locale): CollabSummary {
     regions: c.regions.map((k) => termRef(k, locale)),
     platforms: c.platforms.map((k) => termRef(k, locale)),
     collabTypes: c.collabTypes.map((k) => termRef(k, locale)),
-    cover: null,
+    cover: c.cover
+      ? {
+          url: c.cover.url,
+          originalUrl: c.cover.originalUrl,
+          credit: c.cover.credit || null,
+          alt: (locale === 'en' ? c.cover.alt.en : c.cover.alt.ko) || c.i18n.ko.title,
+          width: c.cover.width,
+          height: c.cover.height,
+        }
+      : null,
     publishedAt: c.publishedAt,
   };
 }
@@ -348,6 +358,7 @@ function toAdmin(c: DbCollab): AdminCollab {
     unmapped: c.unmapped,
     unmappedOther: [],
     sourceStatus: c.sources.map((s) => ({ url: s.url, httpStatus: s.httpStatus ?? null })),
+    cover: c.cover ?? null,
     duplicates: findDuplicates(c),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
@@ -499,6 +510,7 @@ export const mockAdminApi: AdminApi = {
       platforms: input.platforms,
       collabTypes: input.collabTypes,
       period: input.period,
+      ...(input.cover === undefined ? {} : { cover: input.cover }),
       sources: input.sources.map((s) => ({
         lastCheckedAt: null,
         httpStatus: null,
@@ -622,5 +634,18 @@ export const mockAdminApi: AdminApi = {
     };
     db.terms.push(term);
     return term;
+  },
+
+  // 저장소 대신 data: 주소로 메모리에 둔다(서버를 재시작하면 사라진다). 크기는 브라우저가 잰 값을 믿는다
+  async uploadMedia(file, size) {
+    await delay();
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const hash = createHash('sha256').update(bytes).digest('hex').slice(0, 16);
+    return {
+      storageKey: `covers/${hash}.webp`,
+      url: `data:${file.type || 'image/webp'};base64,${bytes.toString('base64')}`,
+      width: size.width,
+      height: size.height,
+    };
   },
 };

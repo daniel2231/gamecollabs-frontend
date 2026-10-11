@@ -1,5 +1,6 @@
 import { Badge, Flex, Text } from '@radix-ui/themes';
 import { Link } from '@/i18n/navigation';
+import { coverFit } from '@/lib/cover';
 import type { CollabSummary } from '@/schema';
 import { PeriodText } from './PeriodText';
 import { PhaseBadge } from './PhaseBadge';
@@ -7,13 +8,6 @@ import { PhaseBadge } from './PhaseBadge';
 const MAX_TAGS = 3;
 // 커버가 없을 때 slug로 고르는 색. Radix 팔레트 안에서만 고른다
 const TINTS = ['indigo', 'cyan', 'crimson', 'amber', 'grass', 'violet', 'orange', 'teal'] as const;
-
-/** 16:9에서 많이 벗어난 커버(정사각형·세로형 등)는 잘리지 않게 통째로 보여준다 */
-function coverFit(cover: { width?: number | null; height?: number | null }): 'cover' | 'contain' {
-  if (!cover.width || !cover.height) return 'cover';
-  const ratio = cover.width / cover.height / (16 / 9);
-  return ratio > 0.8 && ratio < 1.25 ? 'cover' : 'contain';
-}
 
 function tintFor(slug: string): (typeof TINTS)[number] {
   let h = 0;

@@ -574,6 +574,74 @@ body {
   }
 }
 
+/* 관리자 커버 업로드 영역: 카드와 같은 16:9 */
+.ct-dropzone {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px dashed var(--gray-a8);
+  border-radius: var(--radius-3);
+  background: var(--gray-a2);
+  color: var(--gray-11);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ct-dropzone:hover {
+  border-color: var(--gray-a10);
+}
+
+.ct-dropzone:focus-visible {
+  outline: 2px solid var(--accent-8);
+  outline-offset: 2px;
+}
+
+.ct-dropzone[data-filled] {
+  border-style: solid;
+  border-color: var(--ct-line);
+}
+
+.ct-dropzone[data-over] {
+  border-style: dashed;
+  border-color: var(--accent-9);
+  background: var(--accent-a3);
+}
+
+.ct-dropzone img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ct-dropzone img[data-fit='contain'] {
+  object-fit: contain;
+}
+
+.ct-dropzone-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.6);
+  color: var(--gray-12);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* 이미지가 없을 때는 어둡게 덮을 것이 없다 */
+.ct-dropzone:not([data-filled]) .ct-dropzone-overlay {
+  background: none;
+}
+
 .ct-checklist {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

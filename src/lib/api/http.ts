@@ -11,6 +11,7 @@ import {
   propertyDetailSchema,
   statsSchema,
   taxonomyTermSchema,
+  uploadedMediaSchema,
   type CollabQuery,
   type EntityKind,
   type Locale,
@@ -50,10 +51,11 @@ async function request(path: string, opts: RequestOptions = {}): Promise<Respons
     headers: {
       Accept: 'application/json',
       Authorization: `Bearer ${opts.token ?? process.env.API_SERVICE_TOKEN ?? ''}`,
-      ...(opts.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      // FormData는 fetch가 boundary를 붙인 multipart Content-Type을 직접 정한다
+      ...(opts.body !== undefined && !(opts.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
       ...opts.headers,
     },
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    body: opts.body === undefined ? undefined : opts.body instanceof FormData ? opts.body : JSON.stringify(opts.body),
     // 공개 조회는 태그 캐시(웹훅으로 무효화), 관리자 요청은 항상 최신
     ...(isRead && !opts.token ? { next: { tags: opts.tags ?? [], revalidate: 3600 } } : { cache: 'no-store' as const }),
   });
@@ -139,6 +141,9 @@ export const httpPublicApi: PublicApi = {
   getSitemap: async () => A.toSitemap(await data<Parameters<typeof A.toSitemap>[0]>('/v1/sitemap', { tags: ['collabs'] })),
 };
 
+/** 커버 이미지 주소의 기준(백엔드와 같은 값) */
+const mediaBase = () => process.env.MEDIA_BASE_URL?.trim() || null;
+
 const entityPath = (kind: EntityKind) => (kind === 'property' ? 'properties' : 'companies');
 
 export function createHttpAdminApi(token: string): AdminApi {
@@ -147,7 +152,7 @@ export function createHttpAdminApi(token: string): AdminApi {
   /** 문서 + 중복 후보를 함께 읽어 편집기 형태로 */
   const full = async (doc: A.BeAdminCollab) => {
     const duplicates = await data<A.BeDuplicate[]>(`/v1/admin/collabs/${doc.id}/duplicates`, o());
-    return adminCollabSchema.parse(A.toAdminCollab(doc, duplicates));
+    return adminCollabSchema.parse(A.toAdminCollab(doc, duplicates, mediaBase()));
   };
   const entity = (kind: EntityKind, e: A.BeEntityDoc) => adminEntitySchema.parse(A.fromEntityDoc(kind, e));
 
@@ -206,6 +211,19 @@ export function createHttpAdminApi(token: string): AdminApi {
     // Express: :id가 남고 from이 흡수된다
     mergeEntities: async (kind, sourceId, targetId) =>
       entity(kind, await data(`/v1/admin/${entityPath(kind)}/${targetId}/merge`, o({ method: 'POST', body: { from: sourceId } }))),
+    uploadMedia: async (file) => {
+      const form = new FormData();
+      form.set('file', file, file.name);
+      try {
+        return uploadedMediaSchema.parse(A.fromMedia(await data<A.BeMedia>('/v1/admin/media', o({ method: 'POST', body: form })), mediaBase()));
+      } catch (e) {
+        // 백엔드에 아직 업로드 라우트가 없을 때
+        if (e instanceof ApiError && (e.status === 404 || e.status === 405)) {
+          throw new ApiError(501, 'media_upload_unavailable', '백엔드에 업로드 API(POST /v1/admin/media)가 아직 없습니다. 백엔드 배포 후 다시 시도하세요.');
+        }
+        throw e;
+      }
+    },
     createTerm: async (input) =>
       taxonomyTermSchema.parse(A.fromTerm(await data<A.BeTerm>('/v1/admin/taxonomies', o({ method: 'POST', body: A.toTermBody(input) })))),
   };

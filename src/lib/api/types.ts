@@ -16,6 +16,7 @@ import type {
   Stats,
   TaxonomyTerm,
   Transition,
+  UploadedMedia,
 } from '@/schema';
 
 /** Express /v1 공개 조회 API (호출자: Next.js 서버) */
@@ -65,6 +66,11 @@ export interface AdminApi {
   updateEntity(kind: EntityKind, id: string, input: EntityInput): Promise<AdminEntity>;
   mergeEntities(kind: EntityKind, sourceId: string, targetId: string): Promise<AdminEntity>;
   createTerm(input: TermInput): Promise<TaxonomyTerm>;
+  /**
+   * 커버 이미지 업로드: POST /v1/admin/media (multipart, 필드 file).
+   * size는 브라우저가 줄인 뒤 잰 크기로, 크기를 직접 읽지 못하는 목 API만 쓴다.
+   */
+  uploadMedia(file: File, size: { width: number; height: number }): Promise<UploadedMedia>;
 }
 
 export class ApiError extends Error {

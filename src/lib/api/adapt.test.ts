@@ -138,6 +138,45 @@ describe('관리자 변환', () => {
     ]);
   });
 
+  it('커버: 응답에 없으면 undefined(모름), 있으면 주소를 MEDIA_BASE_URL로 만든다', () => {
+    expect(A.toAdminCollab(doc, []).cover).toBeUndefined();
+    expect(A.toAdminCollab({ ...doc, cover: null }, []).cover).toBeNull();
+    const cover = A.toAdminCollab(
+      { ...doc, cover: { storageKey: 'covers/ab.webp', originalUrl: null, credit: null, alt: null, width: 1600, height: 900 } },
+      [],
+      'https://media.example.com/',
+    ).cover;
+    expect(cover).toMatchObject({ url: 'https://media.example.com/covers/ab.webp', credit: '', alt: { ko: '', en: '' } });
+    expect(adminCollabSchema.safeParse({ ...A.toAdminCollab(doc, []), cover }).success).toBe(true);
+  });
+
+  it('커버 저장 본문: 건드리지 않으면 빼고, 대체 텍스트는 한·영이 모두 있어야 보낸다', () => {
+    const input: CollabInput = {
+      slug: 'a',
+      i18n: { ko: { title: '제목', summary: '요약', note: '' }, en: { title: 'Title', summary: 'Summary', note: '' } },
+      parties: [],
+      companies: [],
+      category: null,
+      regions: [],
+      platforms: [],
+      collabTypes: [],
+      period: { start: null, end: null, precision: 'unknown', endKind: 'tba' },
+      sources: [],
+    };
+    expect('cover' in A.toCollabBody(input)).toBe(false);
+    expect(A.toCollabBody({ ...input, cover: null }).cover).toBeNull();
+    const cover = { storageKey: 'covers/ab.webp', url: 'x', originalUrl: null, credit: ' ', alt: { ko: '설명', en: '' }, width: 1600, height: 900 };
+    expect(A.toCollabBody({ ...input, cover }).cover).toEqual({
+      storageKey: 'covers/ab.webp',
+      originalUrl: null,
+      credit: null,
+      alt: null,
+      width: 1600,
+      height: 900,
+    });
+    expect(A.toCollabBody({ ...input, cover: { ...cover, alt: { ko: '설명', en: 'Alt' } } }).cover?.alt).toEqual({ ko: '설명', en: 'Alt' });
+  });
+
   it('대기열 건수: review는 초안 + 검수 요청', () => {
     const q = A.toQueue([{ ...doc, duplicateCount: 1 }], { draft: 2, in_review: 1, published: 113, archived: 0 });
     expect(q.counts.review).toBe(3);

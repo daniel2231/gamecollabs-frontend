@@ -4,7 +4,7 @@
  * 실제 이름은 PRD에 나온 콜라보(태고의 달인 × 자가리코, 진격의 거인 × Blood Strike / WePlay)만 사용했다.
  * 확인되지 않은 날짜·분류·출처는 비워 두거나 example.com 자리표시자로 두었다. 실제 데이터로 쓰지 말 것.
  */
-import type { CollabStatus, CompanyRole, Origin, Period, Source, TaxonomyTerm } from '@/schema';
+import type { AdminCover, CollabStatus, CompanyRole, Origin, Period, Source, TaxonomyTerm } from '@/schema';
 
 type TermSeed = [key: string, ko: string, en: string, legacy?: string[]];
 
@@ -104,6 +104,8 @@ export type DbCollab = {
   origin: Origin;
   unmapped: { field: string; raw: string }[];
   rev: number;
+  /** 관리자 편집기에서 올린 커버(목 모드: url이 data: 주소) */
+  cover?: AdminCover | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;

@@ -237,6 +237,30 @@ const i18nTextSchema = z.object({
   note: z.string(),
 });
 
+/**
+ * 관리자 커버. storageKey는 우리 저장소(업로드·미러링)의 키, url은 미리보기용 주소다.
+ * storageKey가 없으면 아직 미러링하지 않은 원본(originalUrl)만 있는 상태다.
+ */
+export const adminCoverSchema = z.object({
+  storageKey: z.string().nullable(),
+  url: z.string(),
+  originalUrl: z.string().nullable(),
+  credit: z.string().max(120, '120자 이하'),
+  alt: z.object({ ko: z.string().max(300, '300자 이하'), en: z.string().max(300, '300자 이하') }),
+  width: z.number().int().positive().nullable(),
+  height: z.number().int().positive().nullable(),
+});
+export type AdminCover = z.infer<typeof adminCoverSchema>;
+
+/** POST /v1/admin/media 응답 */
+export const uploadedMediaSchema = z.object({
+  storageKey: z.string(),
+  url: z.string(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+});
+export type UploadedMedia = z.infer<typeof uploadedMediaSchema>;
+
 /** 관리자 편집 폼 = PATCH /v1/admin/collabs/:id 본문 */
 export const collabInputSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug는 소문자·숫자·하이픈만'),
@@ -249,6 +273,11 @@ export const collabInputSchema = z.object({
   collabTypes: z.array(z.string()),
   period: periodSchema,
   sources: z.array(sourceSchema.pick({ url: true, title: true, publisher: true, type: true, isPrimary: true, accessedAt: true })),
+  /**
+   * 입력: undefined면 커버를 건드리지 않고(본문에서 뺀다), null이면 지운다.
+   * 조회: undefined면 백엔드가 관리자 응답에 커버를 주지 않은 것(현재 값을 모름).
+   */
+  cover: adminCoverSchema.nullable().optional(),
 });
 export type CollabInput = z.infer<typeof collabInputSchema>;
 

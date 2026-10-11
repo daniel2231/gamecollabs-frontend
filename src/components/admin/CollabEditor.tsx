@@ -42,6 +42,7 @@ import {
   type Period,
   type Transition,
 } from '@/schema';
+import { CoverField } from './CoverField';
 import { EntityCombobox, type EntityChoice } from './EntityCombobox';
 import type { KindOption } from './EntityFormDialog';
 import { slugify } from './EntityFormDialog';
@@ -106,6 +107,8 @@ function initialState(collab: AdminCollab | null, entities: Record<string, Entit
     sources: collab?.sources.length
       ? collab.sources.map((s) => ({ ...s, key: crypto.randomUUID() }))
       : [blankSource(true)],
+    // 새 문서는 커버 없음(null), 기존 문서는 백엔드가 주지 않으면 undefined(모름)
+    cover: collab ? collab.cover : null,
   };
 }
 
@@ -120,6 +123,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [slugTouched, setSlugTouched] = useState(Boolean(collab));
+  // 커버는 손댄 경우에만 보낸다. 백엔드가 현재 커버를 주지 않을 때 저장으로 지워 버리지 않게 하려는 것
+  const [coverTouched, setCoverTouched] = useState(false);
 
   const setForm = (update: Partial<FormState> | ((f: FormState) => FormState)) => {
     setFormState((f) => (typeof update === 'function' ? update(f) : { ...f, ...update }));
@@ -147,6 +152,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       { ok: required, label: required ? '필수 필드' : '필수 필드 누락', blocking: true },
       { ok: unresolved.length === 0, label: unresolved.length ? `분류 매핑 ${unresolved.length}건 미해결` : '분류 매핑', blocking: true },
       { ok: Boolean(form.en.summary.trim() && form.en.title.trim() && form.ko.summary.trim()), label: '한·영 제목·요약', blocking: true },
+      // 현재 커버를 모르면(undefined) 판단하지 않는다
+      ...(form.cover === undefined ? [] : [{ ok: Boolean(form.cover), label: form.cover ? '커버 이미지' : '커버 이미지 없음', blocking: false }]),
     ];
   }, [form, unresolved.length]);
   const unlinked = (collab?.parties ?? []).filter((p) => !p.propertyId && !(p.role === 'host' ? form.host : form.partner));
@@ -169,6 +176,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       collabTypes: form.collabTypes,
       period: normalizePeriod(form.period),
       sources: sources.map(({ key: _key, ...s }, i) => ({ ...s, url: s.url.trim(), isPrimary: hasPrimary ? s.isPrimary : i === 0 })),
+      ...(coverTouched || !collab ? { cover: form.cover ?? null } : {}),
     };
   }
 
@@ -181,6 +189,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
     setError(null);
     setRev(res.data.rev);
     setDirty(false);
+    setCoverTouched(false);
     return res.data;
   }
 
@@ -404,6 +413,17 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
                 <TextArea rows={4} value={form.en.summary} onChange={(e) => setForm((f) => ({ ...f, en: { ...f.en, summary: e.target.value } }))} />
               </Text>
             </div>
+          </FormSection>
+
+          <FormSection title="커버 이미지">
+            <CoverField
+              value={form.cover}
+              onChange={(cover) => {
+                setCoverTouched(true);
+                setForm({ cover });
+              }}
+            />
+            {fieldError('cover')}
           </FormSection>
 
           <FormSection title="참여 작품">

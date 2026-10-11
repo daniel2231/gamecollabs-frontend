@@ -5,6 +5,7 @@
  */
 import type {
   AdminCollab,
+  AdminCover,
   AdminEntity,
   AdminQueueItem,
   CollabDetail,
@@ -20,6 +21,7 @@ import type {
   Stats,
   TaxonomyTerm,
   TermRef,
+  UploadedMedia,
 } from '@/schema';
 import { TAXONOMIES } from '@/schema';
 import type { EntityInput, QueueFilter, QueueResponse, SitemapData, TermInput } from './types';
@@ -136,9 +138,25 @@ export type BeAdminCollab = {
     unmapped: Partial<Record<string, string[] | string>> | null;
   };
   duplicateCount?: number;
+  /** 백엔드가 아직 관리자 응답에 커버를 넣지 않으면 필드 자체가 없다 */
+  cover?: BeAdminCover | null;
   createdAt: string;
   updatedAt: string;
 };
+
+export type BeAdminCover = {
+  storageKey: string | null;
+  /** 백엔드가 주면 그대로, 없으면 MEDIA_BASE_URL + storageKey로 만든다 */
+  url?: string | null;
+  originalUrl: string | null;
+  credit: string | null;
+  alt: { ko: string; en: string } | null;
+  width: number | null;
+  height: number | null;
+};
+
+/** POST /v1/admin/media 응답 */
+export type BeMedia = { storageKey: string; url?: string | null; width: number; height: number };
 
 export type BeDuplicate = {
   id: string;
@@ -369,7 +387,28 @@ const UNMAPPED_FIELD: Record<string, string> = {
   category: 'category',
 };
 
-export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[]): AdminCollab {
+/** 저장소 키 → 공개 주소. mediaBase는 MEDIA_BASE_URL(끝의 / 없이) */
+export function mediaUrl(storageKey: string, mediaBase: string | null): string {
+  return mediaBase ? `${mediaBase.replace(/\/$/, '')}/${storageKey.replace(/^\//, '')}` : storageKey;
+}
+
+export function toAdminCover(c: BeAdminCover, mediaBase: string | null): AdminCover {
+  return {
+    storageKey: c.storageKey,
+    url: c.url ?? (c.storageKey ? mediaUrl(c.storageKey, mediaBase) : (c.originalUrl ?? '')),
+    originalUrl: c.originalUrl,
+    credit: c.credit ?? '',
+    alt: { ko: c.alt?.ko ?? '', en: c.alt?.en ?? '' },
+    width: c.width,
+    height: c.height,
+  };
+}
+
+export function fromMedia(m: BeMedia, mediaBase: string | null): UploadedMedia {
+  return { storageKey: m.storageKey, url: m.url ?? mediaUrl(m.storageKey, mediaBase), width: m.width, height: m.height };
+}
+
+export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], mediaBase: string | null = null): AdminCollab {
   const text = (t: BeLocaleText) => ({ title: t.title, summary: t.summary, note: t.note ?? '' });
   const unmapped: AdminCollab['unmapped'] = [];
   const unmappedOther: AdminCollab['unmappedOther'] = [];
@@ -418,6 +457,8 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[]): Admi
       title: d.title.ko ?? d.title.en ?? d.slug,
       reason: d.reason === 'same_source_url' ? ('same_source' as const) : ('same_parties_near_date' as const),
     })),
+    // 필드가 없으면 undefined로 남겨, 저장할 때 커버를 건드리지 않게 한다
+    cover: c.cover === undefined ? undefined : c.cover && toAdminCover(c.cover, mediaBase),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -484,6 +525,23 @@ export function toCollabBody(input: CollabInput, existing?: BeAdminCollab['parti
       isPrimary: s.isPrimary,
       accessedAt: s.accessedAt,
     })),
+    // 커버를 건드리지 않았으면 필드를 보내지 않는다(PATCH는 보낸 최상위 필드만 바꾼다)
+    ...(input.cover === undefined ? {} : { cover: toCoverBody(input.cover) }),
+  };
+}
+
+/** 편집기 커버 → PATCH 본문. 대체 텍스트는 한·영이 모두 있어야 보낸다 */
+function toCoverBody(cover: AdminCover | null) {
+  if (!cover) return null;
+  const ko = cover.alt.ko.trim();
+  const en = cover.alt.en.trim();
+  return {
+    storageKey: cover.storageKey,
+    originalUrl: cover.originalUrl,
+    credit: cover.credit.trim() || null,
+    alt: ko && en ? { ko, en } : null,
+    width: cover.width,
+    height: cover.height,
   };
 }
 
