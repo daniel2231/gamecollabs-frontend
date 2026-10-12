@@ -61,6 +61,7 @@
       "recent": "Recently added"
     },
     "unknownMonth": "Date unknown",
+    "monthCount": "{count, plural, one {# collab} other {# collabs}}",
     "loadMore": "Load more",
     "empty": "No collabs match these filters.",
     "emptyHint": "Try removing a filter or changing the search.",
