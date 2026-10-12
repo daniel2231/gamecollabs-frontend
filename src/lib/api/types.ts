@@ -33,8 +33,9 @@ export interface PublicApi {
 
 export type SitemapData = {
   collabs: { slug: string; updatedAt: string }[];
-  properties: { slug: string }[];
-  companies: { slug: string }[];
+  /** updatedAt은 백엔드가 내려줄 때만 있다 */
+  properties: { slug: string; updatedAt?: string }[];
+  companies: { slug: string; updatedAt?: string }[];
 };
 
 export type QueueFilter = {

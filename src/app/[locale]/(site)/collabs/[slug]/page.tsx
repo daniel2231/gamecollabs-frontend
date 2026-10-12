@@ -6,11 +6,14 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
+import { JsonLd } from '@/components/site/JsonLd';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatDate, formatPeriod } from '@/lib/format';
+import { breadcrumbJsonLd, collabJsonLd } from '@/lib/jsonld';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
+import { siteUrl } from '@/lib/site';
 import type { CollabDetail } from '@/schema';
 
 type Props = PageProps<'/[locale]/collabs/[slug]'>;
@@ -67,23 +70,20 @@ export default async function CollabDetailPage({ params }: Props) {
       : collab.period.endKind === 'tba' || !collab.period.end
         ? tPeriod('tba')
         : formatDate(collab.period.end, collab.period.precision);
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: collab.title,
-    ...(collab.period.start && collab.period.precision !== 'unknown' ? { startDate: collab.period.start } : {}),
-    ...(collab.period.endKind === 'fixed' && collab.period.end ? { endDate: collab.period.end } : {}),
-    ...(collab.summary ? { description: collab.summary } : {}),
-    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
-    organizer: collab.companies.map((c) => ({ '@type': 'Organization', name: c.name.value })),
-  };
+  const navLabel = (await getTranslations('Site.nav'))('collabs');
+  const base = siteUrl();
+  const url = `${base}/${locale}/collabs/${slug}`;
+  const jsonLd = [
+    collabJsonLd(collab, { url, locale }),
+    breadcrumbJsonLd([{ name: navLabel, url: `${base}/${locale}` }, { name: collab.title }]),
+  ];
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <JsonLd data={jsonLd} />
       {/* 가운데 한 열: 머리 → 핵심 정보 → 내용 → 출처 → 다음에 볼 것 */}
       <div className="ct-article">
-        <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: (await getTranslations('Site.nav'))('collabs') }, { label: collab.title }]} />
+        <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: navLabel }, { label: collab.title }]} />
         <article>
           <Flex direction="column" gap="7">
               <header>

@@ -5,10 +5,13 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CountList, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
+import { JsonLd } from '@/components/site/JsonLd';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatMonth, originalName } from '@/lib/format';
-import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
+import { breadcrumbJsonLd, companyJsonLd } from '@/lib/jsonld';
+import { alternatesFor, openGraphFor } from '@/lib/seo';
+import { siteUrl } from '@/lib/site';
 
 type Props = PageProps<'/[locale]/companies/[slug]'>;
 
@@ -32,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: c.name.value,
     description,
     alternates: alternatesFor(locale, path),
-    openGraph: openGraphFor({ locale, path, siteName: tSite('name'), title: c.name.value, description, images: [defaultOgImage(locale)] }),
+    openGraph: openGraphFor({ locale, path, siteName: tSite('name'), title: c.name.value, description }),
   };
 }
 
@@ -45,8 +48,16 @@ export default async function CompanyPage({ params }: Props) {
   const [t, tp, tRole] = await Promise.all([getTranslations('Company'), getTranslations('Property'), getTranslations('Role')]);
   const regionName = c.country ? new Intl.DisplayNames([locale], { type: 'region' }).of(c.country) : null;
 
+  const base = siteUrl();
+  const url = `${base}/${locale}/companies/${c.slug}`;
+  const jsonLd = [
+    companyJsonLd(c, { url }),
+    breadcrumbJsonLd([{ name: (await getTranslations('Site.nav'))('collabs'), url: `${base}/${locale}` }, { name: c.name.value }]),
+  ];
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <Flex wrap="wrap" gap="6" align="end" justify="between" pb="6" mb="6" style={{ borderBottom: '1px solid var(--ct-line)' }}>
         <Flex direction="column" gap="2" style={{ minWidth: 0 }}>
           <Breadcrumb label={t('breadcrumb')} items={[{ label: t('breadcrumb') }, { label: c.name.value }]} />

@@ -215,3 +215,19 @@ describe('관리자 변환', () => {
     expect(q.items[0]).toMatchObject({ duplicateCandidate: true, origin: 'gpt', sourceCount: 1 });
   });
 });
+
+describe('toSitemap', () => {
+  it('작품·회사 updatedAt은 있을 때만 넘기고, 콜라보 updatedAt이 없으면 epoch로 둔다', () => {
+    expect(
+      A.toSitemap({
+        collabs: [{ slug: 'c', updatedAt: null }],
+        properties: [{ slug: 'p', updatedAt: '2026-10-01T00:00:00.000Z' }, { slug: 'q' }],
+        companies: [{ slug: 'k', updatedAt: null }],
+      }),
+    ).toEqual({
+      collabs: [{ slug: 'c', updatedAt: '1970-01-01T00:00:00.000Z' }],
+      properties: [{ slug: 'p', updatedAt: '2026-10-01T00:00:00.000Z' }, { slug: 'q' }],
+      companies: [{ slug: 'k' }],
+    });
+  });
+});

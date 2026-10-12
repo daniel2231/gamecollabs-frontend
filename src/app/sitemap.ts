@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...entries(''),
     ...data.collabs.flatMap((c) => entries(`/collabs/${c.slug}`, c.updatedAt)),
-    ...data.properties.flatMap((p) => entries(`/properties/${p.slug}`)),
-    ...data.companies.flatMap((c) => entries(`/companies/${c.slug}`)),
+    ...data.properties.flatMap((p) => entries(`/properties/${p.slug}`, p.updatedAt)),
+    ...data.companies.flatMap((c) => entries(`/companies/${c.slug}`, c.updatedAt)),
   ];
 }

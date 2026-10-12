@@ -352,11 +352,14 @@ export function toStats(s: { total: number; byPhase: Stats['byPhase'] }): Stats 
   return { published: s.total, byPhase: s.byPhase };
 }
 
-export function toSitemap(s: { collabs: { slug: string; updatedAt: string | null }[]; properties: { slug: string }[]; companies: { slug: string }[] }): SitemapData {
+type BeSitemapEntity = { slug: string; updatedAt?: string | null };
+const sitemapEntity = (e: BeSitemapEntity) => (e.updatedAt ? { slug: e.slug, updatedAt: e.updatedAt } : { slug: e.slug });
+
+export function toSitemap(s: { collabs: { slug: string; updatedAt: string | null }[]; properties: BeSitemapEntity[]; companies: BeSitemapEntity[] }): SitemapData {
   return {
     collabs: s.collabs.map((c) => ({ slug: c.slug, updatedAt: c.updatedAt ?? new Date(0).toISOString() })),
-    properties: s.properties,
-    companies: s.companies,
+    properties: s.properties.map(sitemapEntity),
+    companies: s.companies.map(sitemapEntity),
   };
 }
 

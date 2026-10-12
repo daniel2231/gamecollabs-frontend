@@ -6,13 +6,16 @@ import { CollabCard } from '@/components/collab/CollabCard';
 import { FilterPanel } from '@/components/collab/FilterPanel';
 import { SortSelect } from '@/components/collab/SortSelect';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
+import { JsonLd } from '@/components/site/JsonLd';
 import { LinkPending } from '@/components/site/Pending';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { groupByStartMonth } from '@/lib/format';
 import { hasActiveFilters, parseCollabQuery, serializeCollabQuery } from '@/lib/filters';
+import { websiteJsonLd } from '@/lib/jsonld';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
+import { siteUrl } from '@/lib/site';
 import { buildTree, labelMap } from '@/lib/taxonomy';
 import { FACET_PARAMS, type CollabQuery } from '@/schema';
 
@@ -49,9 +52,10 @@ export default async function CollabListPage({ params, searchParams }: PageProps
   setRequestLocale(locale);
   const query = parseCollabQuery(await searchParams);
 
-  const [t, tPhase, terms, list, stats] = await Promise.all([
+  const [t, tPhase, tSite, terms, list, stats] = await Promise.all([
     getTranslations('List'),
     getTranslations('Phase'),
+    getTranslations('Site'),
     api.getTaxonomies(),
     api.listCollabs(query, locale),
     api.getStats(),
@@ -82,6 +86,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   return (
     <>
+      <JsonLd data={websiteJsonLd({ name: tSite('name'), description: tSite('description'), url: `${siteUrl()}/${locale}`, locale })} />
       <Flex wrap="wrap" align="center" justify="between" gap="4" mb="5">
         <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }}>
           {t('title')}
