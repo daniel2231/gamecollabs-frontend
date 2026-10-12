@@ -129,6 +129,7 @@
   },
   "Property": {
     "breadcrumb": "작품",
+    "metaDescription": "{name}({kind})의 게임 × IP 콜라보 {count}건. 함께한 작품, 시기, 유형을 공개 출처를 바탕으로 정리했습니다.",
     "aliases": "별칭",
     "stats": {
       "collabs": "발행 콜라보",
@@ -152,6 +153,7 @@
   },
   "Company": {
     "breadcrumb": "회사",
+    "metaDescription": "{name} 참여 게임 × IP 콜라보 {count}건. 회사의 역할과 관련 작품을 공개 출처를 바탕으로 정리했습니다.",
     "country": "국가",
     "stats": {
       "collabs": "참여 콜라보",

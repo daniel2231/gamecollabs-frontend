@@ -12,17 +12,32 @@ import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { groupByStartMonth } from '@/lib/format';
 import { hasActiveFilters, parseCollabQuery, serializeCollabQuery } from '@/lib/filters';
+import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { buildTree, labelMap } from '@/lib/taxonomy';
 import { FACET_PARAMS, type CollabQuery } from '@/schema';
 
 const PHASE_TABS = [undefined, 'ongoing', 'upcoming', 'ended'] as const;
 
 export async function generateMetadata({ params, searchParams }: PageProps<'/[locale]'>): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale: locale as Locale, namespace: 'List' });
+  const locale = (await params).locale as Locale;
+  const [t, tSite] = await Promise.all([
+    getTranslations({ locale, namespace: 'List' }),
+    getTranslations({ locale, namespace: 'Site' }),
+  ]);
   const query = parseCollabQuery(await searchParams);
+  const title = `${t('title')} · ${tSite('name')}`;
   return {
-    title: { absolute: `${t('title')} · ${(await getTranslations({ locale: locale as Locale, namespace: 'Site' }))('name')}` },
+    title: { absolute: title },
+    // 필터·정렬·더 보기 주소도 canonical은 필터 없는 목록
+    alternates: alternatesFor(locale, ''),
+    openGraph: openGraphFor({
+      locale,
+      path: '',
+      siteName: tSite('name'),
+      title,
+      description: tSite('description'),
+      images: [defaultOgImage(locale)],
+    }),
     // 필터 조합 페이지는 색인하지 않는다(중복 콘텐츠 방지)
     robots: hasActiveFilters(query) ? { index: false, follow: true } : undefined,
   };

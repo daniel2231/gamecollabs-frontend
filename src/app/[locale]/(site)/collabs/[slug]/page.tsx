@@ -10,6 +10,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatDate, formatPeriod } from '@/lib/format';
+import { alternatesFor, openGraphFor } from '@/lib/seo';
 import type { CollabDetail } from '@/schema';
 
 type Props = PageProps<'/[locale]/collabs/[slug]'>;
@@ -21,19 +22,27 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, slug } = await params;
-  const collab = await api.getCollab(slug, locale as Locale);
+  const { locale: rawLocale, slug } = await params;
+  const locale = rawLocale as Locale;
+  const collab = await api.getCollab(slug, locale);
   if (!collab) return {};
-  const t = await getTranslations({ locale: locale as Locale, namespace: 'Site' });
-  const description = collab.summary || t('description');
+  const t = await getTranslations({ locale, namespace: 'Site' });
+  const description = (collab.summary || t('description')).slice(0, 160);
+  const path = `/collabs/${slug}`;
   return {
     title: collab.title,
-    description: description.slice(0, 160),
-    alternates: {
-      canonical: `/${locale}/collabs/${slug}`,
-      languages: { ko: `/ko/collabs/${slug}`, en: `/en/collabs/${slug}` },
-    },
-    openGraph: { type: 'article', title: collab.title, description: description.slice(0, 160) },
+    description,
+    alternates: alternatesFor(locale, path),
+    openGraph: openGraphFor({
+      locale,
+      path,
+      siteName: t('name'),
+      type: 'article',
+      title: collab.title,
+      description,
+      ...(collab.publishedAt ? { publishedTime: collab.publishedAt } : {}),
+      modifiedTime: collab.updatedAt,
+    }),
   };
 }
 

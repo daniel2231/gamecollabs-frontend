@@ -9,6 +9,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatMonth, originalName } from '@/lib/format';
+import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 
 type Props = PageProps<'/[locale]/properties/[slug]'>;
 
@@ -18,16 +19,21 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, slug } = await params;
-  const p = await api.getProperty(slug, locale as Locale);
+  const { locale: rawLocale, slug } = await params;
+  const locale = rawLocale as Locale;
+  const p = await api.getProperty(slug, locale);
   if (!p) return {};
+  const [t, tSite] = await Promise.all([
+    getTranslations({ locale, namespace: 'Property' }),
+    getTranslations({ locale, namespace: 'Site' }),
+  ]);
+  const description = t('metaDescription', { name: p.name.value, kind: p.kind.label, count: p.stats.collabCount });
+  const path = `/properties/${slug}`;
   return {
     title: p.name.value,
-    description: `${p.name.value} — ${p.kind.label} · ${p.stats.collabCount}`,
-    alternates: {
-      canonical: `/${locale}/properties/${slug}`,
-      languages: { ko: `/ko/properties/${slug}`, en: `/en/properties/${slug}` },
-    },
+    description,
+    alternates: alternatesFor(locale, path),
+    openGraph: openGraphFor({ locale, path, siteName: tSite('name'), title: p.name.value, description, images: [defaultOgImage(locale)] }),
   };
 }
 

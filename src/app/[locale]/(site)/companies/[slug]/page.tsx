@@ -8,6 +8,7 @@ import { Breadcrumb } from '@/components/site/Breadcrumb';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatMonth, originalName } from '@/lib/format';
+import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 
 type Props = PageProps<'/[locale]/companies/[slug]'>;
 
@@ -17,15 +18,21 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, slug } = await params;
-  const c = await api.getCompany(slug, locale as Locale);
+  const { locale: rawLocale, slug } = await params;
+  const locale = rawLocale as Locale;
+  const c = await api.getCompany(slug, locale);
   if (!c) return {};
+  const [t, tSite] = await Promise.all([
+    getTranslations({ locale, namespace: 'Company' }),
+    getTranslations({ locale, namespace: 'Site' }),
+  ]);
+  const description = t('metaDescription', { name: c.name.value, count: c.stats.collabCount });
+  const path = `/companies/${slug}`;
   return {
     title: c.name.value,
-    alternates: {
-      canonical: `/${locale}/companies/${slug}`,
-      languages: { ko: `/ko/companies/${slug}`, en: `/en/companies/${slug}` },
-    },
+    description,
+    alternates: alternatesFor(locale, path),
+    openGraph: openGraphFor({ locale, path, siteName: tSite('name'), title: c.name.value, description, images: [defaultOgImage(locale)] }),
   };
 }
 
