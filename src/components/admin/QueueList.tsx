@@ -104,6 +104,11 @@ export function QueueList({ items, nextCursor, filter, query, selectedId, emptyM
       </ul>
       {(next || error) && (
         <Flex direction="column" align="center" gap="2" p="4">
+          {all.length === 0 && next && (
+            <Text size="2" color="gray" align="center">
+              불러온 범위에서는 아직 찾지 못했습니다. 더 보기로 이어서 찾을 수 있습니다.
+            </Text>
+          )}
           {error && (
             <Text size="1" color="red" role="alert">
               {error}
@@ -111,7 +116,7 @@ export function QueueList({ items, nextCursor, filter, query, selectedId, emptyM
           )}
           {next && (
             <Button variant="soft" color="gray" size="2" onClick={loadMore} loading={loading} style={{ width: '100%' }}>
-              더 보기 ({all.length}건 표시 중)
+              {all.length ? `더 보기 (${all.length}건 표시 중)` : '더 찾아보기'}
             </Button>
           )}
         </Flex>

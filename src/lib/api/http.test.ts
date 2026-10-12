@@ -47,3 +47,61 @@ describe('커버 업로드(HTTP)', () => {
     expect(err).toMatchObject({ status: 501, code: 'media_upload_unavailable' });
   });
 });
+
+describe('검수 큐: 커버 없음 필터를 백엔드가 모를 때', () => {
+  const item = (id: string, hasCover: boolean) => ({
+    id,
+    slug: id,
+    status: 'published',
+    rev: 1,
+    i18n: { ko: { title: id, summary: 's', note: null }, en: { title: id, summary: 's', note: null } },
+    parties: [],
+    companies: [],
+    category: null,
+    regions: [],
+    platforms: [],
+    collabTypes: [],
+    period: { start: null, end: null, precision: 'unknown', endKind: 'tba' },
+    sources: [],
+    origin: { type: 'manual', runId: null, model: null, confidence: null, unmapped: null },
+    cover: hasCover ? { storageKey: `covers/${id}.webp`, originalUrl: null, credit: null, alt: null, width: 1, height: 1 } : null,
+    createdAt: '2026-10-01T00:00:00.000Z',
+    updatedAt: '2026-10-01T00:00:00.000Z',
+  });
+  const counts = { draft: 0, in_review: 0, published: 250, archived: 0 };
+  // 백엔드는 cover 파라미터를 무시하고 페이지마다 100건씩 준다
+  const pages: Record<string, { data: unknown[]; next: string | null }> = {
+    first: { data: Array.from({ length: 100 }, (_, i) => item(`a${i}`, true)), next: 'p2' },
+    p2: { data: [...Array.from({ length: 98 }, (_, i) => item(`b${i}`, true)), item('nc1', false), item('nc2', false)], next: 'p3' },
+    p3: { data: [item('nc3', false)], next: null },
+  };
+
+  beforeEach(() => {
+    vi.stubEnv('API_BASE_URL', 'https://api.example.com');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const p = pages[new URL(url).searchParams.get('cursor') ?? 'first']!;
+        return json(200, { data: p.data, meta: { counts, nextCursor: p.next } });
+      }),
+    );
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it('첫 페이지에 없으면 다음 페이지를 이어서 읽어 모은다', async () => {
+    const q = await createHttpAdminApi('t').listQueue({ status: 'published', cover: 'missing' });
+    expect(q.items.map((i) => i.id)).toEqual(['nc1', 'nc2', 'nc3']);
+    expect(q.nextCursor).toBeNull();
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(3);
+  });
+
+  it('필터가 없으면 한 페이지만 읽는다', async () => {
+    const q = await createHttpAdminApi('t').listQueue({ status: 'published' });
+    expect(q.items).toHaveLength(100);
+    expect(q.nextCursor).toBe('p2');
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
+  });
+});

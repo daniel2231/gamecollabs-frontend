@@ -141,6 +141,10 @@ export const httpPublicApi: PublicApi = {
   getSitemap: async () => A.toSitemap(await data<Parameters<typeof A.toSitemap>[0]>('/v1/sitemap', { tags: ['collabs'] })),
 };
 
+/** 커버 없음 필터를 프론트에서 거를 때: 이만큼 모이거나 이 페이지 수(100건씩)에 닿을 때까지 읽는다 */
+const COVER_FILTER_MIN = 30;
+const COVER_FILTER_MAX_PAGES = 10;
+
 /** 커버 이미지 주소의 기준(백엔드와 같은 값) */
 const mediaBase = () => process.env.MEDIA_BASE_URL?.trim() || null;
 
@@ -158,16 +162,24 @@ export function createHttpAdminApi(token: string): AdminApi {
 
   return {
     listQueue: async (filter) => {
-      const body = await envelope<
-        A.BeAdminCollab[],
-        { counts: Record<'draft' | 'in_review' | 'published' | 'archived', number>; nextCursor?: string | null }
-      >(
-        `/v1/admin/collabs?${A.queueParams(filter)}`,
-        o(),
-      );
-      if (!body?.meta) throw new ApiError(502, 'bad_response');
-      const queue = A.toQueue(body.data, body.meta.counts, filter, body.meta.nextCursor ?? null);
-      return { ...queue, items: z.array(adminQueueItemSchema).parse(queue.items) };
+      type Meta = { counts: Record<'draft' | 'in_review' | 'published' | 'archived', number>; nextCursor?: string | null };
+      const page = async (cursor?: string) => {
+        const body = await envelope<A.BeAdminCollab[], Meta>(`/v1/admin/collabs?${A.queueParams({ ...filter, cursor })}`, o());
+        if (!body?.meta) throw new ApiError(502, 'bad_response');
+        return A.toQueue(body.data, body.meta.counts, filter, body.meta.nextCursor ?? null);
+      };
+      const first = await page(filter.cursor);
+      const items = [...first.items];
+      let nextCursor = first.nextCursor;
+      // “커버 없음만”은 백엔드가 아직 거르지 않으면 받은 페이지 안에서만 걸러진다. 그러면 첫 100건에
+      // 해당 항목이 없을 때 빈 목록이 되므로, 어느 정도 모일 때까지 다음 페이지를 이어서 읽는다.
+      // 백엔드가 거르게 되면 첫 페이지에서 충분히 차서 추가로 읽지 않는다.
+      for (let pages = 1; filter.cover === 'missing' && nextCursor && items.length < COVER_FILTER_MIN && pages < COVER_FILTER_MAX_PAGES; pages++) {
+        const more = await page(nextCursor);
+        items.push(...more.items);
+        nextCursor = more.nextCursor;
+      }
+      return { ...first, items: z.array(adminQueueItemSchema).parse(items), nextCursor };
     },
     getCollab: async (id) => {
       const body = await envelope<A.BeAdminCollab>(`/v1/admin/collabs/${id}`, o({ nullOn404: true }));
