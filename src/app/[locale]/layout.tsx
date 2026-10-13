@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-import { verificationFromEnv } from '@/lib/seo';
+import { siteVerification } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Pr
     alternates: { types: { 'application/rss+xml': `/${locale}/rss.xml` } },
     openGraph: { siteName: t('name'), locale: locale === 'ko' ? 'ko_KR' : 'en_US', type: 'website' },
     twitter: { card: 'summary_large_image' },
-    verification: verificationFromEnv(),
+    verification: siteVerification(),
   };
 }
 

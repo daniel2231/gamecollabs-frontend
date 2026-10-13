@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { alternatesFor, defaultOgImage, languageAlternates, openGraphFor, verificationFromEnv } from './seo';
+import { alternatesFor, defaultOgImage, languageAlternates, openGraphFor, siteVerification } from './seo';
 
 describe('languageAlternates', () => {
   it('언어별 주소와 x-default(ko)를 만든다', () => {
@@ -40,16 +40,20 @@ describe('defaultOgImage', () => {
   });
 });
 
-describe('verificationFromEnv', () => {
-  it('값이 하나도 없으면 undefined', () => {
-    expect(verificationFromEnv({})).toBeUndefined();
+describe('siteVerification', () => {
+  it('기본값으로 네이버·Bing 태그를 내보내고, 구글은 DNS로 확인하므로 넣지 않는다', () => {
+    expect(siteVerification({})).toEqual({
+      other: {
+        'naver-site-verification': '2b4e141d453ae14f742454abbd865feb25672b8d',
+        'msvalidate.01': '442FC2131C37B6876E5B9C499116854B',
+      },
+    });
   });
 
-  it('있는 값만 넣는다', () => {
-    expect(verificationFromEnv({ GOOGLE_SITE_VERIFICATION: 'g', NAVER_SITE_VERIFICATION: 'n' })).toEqual({
+  it('환경 변수가 있으면 그 값을 쓴다', () => {
+    expect(siteVerification({ GOOGLE_SITE_VERIFICATION: 'g', NAVER_SITE_VERIFICATION: 'n', BING_SITE_VERIFICATION: '' })).toEqual({
       google: 'g',
-      other: { 'naver-site-verification': 'n' },
+      other: { 'naver-site-verification': 'n', 'msvalidate.01': '442FC2131C37B6876E5B9C499116854B' },
     });
-    expect(verificationFromEnv({ BING_SITE_VERIFICATION: 'b' })).toEqual({ other: { 'msvalidate.01': 'b' } });
   });
 });
