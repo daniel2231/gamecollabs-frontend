@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
+import { verificationFromEnv } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -19,18 +20,18 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale: hasLocale(routing.locales, locale) ? locale : 'ko', namespace: 'Site' });
+  const { locale: rawLocale } = await params;
+  const locale = hasLocale(routing.locales, rawLocale) ? rawLocale : routing.defaultLocale;
+  const t = await getTranslations({ locale, namespace: 'Site' });
   return {
     metadataBase: new URL(siteUrl()),
     title: { default: t('name'), template: `%s · ${t('name')}` },
     description: t('description'),
-    alternates: {
-      canonical: `/${locale}`,
-      languages: { ko: '/ko', en: '/en' },
-      types: { 'application/rss+xml': `/${locale}/rss.xml` },
-    },
+    // canonical·hreflang은 각 페이지가 정한다. 여기에 두면 404·에러 페이지가 홈을 canonical로 물려받는다
+    alternates: { types: { 'application/rss+xml': `/${locale}/rss.xml` } },
     openGraph: { siteName: t('name'), locale: locale === 'ko' ? 'ko_KR' : 'en_US', type: 'website' },
+    twitter: { card: 'summary_large_image' },
+    verification: verificationFromEnv(),
   };
 }
 

@@ -1,7 +1,9 @@
 import { revalidateTag } from 'next/cache';
 import { timingSafeEqual } from 'node:crypto';
-import { NextResponse, type NextRequest } from 'next/server';
+import { after, NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
+import { indexNowKey, submitIndexNow, urlsForTags } from '@/lib/indexnow';
+import { siteUrl } from '@/lib/site';
 
 /** Express가 발행·수정 후 호출: { "tags": ["collabs", "collab:<slug>", "property:<slug>"] } */
 const bodySchema = z.object({
@@ -25,5 +27,11 @@ export async function POST(req: NextRequest) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { code: 'validation_failed' } }, { status: 422 });
   for (const tag of parsed.data.tags) revalidateTag(tag, 'max');
+  // sitemap은 'collabs' 태그로 읽으므로 위에서 함께 갱신된다. 검색엔진에는 응답을 보낸 뒤 알린다
+  const key = indexNowKey();
+  if (key) {
+    const base = siteUrl();
+    after(() => submitIndexNow(urlsForTags(parsed.data.tags, base), { key, base }));
+  }
   return NextResponse.json({ revalidated: parsed.data.tags });
 }

@@ -6,11 +6,16 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
+import { JsonLd } from '@/components/site/JsonLd';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatDate, formatPeriod } from '@/lib/format';
-import type { CollabDetail } from '@/schema';
+import { breadcrumbJsonLd, collabJsonLd } from '@/lib/jsonld';
+import { landingPath } from '@/lib/landing';
+import { alternatesFor, openGraphFor } from '@/lib/seo';
+import { siteUrl } from '@/lib/site';
+import type { CollabDetail, FacetParam, TermRef } from '@/schema';
 
 type Props = PageProps<'/[locale]/collabs/[slug]'>;
 
@@ -21,19 +26,27 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, slug } = await params;
-  const collab = await api.getCollab(slug, locale as Locale);
+  const { locale: rawLocale, slug } = await params;
+  const locale = rawLocale as Locale;
+  const collab = await api.getCollab(slug, locale);
   if (!collab) return {};
-  const t = await getTranslations({ locale: locale as Locale, namespace: 'Site' });
-  const description = collab.summary || t('description');
+  const t = await getTranslations({ locale, namespace: 'Site' });
+  const description = (collab.summary || t('description')).slice(0, 160);
+  const path = `/collabs/${slug}`;
   return {
     title: collab.title,
-    description: description.slice(0, 160),
-    alternates: {
-      canonical: `/${locale}/collabs/${slug}`,
-      languages: { ko: `/ko/collabs/${slug}`, en: `/en/collabs/${slug}` },
-    },
-    openGraph: { type: 'article', title: collab.title, description: description.slice(0, 160) },
+    description,
+    alternates: alternatesFor(locale, path),
+    openGraph: openGraphFor({
+      locale,
+      path,
+      siteName: t('name'),
+      type: 'article',
+      title: collab.title,
+      description,
+      ...(collab.publishedAt ? { publishedTime: collab.publishedAt } : {}),
+      modifiedTime: collab.updatedAt,
+    }),
   };
 }
 
@@ -58,23 +71,20 @@ export default async function CollabDetailPage({ params }: Props) {
       : collab.period.endKind === 'tba' || !collab.period.end
         ? tPeriod('tba')
         : formatDate(collab.period.end, collab.period.precision);
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: collab.title,
-    ...(collab.period.start && collab.period.precision !== 'unknown' ? { startDate: collab.period.start } : {}),
-    ...(collab.period.endKind === 'fixed' && collab.period.end ? { endDate: collab.period.end } : {}),
-    ...(collab.summary ? { description: collab.summary } : {}),
-    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
-    organizer: collab.companies.map((c) => ({ '@type': 'Organization', name: c.name.value })),
-  };
+  const navLabel = (await getTranslations('Site.nav'))('collabs');
+  const base = siteUrl();
+  const url = `${base}/${locale}/collabs/${slug}`;
+  const jsonLd = [
+    collabJsonLd(collab, { url, locale }),
+    breadcrumbJsonLd([{ name: navLabel, url: `${base}/${locale}` }, { name: collab.title }]),
+  ];
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <JsonLd data={jsonLd} />
       {/* 가운데 한 열: 머리 → 핵심 정보 → 내용 → 출처 → 다음에 볼 것 */}
       <div className="ct-article">
-        <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: (await getTranslations('Site.nav'))('collabs') }, { label: collab.title }]} />
+        <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: navLabel }, { label: collab.title }]} />
         <article>
           <Flex direction="column" gap="7">
               <header>
@@ -169,13 +179,44 @@ export default async function CollabDetailPage({ params }: Props) {
                 )}
               </Section>
 
+              {collab.venues.length > 0 && (
+                <Section title={t('venues')}>
+                  <Card size="1" style={{ padding: 0 }}>
+                    {collab.venues.map((v, i) => (
+                      <Flex
+                        key={`${v.name}-${i}`}
+                        direction="column"
+                        gap="1"
+                        px="4"
+                        py="3"
+                        style={i ? { borderTop: '1px solid var(--ct-line-soft)' } : undefined}
+                      >
+                        {v.url ? (
+                          <RadixLink href={v.url} target="_blank" rel="noopener noreferrer" weight="medium" highContrast underline="hover">
+                            {v.name} ↗
+                          </RadixLink>
+                        ) : (
+                          <Text weight="medium">{v.name}</Text>
+                        )}
+                        {/* 주소는 공식 표기(현지어) 그대로 둔다 */}
+                        {v.address && (
+                          <Text size="2" color="gray" translate="no">
+                            {v.address}
+                          </Text>
+                        )}
+                      </Flex>
+                    ))}
+                  </Card>
+                </Section>
+              )}
+
               <Section title={t('classification')}>
                 <dl className="ct-facts">
-                  <Fact label={t('labels.category')} values={collab.category ? [collab.category.label] : []} none={t('none')} />
-                  <Fact label={t('labels.partner')} values={partner ? [partner.kind.label] : []} none={t('none')} />
-                  <Fact label={t('labels.region')} values={collab.regions.map((r) => r.label)} none={t('none')} />
-                  <Fact label={t('labels.platform')} values={collab.platforms.map((r) => r.label)} none={t('none')} />
-                  <Fact label={t('labels.type')} values={collab.collabTypes.map((r) => r.label)} none={t('none')} />
+                  <Fact label={t('labels.category')} param="category" terms={collab.category ? [collab.category] : []} none={t('none')} />
+                  <Fact label={t('labels.partner')} param="partner_category" terms={partner ? [partner.kind] : []} none={t('none')} />
+                  <Fact label={t('labels.region')} param="region" terms={collab.regions} none={t('none')} />
+                  <Fact label={t('labels.platform')} param="platform" terms={collab.platforms} none={t('none')} />
+                  <Fact label={t('labels.type')} param="collab_type" terms={collab.collabTypes} none={t('none')} />
                 </dl>
               </Section>
 
@@ -270,8 +311,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-/** 분류 한 줄: 왼쪽 라벨, 오른쪽 값(여러 개면 배지로 나열) */
-function Fact({ label, values, none }: { label: string; values: string[]; none: string }) {
+/** 분류 한 줄: 왼쪽 라벨, 오른쪽 값(여러 개면 배지로 나열). 값은 그 분류의 목록(랜딩 페이지)으로 연결한다 */
+function Fact({ label, param, terms, none }: { label: string; param: FacetParam; terms: TermRef[]; none: string }) {
   return (
     <div>
       <dt>
@@ -280,15 +321,15 @@ function Fact({ label, values, none }: { label: string; values: string[]; none: 
         </Text>
       </dt>
       <dd>
-        {values.length === 0 ? (
+        {terms.length === 0 ? (
           <Text size="2" color="gray">
             {none}
           </Text>
         ) : (
           <Flex wrap="wrap" gap="1">
-            {values.map((v) => (
-              <Badge key={v} variant="soft" color="gray" size="2" highContrast>
-                {v}
+            {terms.map((term) => (
+              <Badge key={term.key} asChild variant="soft" color="gray" size="2" highContrast>
+                <Link href={`/${landingPath({ param, key: term.key })}`}>{term.label}</Link>
               </Badge>
             ))}
           </Flex>

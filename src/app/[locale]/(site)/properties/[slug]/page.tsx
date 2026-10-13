@@ -5,10 +5,14 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CountList, Distribution, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
+import { JsonLd } from '@/components/site/JsonLd';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatMonth, originalName } from '@/lib/format';
+import { breadcrumbJsonLd, propertyJsonLd } from '@/lib/jsonld';
+import { alternatesFor, openGraphFor } from '@/lib/seo';
+import { siteUrl } from '@/lib/site';
 
 type Props = PageProps<'/[locale]/properties/[slug]'>;
 
@@ -18,16 +22,21 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, slug } = await params;
-  const p = await api.getProperty(slug, locale as Locale);
+  const { locale: rawLocale, slug } = await params;
+  const locale = rawLocale as Locale;
+  const p = await api.getProperty(slug, locale);
   if (!p) return {};
+  const [t, tSite] = await Promise.all([
+    getTranslations({ locale, namespace: 'Property' }),
+    getTranslations({ locale, namespace: 'Site' }),
+  ]);
+  const description = t('metaDescription', { name: p.name.value, kind: p.kind.label, count: p.stats.collabCount });
+  const path = `/properties/${slug}`;
   return {
     title: p.name.value,
-    description: `${p.name.value} — ${p.kind.label} · ${p.stats.collabCount}`,
-    alternates: {
-      canonical: `/${locale}/properties/${slug}`,
-      languages: { ko: `/ko/properties/${slug}`, en: `/en/properties/${slug}` },
-    },
+    description,
+    alternates: alternatesFor(locale, path),
+    openGraph: openGraphFor({ locale, path, siteName: tSite('name'), title: p.name.value, description }),
   };
 }
 
@@ -44,8 +53,16 @@ export default async function PropertyPage({ params }: Props) {
     return { ...c, heading: other?.name.value ?? c.title };
   });
 
+  const base = siteUrl();
+  const url = `${base}/${locale}/properties/${p.slug}`;
+  const jsonLd = [
+    propertyJsonLd(p, { url }),
+    breadcrumbJsonLd([{ name: (await getTranslations('Site.nav'))('collabs'), url: `${base}/${locale}` }, { name: p.name.value }]),
+  ];
+
   return (
     <>
+      <JsonLd data={jsonLd} />
       <Flex wrap="wrap" gap="6" align="end" justify="between" pb="6" mb="6" style={{ borderBottom: '1px solid var(--ct-line)' }}>
         <Flex direction="column" gap="2" style={{ minWidth: 0 }}>
           <Breadcrumb label={t('breadcrumb')} items={[{ label: t('breadcrumb') }, { label: p.kind.label }]} />

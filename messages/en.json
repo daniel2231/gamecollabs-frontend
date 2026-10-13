@@ -1,5 +1,6 @@
 {
   "Site": {
+    "collabCount": "{count, plural, one {# collab} other {# collabs}}",
     "loading": "Loading…",
     "name": "Collab Tracker",
     "description": "A manually reviewed record of game × IP collaborations, built from public sources. Find which IPs worked with which games, and how.",
@@ -34,6 +35,19 @@
   },
   "List": {
     "title": "Game × IP Collabs",
+    "landing": {
+      "phase": {
+        "ongoing": "Ongoing game × IP collabs",
+        "upcoming": "Upcoming game × IP collabs",
+        "ended": "Past game × IP collabs"
+      },
+      "category": "{label} collabs",
+      "partner_category": "{label} × game collabs",
+      "region": "{label} game collabs",
+      "platform": "{label} game collabs",
+      "collab_type": "{label} collabs"
+    },
+    "landingDescription": "{title}: {count, plural, one {# record} other {# records}} compiled from public sources and reviewed by hand, sorted by start date.",
     "copyLink": "Copy filter link",
     "copied": "Copied",
     "phaseTabs": "Status",
@@ -89,6 +103,7 @@
     "end": "End",
     "status": "Status",
     "summary": "Summary",
+    "venues": "Venues",
     "summaryEmpty": "No summary yet.",
     "parties": "Properties involved",
     "seeAll": "See all collabs →",
@@ -130,6 +145,7 @@
   },
   "Property": {
     "breadcrumb": "Properties",
+    "metaDescription": "{count, plural, =0 {Game × IP collabs} one {# game × IP collab} other {# game × IP collabs}} involving {name} ({kind}): partners, dates and collab types, compiled from public sources.",
     "aliases": "Also known as",
     "stats": {
       "collabs": "Published collabs",
@@ -153,6 +169,7 @@
   },
   "Company": {
     "breadcrumb": "Companies",
+    "metaDescription": "{count, plural, =0 {Game × IP collabs} one {# game × IP collab} other {# game × IP collabs}} involving {name}: the company's roles and related properties, compiled from public sources.",
     "country": "Country",
     "stats": {
       "collabs": "Collabs",

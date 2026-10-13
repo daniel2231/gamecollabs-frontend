@@ -215,3 +215,48 @@ describe('관리자 변환', () => {
     expect(q.items[0]).toMatchObject({ duplicateCandidate: true, origin: 'gpt', sourceCount: 1 });
   });
 });
+
+describe('toSitemap', () => {
+  it('작품·회사 updatedAt은 있을 때만 넘기고, 콜라보 updatedAt이 없으면 epoch로 둔다', () => {
+    expect(
+      A.toSitemap({
+        collabs: [{ slug: 'c', updatedAt: null }],
+        properties: [{ slug: 'p', updatedAt: '2026-10-01T00:00:00.000Z' }, { slug: 'q' }],
+        companies: [{ slug: 'k', updatedAt: null }],
+      }),
+    ).toEqual({
+      collabs: [{ slug: 'c', updatedAt: '1970-01-01T00:00:00.000Z' }],
+      properties: [{ slug: 'p', updatedAt: '2026-10-01T00:00:00.000Z' }, { slug: 'q' }],
+      companies: [{ slug: 'k' }],
+    });
+  });
+});
+
+describe('venues', () => {
+  it('공개 상세: 이름 없는 장소는 버리고, 장소가 없으면 빈 배열', () => {
+    const base = { ...card, summary: '', note: null, companies: [], sources: [], related: [], updatedAt: null } as A.BeDetail;
+    expect(A.toDetail(base).venues).toEqual([]);
+    expect(
+      A.toDetail({ ...base, venues: [{ name: '시부야점', address: '東京都渋谷区', url: null }, { name: null, address: null, url: null }] }).venues,
+    ).toEqual([{ name: '시부야점', address: '東京都渋谷区', url: null }]);
+  });
+
+  it('관리자 저장: venues를 정했을 때만 본문에 넣는다', () => {
+    const input = {
+      slug: 'a',
+      i18n: { ko: { title: 't', summary: 's', note: '' }, en: { title: 't', summary: 's', note: '' } },
+      parties: [],
+      companies: [],
+      category: null,
+      regions: [],
+      platforms: [],
+      collabTypes: [],
+      period: { start: null, end: null, precision: 'unknown', endKind: 'tba' },
+      sources: [],
+    } satisfies CollabInput;
+    expect(A.toCollabBody(input)).not.toHaveProperty('venues');
+    const venues = [{ name: { ko: '시부야점', en: 'Shibuya' }, address: null, url: 'https://shop.test' }];
+    expect(A.toCollabBody({ ...input, venues }).venues).toEqual(venues);
+    expect(A.toCollabBody({ ...input, venues: [] }).venues).toEqual([]);
+  });
+});
