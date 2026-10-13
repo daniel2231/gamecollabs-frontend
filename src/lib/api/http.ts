@@ -7,6 +7,7 @@ import {
   collabDetailSchema,
   collabListResponseSchema,
   companyDetailSchema,
+  followUpItemSchema,
   matchResponseSchema,
   propertyDetailSchema,
   statsSchema,
@@ -82,6 +83,7 @@ const backendErrorSchema = z.object({
 
 const ERROR_MESSAGES: Record<string, string> = {
   rev_conflict: '다른 사람이 먼저 수정했습니다. 새로고침 후 다시 시도하세요.',
+  proposal_pending: '이 콜라보에는 처리하지 않은 재확인 제안이 있습니다.',
   precondition_failed: '다른 사람이 먼저 수정했습니다. 새로고침 후 다시 시도하세요.',
   invalid_transition: '현재 상태에서는 할 수 없는 작업입니다.',
 };
@@ -233,6 +235,25 @@ export function createHttpAdminApi(token: string): AdminApi {
       );
       return { result: res.result, collab: await full(res.collab) };
     },
+    listFollowUps: async (view, limit = 50) => {
+      try {
+        const rows = await data<A.BeFollowUpRow[]>(`/v1/admin/followups?${new URLSearchParams({ view, limit: String(limit) })}`, o());
+        return z.array(followUpItemSchema).parse(rows.map(A.toFollowUpItem));
+      } catch (e) {
+        // 백엔드에 아직 후속 확인 기능이 없을 때
+        if (e instanceof ApiError && e.status === 404) {
+          throw new ApiError(501, 'followups_unavailable', '백엔드에 후속 확인 API(GET /v1/admin/followups)가 아직 없습니다. 백엔드 배포 후 다시 시도하세요.');
+        }
+        throw e;
+      }
+    },
+    resolveFollowUp: async (id, action, rev) =>
+      full(
+        await data<A.BeAdminCollab>(`/v1/admin/collabs/${id}/followup`, {
+          ...o({ method: 'POST', body: { action } }),
+          ...(rev ? { headers: { 'If-Match': String(rev) } } : {}),
+        }),
+      ),
     uploadMedia: async (file) => {
       const form = new FormData();
       form.set('file', file, file.name);

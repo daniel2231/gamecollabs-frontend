@@ -9,6 +9,8 @@ import type {
   CollabStatus,
   CompanyDetail,
   EntityKind,
+  FollowUpItem,
+  FollowUpView,
   Locale,
   MatchResponse,
   OriginType,
@@ -85,6 +87,13 @@ export interface AdminApi {
   uploadMedia(file: File, size: { width: number; height: number }): Promise<UploadedMedia>;
   /** 커버의 원본 주소(originalUrl)를 저장소로 복사: POST /v1/admin/collabs/:id/cover/mirror (rev는 바뀌지 않는다) */
   mirrorCover(id: string): Promise<{ result: 'mirrored' | 'skipped' | 'failed'; collab: AdminCollab }>;
+  /** 후속 확인 큐: GET /v1/admin/followups?view= (제안·알림·확인 예정, 최대 50건) */
+  listFollowUps(view: FollowUpView, limit?: number): Promise<FollowUpItem[]>;
+  /**
+   * 재확인 제안 처리: POST /v1/admin/collabs/:id/followup.
+   * apply는 일반 수정과 같아서 현재 rev가 필요하다(If-Match). dismiss는 rev를 쓰지 않는다.
+   */
+  resolveFollowUp(id: string, action: 'apply' | 'dismiss', rev?: number): Promise<AdminCollab>;
 }
 
 export class ApiError extends Error {

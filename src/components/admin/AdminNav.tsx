@@ -20,7 +20,8 @@ const DATA_LINKS = [
   { href: '/admin/taxonomy', label: '분류 어휘' },
 ] as const;
 
-export function AdminNav({ counts }: { counts: Counts }) {
+/** followUps: 처리할 재확인 제안 수(백엔드가 기능을 모르면 null) */
+export function AdminNav({ counts, followUps }: { counts: Counts; followUps: number | null }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const current = pathname === '/admin' ? (params.get('status') ?? 'review') : null;
@@ -38,6 +39,15 @@ export function AdminNav({ counts }: { counts: Counts }) {
           </span>
         </Link>
       ))}
+      <Link href="/admin/followups" aria-current={pathname.startsWith('/admin/followups') ? 'page' : undefined}>
+        <LinkPending scope="list" />
+        후속 확인
+        {followUps !== null && (
+          <span className="ct-mono" style={{ color: pathname.startsWith('/admin/followups') ? undefined : 'var(--gray-11)' }}>
+            {followUps >= 50 ? '50+' : followUps}
+          </span>
+        )}
+      </Link>
       <Link href="/admin/new" aria-current={pathname === '/admin/new' ? 'page' : undefined}>
         + 새 콜라보
       </Link>

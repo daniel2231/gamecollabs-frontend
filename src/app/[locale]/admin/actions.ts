@@ -73,6 +73,17 @@ export async function mirrorCollabCover(id: string): Promise<ActionResult<{ resu
   return run((api) => api.mirrorCover(z.string().min(1).max(64).parse(id)));
 }
 
+/** 재확인 제안 반영(현재 rev 필요) 또는 버리기 */
+export async function resolveFollowUp(id: string, action: 'apply' | 'dismiss', rev?: number): Promise<ActionResult<AdminCollab>> {
+  return run((api) =>
+    api.resolveFollowUp(
+      z.string().min(1).max(64).parse(id),
+      z.enum(['apply', 'dismiss']).parse(action),
+      rev === undefined ? undefined : z.number().int().min(1).parse(rev),
+    ),
+  );
+}
+
 export async function transitionCollab(id: string, action: Transition, reason?: string): Promise<ActionResult<AdminCollab>> {
   return run(async (api) => {
     z.enum(TRANSITIONS).parse(action);

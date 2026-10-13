@@ -12,7 +12,12 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
   const { locale } = await params;
   const session = await getAdminSession();
   if (!session) redirect(`/${locale}/admin/login`);
-  const { counts } = await adminApi(session.token).listQueue({ status: 'review' });
+  const admin = adminApi(session.token);
+  // 후속 확인 제안 수는 메뉴 표시용이라 실패해도(백엔드에 기능이 없을 때 등) 화면을 막지 않는다
+  const [{ counts }, followUps] = await Promise.all([
+    admin.listQueue({ status: 'review' }),
+    admin.listFollowUps('proposals').then((items) => items.length, () => null),
+  ]);
 
   return (
     <div className="ct-admin">
@@ -29,7 +34,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
           )}
         </Flex>
         <Suspense fallback={null}>
-          <AdminNav counts={counts} />
+          <AdminNav counts={counts} followUps={followUps} />
         </Suspense>
         <Flex direction="column" gap="2" mt="6" px="2">
           <Text size="1" color="gray">
