@@ -1,11 +1,10 @@
-import { Badge, Card, DataList, Flex, Heading, Link as RadixLink, Text } from '@radix-ui/themes';
+import { Badge, Flex, Heading, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CountList, Distribution, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
-import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatMonth, originalName } from '@/lib/format';
@@ -53,6 +52,9 @@ export default async function PropertyPage({ params }: Props) {
             <Heading as="h1" size="9" style={{ letterSpacing: '-0.025em', lineHeight: 1.1 }} lang={p.name.fallback ? 'ko' : undefined}>
               {p.name.value}
             </Heading>
+            <Badge variant="soft" size="3">
+              {p.kind.label}
+            </Badge>
           </Flex>
           <Flex wrap="wrap" gap="3">
             {[originalName(p)].filter(Boolean).map((n, i) => (
@@ -91,38 +93,6 @@ export default async function PropertyPage({ params }: Props) {
           <Flex direction="column" gap="4">
             <CountList title={t('counterparts')} items={p.counterparts} hrefPrefix="/properties" />
             <Distribution title={t('typeDistribution')} items={p.typeDistribution} />
-            <Card size="2">
-              <DataList.Root size="2">
-                <DataList.Item>
-                  <DataList.Label minWidth="80px">{t('info.kind')}</DataList.Label>
-                  <DataList.Value>{p.kind.label}</DataList.Value>
-                </DataList.Item>
-                <DataList.Item>
-                  <DataList.Label minWidth="80px">{t('info.franchise')}</DataList.Label>
-                  <DataList.Value>
-                    {p.parent ? (
-                      <RadixLink asChild>
-                        <Link href={`/properties/${p.parent.slug}`}>{p.parent.name}</Link>
-                      </RadixLink>
-                    ) : (
-                      '—'
-                    )}
-                  </DataList.Value>
-                </DataList.Item>
-                <DataList.Item>
-                  <DataList.Label minWidth="80px">{t('info.official')}</DataList.Label>
-                  <DataList.Value>
-                    {p.officialUrl ? (
-                      <RadixLink href={p.officialUrl} target="_blank" rel="noopener noreferrer" underline="always">
-                        {t('info.officialSite')}
-                      </RadixLink>
-                    ) : (
-                      '—'
-                    )}
-                  </DataList.Value>
-                </DataList.Item>
-              </DataList.Root>
-            </Card>
           </Flex>
         </aside>
       </div>

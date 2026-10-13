@@ -142,12 +142,6 @@
     "unknownYear": "시기 미상",
     "counterparts": "협업한 작품",
     "typeDistribution": "콜라보 유형 분포",
-    "info": {
-      "kind": "분류",
-      "franchise": "프랜차이즈",
-      "official": "공식",
-      "officialSite": "공식 사이트"
-    },
     "empty": "아직 발행된 콜라보가 없습니다.",
     "noData": "데이터 없음"
   },
