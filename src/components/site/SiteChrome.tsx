@@ -1,4 +1,4 @@
-import { Callout, Flex, Link as RadixLink, Text } from '@radix-ui/themes';
+import { Callout, Flex, Link as RadixLink } from '@radix-ui/themes';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { isMockApi } from '@/lib/api';
 
@@ -15,15 +15,11 @@ export async function MockBanner() {
 }
 
 export async function SiteFooter() {
-  const t = await getTranslations('Site');
   const locale = await getLocale();
   return (
     <footer className="ct-footer">
       <div className="ct-container">
-        <Flex wrap="wrap" justify="between" gap="3" py="5">
-          <Text size="2" color="gray">
-            {t('footer')}
-          </Text>
+        <Flex wrap="wrap" justify="end" gap="3" py="5">
           <RadixLink size="2" color="gray" href={`/${locale}/rss.xml`}>
             RSS
           </RadixLink>
