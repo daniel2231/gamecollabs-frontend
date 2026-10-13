@@ -158,12 +158,6 @@
     "unknownYear": "Date unknown",
     "counterparts": "Collaborated with",
     "typeDistribution": "Collab types",
-    "info": {
-      "kind": "Category",
-      "franchise": "Franchise",
-      "official": "Official",
-      "officialSite": "Official site"
-    },
     "empty": "No published collabs yet.",
     "noData": "No data"
   },
