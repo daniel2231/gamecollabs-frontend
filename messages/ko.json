@@ -1,5 +1,6 @@
 {
   "Site": {
+    "collabCount": "콜라보 {count}건",
     "loading": "불러오는 중…",
     "name": "콜라보 트래커",
     "description": "공개 출처로 수동 검수한 게임 × IP 콜라보 기록. 어떤 IP가, 어떤 게임과, 어떤 형태로 협업했는지 찾아보세요.",
@@ -34,6 +35,19 @@
   },
   "List": {
     "title": "게임 × IP 콜라보",
+    "landing": {
+      "phase": {
+        "ongoing": "진행 중인 게임 × IP 콜라보",
+        "upcoming": "예정된 게임 × IP 콜라보",
+        "ended": "종료된 게임 × IP 콜라보"
+      },
+      "category": "{label} 콜라보",
+      "partner_category": "{label} × 게임 콜라보",
+      "region": "{label} 게임 콜라보",
+      "platform": "{label} 게임 콜라보",
+      "collab_type": "{label} 콜라보"
+    },
+    "landingDescription": "{title}: 공개 출처로 수동 검수한 기록 {count}건을 시작일순으로 모았습니다.",
     "copyLink": "필터 링크 복사",
     "copied": "복사됨",
     "phaseTabs": "진행 상태",
@@ -89,6 +103,7 @@
     "end": "종료",
     "status": "상태",
     "summary": "요약",
+    "venues": "장소",
     "summaryEmpty": "아직 요약이 없습니다.",
     "parties": "참여 작품",
     "seeAll": "모든 콜라보 보기 →",
@@ -130,6 +145,7 @@
   },
   "Property": {
     "breadcrumb": "작품",
+    "metaDescription": "{name}({kind})의 게임 × IP 콜라보 {count}건. 함께한 작품, 시기, 유형을 공개 출처를 바탕으로 정리했습니다.",
     "aliases": "별칭",
     "stats": {
       "collabs": "발행 콜라보",
@@ -147,6 +163,7 @@
   },
   "Company": {
     "breadcrumb": "회사",
+    "metaDescription": "{name} 참여 게임 × IP 콜라보 {count}건. 회사의 역할과 관련 작품을 공개 출처를 바탕으로 정리했습니다.",
     "country": "국가",
     "stats": {
       "collabs": "참여 콜라보",
