@@ -92,6 +92,17 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   const landing = landingOf(query);
   const heading = await landingTitle(landing, terms, locale);
+  // 시작일 정렬이면 시작 월별로 묶는다. 다음 페이지가 남아 있으면 마지막 달은 일부만 불러온 상태라
+  // 그 달의 전체 개수를 따로 받아 온다(불러온 개수만 세면 '더 보기'를 눌러야 숫자가 맞아진다)
+  const groups = (query.sort === 'recent' ? [] : groupByStartMonth(list.items)).map((g) => ({ ...g, total: g.items.length }));
+  const lastGroup = groups.at(-1);
+  if (lastGroup && list.nextCursor) {
+    lastGroup.total = lastGroup.key
+      ? (await api.listCollabs({ ...query, from: lastGroup.key, to: lastGroup.key, limit: 1, cursor: undefined }, locale)).total
+      : // 시기 미상은 항상 맨 뒤에 오므로 남은 전부가 미상이다
+        list.total - (list.items.length - lastGroup.items.length);
+  }
+
   const labels = labelMap(terms, locale);
   const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
   const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -201,13 +212,13 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                 </ul>
               ) : (
                 // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
-                groupByStartMonth(list.items).map((group) => (
+                groups.map((group) => (
                   <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
                     <Heading as="h2" size="4" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
                       {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
-                      <Text size="2" weight="regular" color="gray" className="ct-mono">
-                        {group.items.length}
-                      </Text>
+                      <Badge size="2" radius="full" variant="soft" color="gray" className="ct-month-count">
+                        {t('monthCount', { count: group.total })}
+                      </Badge>
                     </Heading>
                     <ul className="ct-grid">
                       {group.items.map((item) => (

@@ -151,13 +151,17 @@ body {
   margin-top: 12px;
 }
 
-/* 월 제목: 아래 구분선 + 개수 */
+/* 월 제목: 아래 구분선 + 개수 배지 */
 .ct-month-heading {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--gray-a5);
+}
+
+.ct-month-count {
+  font-variant-numeric: tabular-nums;
 }
 
 .ct-grid > li {
