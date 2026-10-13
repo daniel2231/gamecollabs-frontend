@@ -35,6 +35,19 @@
   },
   "List": {
     "title": "Game × IP Collabs",
+    "landing": {
+      "phase": {
+        "ongoing": "Ongoing game × IP collabs",
+        "upcoming": "Upcoming game × IP collabs",
+        "ended": "Past game × IP collabs"
+      },
+      "category": "{label} collabs",
+      "partner_category": "{label} × game collabs",
+      "region": "{label} game collabs",
+      "platform": "{label} game collabs",
+      "collab_type": "{label} collabs"
+    },
+    "landingDescription": "{title}: {count, plural, one {# record} other {# records}} compiled from public sources and reviewed by hand, sorted by start date.",
     "copyLink": "Copy filter link",
     "copied": "Copied",
     "phaseTabs": "Status",

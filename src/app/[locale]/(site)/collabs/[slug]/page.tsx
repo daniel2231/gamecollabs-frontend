@@ -12,9 +12,10 @@ import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatDate, formatPeriod } from '@/lib/format';
 import { breadcrumbJsonLd, collabJsonLd } from '@/lib/jsonld';
+import { landingPath } from '@/lib/landing';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import type { CollabDetail } from '@/schema';
+import type { CollabDetail, FacetParam, TermRef } from '@/schema';
 
 type Props = PageProps<'/[locale]/collabs/[slug]'>;
 
@@ -180,11 +181,11 @@ export default async function CollabDetailPage({ params }: Props) {
 
               <Section title={t('classification')}>
                 <dl className="ct-facts">
-                  <Fact label={t('labels.category')} values={collab.category ? [collab.category.label] : []} none={t('none')} />
-                  <Fact label={t('labels.partner')} values={partner ? [partner.kind.label] : []} none={t('none')} />
-                  <Fact label={t('labels.region')} values={collab.regions.map((r) => r.label)} none={t('none')} />
-                  <Fact label={t('labels.platform')} values={collab.platforms.map((r) => r.label)} none={t('none')} />
-                  <Fact label={t('labels.type')} values={collab.collabTypes.map((r) => r.label)} none={t('none')} />
+                  <Fact label={t('labels.category')} param="category" terms={collab.category ? [collab.category] : []} none={t('none')} />
+                  <Fact label={t('labels.partner')} param="partner_category" terms={partner ? [partner.kind] : []} none={t('none')} />
+                  <Fact label={t('labels.region')} param="region" terms={collab.regions} none={t('none')} />
+                  <Fact label={t('labels.platform')} param="platform" terms={collab.platforms} none={t('none')} />
+                  <Fact label={t('labels.type')} param="collab_type" terms={collab.collabTypes} none={t('none')} />
                 </dl>
               </Section>
 
@@ -279,8 +280,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-/** 분류 한 줄: 왼쪽 라벨, 오른쪽 값(여러 개면 배지로 나열) */
-function Fact({ label, values, none }: { label: string; values: string[]; none: string }) {
+/** 분류 한 줄: 왼쪽 라벨, 오른쪽 값(여러 개면 배지로 나열). 값은 그 분류의 목록(랜딩 페이지)으로 연결한다 */
+function Fact({ label, param, terms, none }: { label: string; param: FacetParam; terms: TermRef[]; none: string }) {
   return (
     <div>
       <dt>
@@ -289,15 +290,15 @@ function Fact({ label, values, none }: { label: string; values: string[]; none: 
         </Text>
       </dt>
       <dd>
-        {values.length === 0 ? (
+        {terms.length === 0 ? (
           <Text size="2" color="gray">
             {none}
           </Text>
         ) : (
           <Flex wrap="wrap" gap="1">
-            {values.map((v) => (
-              <Badge key={v} variant="soft" color="gray" size="2" highContrast>
-                {v}
+            {terms.map((term) => (
+              <Badge key={term.key} asChild variant="soft" color="gray" size="2" highContrast>
+                <Link href={`/${landingPath({ param, key: term.key })}`}>{term.label}</Link>
               </Badge>
             ))}
           </Flex>

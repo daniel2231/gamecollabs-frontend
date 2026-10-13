@@ -13,35 +13,64 @@ import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { groupByStartMonth } from '@/lib/format';
 import { hasActiveFilters, parseCollabQuery, serializeCollabQuery } from '@/lib/filters';
-import { websiteJsonLd } from '@/lib/jsonld';
+import { breadcrumbJsonLd, websiteJsonLd } from '@/lib/jsonld';
+import { landingOf, landingPath, type Landing } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
 import { buildTree, labelMap } from '@/lib/taxonomy';
-import { FACET_PARAMS, type CollabQuery } from '@/schema';
+import { FACET_PARAMS, type CollabQuery, type TaxonomyTerm } from '@/schema';
 
 const PHASE_TABS = [undefined, 'ongoing', 'upcoming', 'ended'] as const;
 
+/** 랜딩 페이지 제목. 분류 키가 없거나 폐기된 항목이면 null(랜딩으로 보지 않는다) */
+async function landingTitle(landing: Landing | null, terms: TaxonomyTerm[], locale: Locale): Promise<string | null> {
+  if (!landing) return null;
+  const t = await getTranslations({ locale, namespace: 'List' });
+  if (landing.param === 'phase') return t(`landing.phase.${landing.key}`);
+  const label = terms.find((x) => x.key === landing.key && !x.deprecated)?.label[locale];
+  return label ? t(`landing.${landing.param}`, { label }) : null;
+}
+
 export async function generateMetadata({ params, searchParams }: PageProps<'/[locale]'>): Promise<Metadata> {
   const locale = (await params).locale as Locale;
-  const [t, tSite] = await Promise.all([
+  const query = parseCollabQuery(await searchParams);
+  const landing = landingOf(query);
+  const [t, tSite, terms, list] = await Promise.all([
     getTranslations({ locale, namespace: 'List' }),
     getTranslations({ locale, namespace: 'Site' }),
+    landing ? api.getTaxonomies() : [],
+    landing ? api.listCollabs(query, locale) : null,
   ]);
-  const query = parseCollabQuery(await searchParams);
-  const title = `${t('title')} · ${tSite('name')}`;
+  const heading = await landingTitle(landing, terms, locale);
+  const siteName = tSite('name');
+
+  // 필터 하나짜리 랜딩: 결과가 있을 때만 색인. canonical은 그 필터만 남긴 주소
+  if (landing && heading && list && list.total > 0) {
+    const path = landingPath(landing);
+    const title = `${heading} · ${siteName}`;
+    const description = t('landingDescription', { title: heading, count: list.total });
+    return {
+      title: { absolute: title },
+      description,
+      alternates: alternatesFor(locale, path),
+      openGraph: openGraphFor({ locale, path, siteName, title, description, images: [defaultOgImage(locale)] }),
+    };
+  }
+
+  const title = `${t('title')} · ${siteName}`;
   return {
     title: { absolute: title },
-    // 필터·정렬·더 보기 주소도 canonical은 필터 없는 목록
+    // 정렬·더 보기 주소와 색인하지 않는 필터 페이지의 canonical은 필터 없는 목록
     alternates: alternatesFor(locale, ''),
     openGraph: openGraphFor({
       locale,
       path: '',
-      siteName: tSite('name'),
+      siteName,
       title,
       description: tSite('description'),
       images: [defaultOgImage(locale)],
     }),
-    // 필터 조합 페이지는 색인하지 않는다(중복 콘텐츠 방지)
+    // 검색어·기간·여러 필터 조합, 결과 없는 랜딩은 색인하지 않는다(중복·빈 콘텐츠 방지)
     robots: hasActiveFilters(query) ? { index: false, follow: true } : undefined,
   };
 }
@@ -61,6 +90,8 @@ export default async function CollabListPage({ params, searchParams }: PageProps
     api.getStats(),
   ]);
 
+  const landing = landingOf(query);
+  const heading = await landingTitle(landing, terms, locale);
   const labels = labelMap(terms, locale);
   const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
   const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
@@ -86,10 +117,20 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   return (
     <>
-      <JsonLd data={websiteJsonLd({ name: tSite('name'), description: tSite('description'), url: `${siteUrl()}/${locale}`, locale })} />
+      {!hasActiveFilters(query) && (
+        <JsonLd data={websiteJsonLd({ name: tSite('name'), description: tSite('description'), url: `${siteUrl()}/${locale}`, locale })} />
+      )}
+      {heading && landing && (
+        <JsonLd
+          data={breadcrumbJsonLd([
+            { name: tSite('nav.collabs'), url: `${siteUrl()}/${locale}` },
+            { name: heading, url: `${siteUrl()}/${locale}${landingPath(landing)}` },
+          ])}
+        />
+      )}
       <Flex wrap="wrap" align="center" justify="between" gap="4" mb="5">
         <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }}>
-          {t('title')}
+          {heading ?? t('title')}
         </Heading>
         <Flex wrap="wrap" gap="2">
           <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />

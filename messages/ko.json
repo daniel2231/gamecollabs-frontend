@@ -35,6 +35,19 @@
   },
   "List": {
     "title": "게임 × IP 콜라보",
+    "landing": {
+      "phase": {
+        "ongoing": "진행 중인 게임 × IP 콜라보",
+        "upcoming": "예정된 게임 × IP 콜라보",
+        "ended": "종료된 게임 × IP 콜라보"
+      },
+      "category": "{label} 콜라보",
+      "partner_category": "{label} × 게임 콜라보",
+      "region": "{label} 게임 콜라보",
+      "platform": "{label} 게임 콜라보",
+      "collab_type": "{label} 콜라보"
+    },
+    "landingDescription": "{title}: 공개 출처로 수동 검수한 기록 {count}건을 시작일순으로 모았습니다.",
     "copyLink": "필터 링크 복사",
     "copied": "복사됨",
     "phaseTabs": "진행 상태",
