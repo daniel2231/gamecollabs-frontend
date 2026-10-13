@@ -50,12 +50,19 @@ export function defaultOgImage(locale: Locale) {
   return { url: `/${locale}/opengraph-image`, width: 1200, height: 630, type: 'image/png' };
 }
 
-/** 검색엔진 소유 확인 메타 태그. 값이 없는 항목은 내보내지 않는다 */
-export function verificationFromEnv(env: Record<string, string | undefined> = process.env): Metadata['verification'] {
-  const other: Record<string, string> = {};
-  if (env.NAVER_SITE_VERIFICATION) other['naver-site-verification'] = env.NAVER_SITE_VERIFICATION;
-  if (env.BING_SITE_VERIFICATION) other['msvalidate.01'] = env.BING_SITE_VERIFICATION;
+/**
+ * 검색엔진 소유 확인 코드. 페이지 HTML에 그대로 드러나는 공개 값이라 코드에 둔다.
+ * 구글은 Search Console 도메인 속성(DNS TXT)으로 확인하므로 태그가 필요 없다.
+ */
+const SITE_VERIFICATION = {
+  naver: '2b4e141d453ae14f742454abbd865feb25672b8d',
+  bing: '442FC2131C37B6876E5B9C499116854B',
+};
+
+/** 검색엔진 소유 확인 메타 태그. 환경 변수가 있으면 그 값을 쓴다(다른 도메인에 배포할 때) */
+export function siteVerification(env: Record<string, string | undefined> = process.env): Metadata['verification'] {
   const google = env.GOOGLE_SITE_VERIFICATION || undefined;
-  if (!google && Object.keys(other).length === 0) return undefined;
-  return { ...(google ? { google } : {}), ...(Object.keys(other).length ? { other } : {}) };
+  const naver = env.NAVER_SITE_VERIFICATION || SITE_VERIFICATION.naver;
+  const bing = env.BING_SITE_VERIFICATION || SITE_VERIFICATION.bing;
+  return { ...(google ? { google } : {}), other: { 'naver-site-verification': naver, 'msvalidate.01': bing } };
 }
