@@ -2,14 +2,16 @@
  * schema.org 구조화 데이터. 화면에 보이는 정보만 넣는다(구글 구조화 데이터 지침).
  * 모든 URL은 절대 주소여야 하므로 base(siteUrl)를 받는다.
  */
-import type { CollabDetail, CompanyDetail, PropertyDetail } from '@/schema';
+import type { CollabDetail, CompanyDetail, PropertyDetail, Venue } from '@/schema';
 
 type Thing = Record<string, unknown>;
 
 const CONTEXT = 'https://schema.org';
 
-/** 행사를 운영하는 쪽. 라이선서·브랜드 파트너는 주최자가 아니다 */
+/** 행사를 운영하는 쪽. 라이선서는 주최자가 아니다 */
 const ORGANIZER_ROLES = new Set(['publisher', 'organizer']);
+/** 오프라인 행사는 매장·장소를 운영하는 브랜드 파트너도 주최자다 */
+const OFFLINE_ORGANIZER_ROLES = new Set([...ORGANIZER_ROLES, 'brand_partner']);
 
 /** 작품 분류 키 → schema.org 타입 */
 function propertyType(kindKey: string): string {
@@ -42,18 +44,32 @@ export function breadcrumbJsonLd(items: { name: string; url?: string }[]): Thing
   };
 }
 
+const place = (v: Venue): Thing => ({
+  '@type': 'Place',
+  name: v.name,
+  ...(v.address ? { address: { '@type': 'PostalAddress', streetAddress: v.address } } : {}),
+  ...(v.url ? { url: v.url } : {}),
+});
+
 /**
- * 시작일이 일 단위로 확인된 게임 내 콜라보만 Event(온라인)로 표시한다.
- * 오프라인 행사는 주소가, 날짜가 불확실한 콜라보는 시작일이 없어 Event 필수 항목을 채울 수 없으므로 Article로 둔다.
+ * 시작일이 일 단위로 확인됐을 때만 Event로 표시한다. 장소는
+ * - 게임 내 콜라보: 온라인(VirtualLocation)
+ * - 주소가 있는 장소: 오프라인(Place). 구글 Event는 location.address가 필수라 주소 없는 장소는 넣지 않는다
+ * 둘 다 있으면 혼합, 둘 다 없거나 날짜가 불확실하면 Article로 두고 장소는 contentLocation에 넣는다.
  */
 export function collabJsonLd(collab: CollabDetail, { url, locale }: { url: string; locale: string }): Thing {
   const image = collab.cover?.url ? [collab.cover.url] : undefined;
   const description = collab.summary || undefined;
-  const isEvent = collab.category?.key === 'category.in_game' && collab.period.precision === 'day' && Boolean(collab.period.start);
+  const dated = collab.period.precision === 'day' && Boolean(collab.period.start);
+  const online = collab.category?.key === 'category.in_game';
+  const addressed = collab.venues.filter((v) => v.address);
 
-  if (isEvent) {
-    const organizers = collab.companies.filter((c) => ORGANIZER_ROLES.has(c.role));
+  if (dated && (online || addressed.length > 0)) {
+    const roles = addressed.length > 0 ? OFFLINE_ORGANIZER_ROLES : ORGANIZER_ROLES;
+    const organizers = collab.companies.filter((c) => roles.has(c.role));
     const primarySource = collab.sources.find((s) => s.isPrimary && s.type === 'official') ?? collab.sources.find((s) => s.type === 'official');
+    const locations = [...(online ? [{ '@type': 'VirtualLocation', url: primarySource?.url ?? url }] : []), ...addressed.map(place)];
+    const mode = online && addressed.length > 0 ? 'Mixed' : online ? 'Online' : 'Offline';
     return {
       '@context': CONTEXT,
       '@type': 'Event',
@@ -65,8 +81,8 @@ export function collabJsonLd(collab: CollabDetail, { url, locale }: { url: strin
       startDate: collab.period.start,
       ...(collab.period.endKind === 'fixed' && collab.period.end ? { endDate: collab.period.end } : {}),
       eventStatus: 'https://schema.org/EventScheduled',
-      eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
-      location: { '@type': 'VirtualLocation', url: primarySource?.url ?? url },
+      eventAttendanceMode: `https://schema.org/${mode}EventAttendanceMode`,
+      location: locations.length === 1 ? locations[0] : locations,
       ...(organizers.length ? { organizer: organizers.map((c) => ({ '@type': 'Organization', name: c.name.value })) } : {}),
     };
   }
@@ -82,6 +98,7 @@ export function collabJsonLd(collab: CollabDetail, { url, locale }: { url: strin
     ...(collab.publishedAt ? { datePublished: collab.publishedAt } : {}),
     dateModified: collab.updatedAt,
     about: collab.parties.map((p) => ({ '@type': propertyType(p.kind.key), name: p.name.value })),
+    ...(collab.venues.length ? { contentLocation: collab.venues.map(place) } : {}),
   };
 }
 

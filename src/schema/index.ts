@@ -95,6 +95,14 @@ export const sourceSchema = z.object({
 });
 export type Source = z.infer<typeof sourceSchema>;
 
+/** 오프라인 콜라보 장소(공개 응답). 이름은 요청 언어, 주소는 공식 표기 그대로(현지어) */
+export const venueSchema = z.object({
+  name: z.string(),
+  address: z.string().nullable(),
+  url: z.string().nullable(),
+});
+export type Venue = z.infer<typeof venueSchema>;
+
 export const coverSchema = z.object({
   url: z.string(),
   originalUrl: z.string().nullable(),
@@ -139,6 +147,7 @@ export const collabDetailSchema = collabSummarySchema.extend({
   note: z.string().nullable(),
   companies: z.array(companyRefSchema),
   sources: z.array(sourceSchema),
+  venues: z.array(venueSchema),
   related: z.array(
     collabSummarySchema.extend({ relation: z.enum(['same_host', 'same_partner']) }),
   ),
@@ -263,6 +272,17 @@ export const uploadedMediaSchema = z.object({
 });
 export type UploadedMedia = z.infer<typeof uploadedMediaSchema>;
 
+/** 관리자 장소 입력. 백엔드 VenueInput과 같은 규칙(이름 한·영 필수, 주소·URL은 없을 수 있음) */
+export const adminVenueSchema = z.object({
+  name: z.object({
+    ko: z.string().trim().min(1, '한국어 이름 필수').max(200, '200자 이하'),
+    en: z.string().trim().min(1, '영어 이름 필수').max(200, '200자 이하'),
+  }),
+  address: z.string().trim().min(1).max(300, '300자 이하').nullable(),
+  url: z.url({ protocol: /^https?$/, error: 'http(s) 주소' }).nullable(),
+});
+export type AdminVenue = z.infer<typeof adminVenueSchema>;
+
 /** 관리자 편집 폼 = PATCH /v1/admin/collabs/:id 본문 */
 export const collabInputSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'slug는 소문자·숫자·하이픈만'),
@@ -280,6 +300,8 @@ export const collabInputSchema = z.object({
    * 조회: undefined면 백엔드가 관리자 응답에 커버를 주지 않은 것(현재 값을 모름).
    */
   cover: adminCoverSchema.nullable().optional(),
+  /** 오프라인 콜라보 장소. undefined면 본문에서 뺀다(백엔드가 관리자 응답에 주지 않아 현재 값을 모를 때) */
+  venues: z.array(adminVenueSchema).max(20, '20곳 이하').optional(),
 });
 export type CollabInput = z.infer<typeof collabInputSchema>;
 

@@ -200,6 +200,7 @@ export const mockPublicApi: PublicApi = {
         return comp ? [{ slug: comp.slug, role: co.role, name: localize(comp.name, locale) }] : [];
       }),
       sources: [...c.sources].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary)),
+      venues: (c.venues ?? []).map((v) => ({ name: locale === 'en' ? v.name.en : v.name.ko, address: v.address, url: v.url })),
       related,
       updatedAt: c.updatedAt,
     };
@@ -362,6 +363,7 @@ function toAdmin(c: DbCollab): AdminCollab {
     unmappedOther: [],
     sourceStatus: c.sources.map((s) => ({ url: s.url, httpStatus: s.httpStatus ?? null })),
     cover: c.cover ?? null,
+    venues: c.venues ?? [],
     duplicates: findDuplicates(c),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
@@ -523,6 +525,7 @@ export const mockAdminApi: AdminApi = {
       collabTypes: input.collabTypes,
       period: input.period,
       ...(input.cover === undefined ? {} : { cover: input.cover }),
+      ...(input.venues === undefined ? {} : { venues: input.venues }),
       sources: input.sources.map((s) => ({
         lastCheckedAt: null,
         httpStatus: null,

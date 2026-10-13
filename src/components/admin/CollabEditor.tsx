@@ -70,6 +70,7 @@ const STATUS_LABEL = { draft: '초안', in_review: '검수 요청됨', published
 const ORIGIN_LABEL = { manual: '수동', gpt: 'GPT 수집', agent: '에이전트', migration: '이관' } as const;
 
 type SourceRow = CollabInput['sources'][number] & { key: string };
+type VenueRow = { key: string; ko: string; en: string; address: string; url: string };
 type CompanyRow = { key: string; entity: EntityChoice | null; role: CompanyRole };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -82,6 +83,8 @@ const blankSource = (primary: boolean): SourceRow => ({
   isPrimary: primary,
   accessedAt: today(),
 });
+
+const blankVenue = (): VenueRow => ({ key: crypto.randomUUID(), ko: '', en: '', address: '', url: '' });
 
 function initialState(collab: AdminCollab | null, entities: Record<string, EntityChoice>) {
   const party = (role: 'host' | 'partner') => {
@@ -109,6 +112,13 @@ function initialState(collab: AdminCollab | null, entities: Record<string, Entit
       : [blankSource(true)],
     // 새 문서는 커버 없음(null), 기존 문서는 백엔드가 주지 않으면 undefined(모름)
     cover: collab ? collab.cover : null,
+    venues: (collab?.venues ?? []).map<VenueRow>((v) => ({
+      key: crypto.randomUUID(),
+      ko: v.name.ko,
+      en: v.name.en,
+      address: v.address ?? '',
+      url: v.url ?? '',
+    })),
   };
 }
 
@@ -167,6 +177,10 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
 
   function toInput(): CollabInput {
     const sources = form.sources.filter((s) => s.url.trim());
+    // 아무것도 쓰지 않은 줄은 버린다. 빈 이름은 그대로 보내 검증 오류로 알린다
+    const venues = form.venues
+      .filter((v) => [v.ko, v.en, v.address, v.url].some((x) => x.trim()))
+      .map((v) => ({ name: { ko: v.ko.trim(), en: v.en.trim() }, address: v.address.trim() || null, url: v.url.trim() || null }));
     const hasPrimary = sources.some((s) => s.isPrimary);
     return {
       slug: form.slug.trim(),
@@ -183,6 +197,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       period: normalizePeriod(form.period),
       sources: sources.map(({ key: _key, ...s }, i) => ({ ...s, url: s.url.trim(), isPrimary: hasPrimary ? s.isPrimary : i === 0 })),
       ...(coverTouched || !collab ? { cover: form.cover ?? null } : {}),
+      // 백엔드가 현재 장소를 주지 않았으면(undefined) 사람이 입력했을 때만 보낸다
+      ...(!collab || collab.venues !== undefined || venues.length > 0 ? { venues } : {}),
     };
   }
 
@@ -337,18 +353,17 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             <Callout.Icon>
               <ExclamationTriangleIcon />
             </Callout.Icon>
-            <Callout.Text>
-              {error.message ?? (error.code === 'validation_failed' ? '입력값을 확인하세요' : error.code)}
-              {error.fields && (
-                <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
-                  {Object.entries(error.fields).map(([k, v]) => (
-                    <li key={k}>
-                      <span className="ct-mono">{k}</span>: {v}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Callout.Text>
+            <Callout.Text>{error.message ?? (error.code === 'validation_failed' ? '입력값을 확인하세요' : error.code)}</Callout.Text>
+            {/* Callout.Text는 p라 목록을 안에 넣을 수 없다. 아이콘이 아닌 자식은 같은 글 열에 놓인다 */}
+            {error.fields && (
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 'var(--font-size-2)' }}>
+                {Object.entries(error.fields).map(([k, v]) => (
+                  <li key={k}>
+                    <span className="ct-mono">{k}</span>: {v}
+                  </li>
+                ))}
+              </ul>
+            )}
           </Callout.Root>
         )}
       </div>
@@ -585,6 +600,11 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             </div>
           </FormSection>
 
+          <FormSection title="장소" hint="오프라인 콜라보만. 이름은 한·영 필수, 주소는 공식 표기 그대로">
+            <VenuesEditor rows={form.venues} errors={error?.fields} onChange={(venues) => setForm({ venues })} />
+            {fieldError('venues')}
+          </FormSection>
+
           <FormSection title="출처" hint="최소 1개, 주 출처 1개">
             <SourcesEditor
               rows={form.sources}
@@ -745,6 +765,70 @@ function SourcesEditor({ rows, status, onChange }: { rows: SourceRow[]; status: 
       <div>
         <Button variant="soft" color="gray" size="2" onClick={() => onChange([...rows, blankSource(rows.length === 0)])}>
           <PlusIcon /> 출처 추가
+        </Button>
+      </div>
+    </Flex>
+  );
+}
+
+function VenuesEditor({ rows, errors, onChange }: { rows: VenueRow[]; errors?: Record<string, string>; onChange: (rows: VenueRow[]) => void }) {
+  const update = (key: string, patch: Partial<VenueRow>) => onChange(rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  // 저장 때 빈 줄을 빼므로, 오류 경로의 번호는 내용이 있는 줄 기준이다
+  const filled = rows.filter((r) => [r.ko, r.en, r.address, r.url].some((x) => x.trim())).map((r) => r.key);
+  const rowErrors = (key: string) => {
+    const i = filled.indexOf(key);
+    if (i < 0 || !errors) return [];
+    return Object.entries(errors).flatMap(([path, message]) => (path.startsWith(`venues.${i}.`) ? [message] : []));
+  };
+  return (
+    <Flex direction="column" gap="3">
+      {rows.length > 0 && (
+        <Table.Root variant="surface" size="1" style={{ overflowX: 'auto' }}>
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeaderCell minWidth="240px">이름 (한국어 · 영어)</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell minWidth="280px">주소 · 장소 페이지</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell width="48px">
+                <VisuallyHidden>삭제</VisuallyHidden>
+              </Table.ColumnHeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {rows.map((r, i) => {
+              const messages = rowErrors(r.key);
+              return (
+                <Table.Row key={r.key} align="center">
+                  <Table.Cell>
+                    <Flex direction="column" gap="1">
+                      <TextField.Root size="1" placeholder="한국어 이름" aria-label={`장소 ${i + 1} 한국어 이름`} value={r.ko} onChange={(e) => update(r.key, { ko: e.target.value })} maxLength={200} />
+                      <TextField.Root size="1" placeholder="English name" aria-label={`장소 ${i + 1} 영어 이름`} value={r.en} onChange={(e) => update(r.key, { en: e.target.value })} maxLength={200} />
+                      {messages.map((m) => (
+                        <span key={m} className="ct-error-text" role="alert">
+                          {m}
+                        </span>
+                      ))}
+                    </Flex>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Flex direction="column" gap="1">
+                      <TextField.Root size="1" placeholder="주소 (공식 표기, 없으면 비움)" aria-label={`장소 ${i + 1} 주소`} value={r.address} onChange={(e) => update(r.key, { address: e.target.value })} maxLength={300} />
+                      <TextField.Root size="1" type="url" className="ct-mono" placeholder="https:// (장소 페이지, 없으면 비움)" aria-label={`장소 ${i + 1} URL`} value={r.url} onChange={(e) => update(r.key, { url: e.target.value })} />
+                    </Flex>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <IconButton size="1" variant="ghost" color="gray" aria-label={`장소 ${i + 1} 삭제`} onClick={() => onChange(rows.filter((x) => x.key !== r.key))}>
+                      <TrashIcon />
+                    </IconButton>
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })}
+          </Table.Body>
+        </Table.Root>
+      )}
+      <div>
+        <Button variant="soft" color="gray" size="2" onClick={() => onChange([...rows, blankVenue()])} disabled={rows.length >= 20}>
+          <PlusIcon /> 장소 추가
         </Button>
       </div>
     </Flex>

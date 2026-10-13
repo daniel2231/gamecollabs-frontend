@@ -28,6 +28,7 @@ const collab = (over: Partial<CollabDetail> = {}): CollabDetail => ({
     { slug: 'lic', role: 'licensor', name: name('Lic') },
   ],
   sources: [{ url: 'https://official.test/news', title: 't', publisher: 'p', type: 'official', isPrimary: true, accessedAt: '2026-09-20' }],
+  venues: [],
   related: [],
   updatedAt: '2026-10-02T00:00:00.000Z',
   ...over,
@@ -55,6 +56,51 @@ describe('collabJsonLd', () => {
 
   it('종료일이 정해지지 않았으면 endDate가 없다', () => {
     expect(collabJsonLd(collab({ period: { start: '2026-10-01', end: null, precision: 'day', endKind: 'permanent' } }), ctx)).not.toHaveProperty('endDate');
+  });
+
+  it('주소가 있는 장소가 있으면 오프라인 Event, 장소를 운영하는 브랜드 파트너도 주최자', () => {
+    const ld = collabJsonLd(
+      collab({
+        category: { key: 'category.brand_campaign', label: '브랜드 캠페인' },
+        companies: [
+          { slug: 'pub', role: 'publisher', name: name('Pub') },
+          { slug: 'shop', role: 'brand_partner', name: name('Shop') },
+          { slug: 'lic', role: 'licensor', name: name('Lic') },
+        ],
+        venues: [
+          { name: '시부야점', address: '東京都渋谷区1-1', url: 'https://shop.test/shibuya' },
+          { name: '참여 매장 44곳', address: null, url: null },
+        ],
+      }),
+      ctx,
+    );
+    expect(ld).toMatchObject({
+      '@type': 'Event',
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      location: { '@type': 'Place', name: '시부야점', address: { '@type': 'PostalAddress', streetAddress: '東京都渋谷区1-1' }, url: 'https://shop.test/shibuya' },
+      organizer: [
+        { '@type': 'Organization', name: 'Pub' },
+        { '@type': 'Organization', name: 'Shop' },
+      ],
+    });
+  });
+
+  it('게임 내 콜라보에 주소 있는 장소가 더해지면 혼합 Event, 장소는 목록', () => {
+    const ld = collabJsonLd(collab({ venues: [{ name: '팝업', address: '서울 성동구 1', url: null }] }), ctx);
+    expect(ld.eventAttendanceMode).toBe('https://schema.org/MixedEventAttendanceMode');
+    expect(ld.location).toEqual([
+      { '@type': 'VirtualLocation', url: 'https://official.test/news' },
+      { '@type': 'Place', name: '팝업', address: { '@type': 'PostalAddress', streetAddress: '서울 성동구 1' } },
+    ]);
+  });
+
+  it('주소 없는 장소만 있으면 Article에 contentLocation으로 넣는다', () => {
+    const ld = collabJsonLd(
+      collab({ category: { key: 'category.brand_campaign', label: '브랜드 캠페인' }, venues: [{ name: '참여 매장 44곳', address: null, url: 'https://shop.test' }] }),
+      ctx,
+    );
+    expect(ld['@type']).toBe('Article');
+    expect(ld.contentLocation).toEqual([{ '@type': 'Place', name: '참여 매장 44곳', url: 'https://shop.test' }]);
   });
 
   it('오프라인이거나 시작일이 월 단위면 Article', () => {

@@ -179,6 +179,37 @@ export default async function CollabDetailPage({ params }: Props) {
                 )}
               </Section>
 
+              {collab.venues.length > 0 && (
+                <Section title={t('venues')}>
+                  <Card size="1" style={{ padding: 0 }}>
+                    {collab.venues.map((v, i) => (
+                      <Flex
+                        key={`${v.name}-${i}`}
+                        direction="column"
+                        gap="1"
+                        px="4"
+                        py="3"
+                        style={i ? { borderTop: '1px solid var(--ct-line-soft)' } : undefined}
+                      >
+                        {v.url ? (
+                          <RadixLink href={v.url} target="_blank" rel="noopener noreferrer" weight="medium" highContrast underline="hover">
+                            {v.name} ↗
+                          </RadixLink>
+                        ) : (
+                          <Text weight="medium">{v.name}</Text>
+                        )}
+                        {/* 주소는 공식 표기(현지어) 그대로 둔다 */}
+                        {v.address && (
+                          <Text size="2" color="gray" translate="no">
+                            {v.address}
+                          </Text>
+                        )}
+                      </Flex>
+                    ))}
+                  </Card>
+                </Section>
+              )}
+
               <Section title={t('classification')}>
                 <dl className="ct-facts">
                   <Fact label={t('labels.category')} param="category" terms={collab.category ? [collab.category] : []} none={t('none')} />

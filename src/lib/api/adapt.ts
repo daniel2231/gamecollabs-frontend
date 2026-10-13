@@ -68,6 +68,8 @@ export type BeDetail = BeCard & {
     accessedAt: string | null;
     lastCheckedAt: string | null;
   }[];
+  /** 오프라인 콜라보 장소(이전 백엔드는 주지 않는다) */
+  venues?: { name: string | null; address: string | null; url: string | null }[];
   related: BeCard[];
   updatedAt: string | null;
 };
@@ -130,6 +132,7 @@ export type BeAdminCollab = {
   collabTypes: string[];
   period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
   sources: (BeDetail['sources'][number] & { httpStatus: number | null })[];
+  venues?: { name: { ko: string | null; en: string | null }; address: string | null; url: string | null }[];
   origin: {
     type: AdminCollab['origin']['type'];
     runId: string | null;
@@ -248,6 +251,7 @@ export function toDetail(d: BeDetail): CollabDetail {
         accessedAt: isoDay(s.accessedAt) ?? isoDay(d.updatedAt) ?? new Date().toISOString().slice(0, 10),
         lastCheckedAt: s.lastCheckedAt,
       })),
+    venues: (d.venues ?? []).flatMap((v) => (v.name ? [{ name: v.name, address: v.address, url: v.url }] : [])),
     related: d.related.map((r) => ({
       ...toSummary(r),
       relation: r.parties.some((p) => p.role === 'host' && p.id && hosts.has(p.id)) ? ('same_host' as const) : ('same_partner' as const),
@@ -464,6 +468,7 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
     })),
     // 필드가 없으면 undefined로 남겨, 저장할 때 커버를 건드리지 않게 한다
     cover: c.cover === undefined ? undefined : c.cover && toAdminCover(c.cover, mediaBase),
+    venues: c.venues?.map((v) => ({ name: { ko: v.name.ko ?? '', en: v.name.en ?? '' }, address: v.address, url: v.url })),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -547,6 +552,7 @@ export function toCollabBody(input: CollabInput, existing?: BeAdminCollab['parti
     })),
     // 커버를 건드리지 않았으면 필드를 보내지 않는다(PATCH는 보낸 최상위 필드만 바꾼다)
     ...(input.cover === undefined ? {} : { cover: toCoverBody(input.cover) }),
+    ...(input.venues === undefined ? {} : { venues: input.venues }),
   };
 }
 
