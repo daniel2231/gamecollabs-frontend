@@ -83,4 +83,21 @@ describe('목 API: PRD 규칙', () => {
     expect(bs?.collabs.map((c) => c.slug)).toContain('weplay-attack-on-titan');
     expect(await svc.mockPublicApi.getProperty('weplay', 'ko')).toBeNull();
   });
+
+  it('후속 확인: 제안을 반영하면 rev가 오르고 출처가 붙으며, 버리면 제안만 사라진다', async () => {
+    const admin = svc.mockAdminApi;
+    const proposals = await admin.listFollowUps('proposals');
+    expect(proposals.map((f) => f.id)).toEqual(['k_weplay_aot']);
+    expect((await admin.listFollowUps('escalated')).map((f) => f.id)).toEqual(['k_bloodstrike_aot']);
+
+    const item = proposals[0]!;
+    await expect(admin.resolveFollowUp(item.id, 'apply', item.rev + 1)).rejects.toMatchObject({ status: 412 });
+    const applied = await admin.resolveFollowUp(item.id, 'apply', item.rev);
+    expect(applied.rev).toBe(item.rev + 1);
+    expect(applied.i18n.en.title).toBe('WePlay × Attack on Titan');
+    expect(applied.sources.map((s) => s.url)).toContain('https://example.com/weplay-attack-on-titan/announcement');
+    expect(applied.followUp!.proposal).toBeNull();
+    expect(await admin.listFollowUps('proposals')).toEqual([]);
+    await expect(admin.resolveFollowUp(item.id, 'dismiss')).rejects.toMatchObject({ status: 404 });
+  });
 });

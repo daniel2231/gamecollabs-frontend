@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { adminCollabSchema, collabDetailSchema, collabListResponseSchema, type CollabInput } from '@/schema';
+import { adminCollabSchema, collabDetailSchema, collabListResponseSchema, followUpItemSchema, type CollabInput } from '@/schema';
 import * as A from './adapt';
 
 const card: A.BeCard = {
@@ -258,5 +258,58 @@ describe('venues', () => {
     const venues = [{ name: { ko: '시부야점', en: 'Shibuya' }, address: null, url: 'https://shop.test' }];
     expect(A.toCollabBody({ ...input, venues }).venues).toEqual(venues);
     expect(A.toCollabBody({ ...input, venues: [] }).venues).toEqual([]);
+  });
+});
+
+describe('후속 확인 변환', () => {
+  const proposal: A.BeFollowUpProposal = {
+    changes: { period: { start: '2026-11', endKind: 'tba' }, i18n: { ko: { title: '가 × 나', summary: '요약' }, en: { title: 'A x B', summary: 'Summary' } } },
+    sources: [{ url: 'https://example.com/dates', title: null }],
+    note: null,
+    rev: 3,
+    by: 'token:mcp',
+    at: '2026-10-13T00:00:00.000Z',
+  };
+
+  it('큐 항목: 기간을 화면 형태로, 제안의 입력형 기간은 정밀도를 날짜 길이로 정한다', () => {
+    const item = followUpItemSchema.parse(
+      A.toFollowUpItem({
+        id: 'c1',
+        slug: 'a-b-2026-11',
+        status: 'published',
+        rev: 4,
+        reason: 'month_only',
+        title: { ko: '가 × 나', en: 'A x B' },
+        summary: { ko: null, en: 'Old' },
+        period: { start: '2026-11', end: null, precision: 'month', endKind: 'tba' },
+        sourceUrls: ['https://example.com/a'],
+        lastCheckedAt: null,
+        nextCheckAt: '2026-10-16T00:00:00.000Z',
+        uncheckedRuns: 2,
+        escalated: false,
+        proposal,
+      }),
+    );
+    expect(item.period).toEqual({ start: '2026-11-01', end: null, precision: 'month', endKind: 'tba' });
+    expect(item.text.ko).toEqual({ title: '가 × 나', summary: '' });
+    expect(item.unchanged).toBe(2);
+    expect(item.proposal!.period).toEqual({ start: '2026-11-01', end: null, precision: 'month', endKind: 'tba' });
+    expect(item.proposal!.sources).toEqual([{ url: 'https://example.com/dates', title: null, publisher: null }]);
+  });
+
+  it('입력형 기간: 정밀도·종료 방식 기본값', () => {
+    expect(A.fromPeriodInput({ start: '2026-11-05', end: '2026-12-01' })).toEqual({ start: '2026-11-05', end: '2026-12-01', precision: 'day', endKind: 'fixed' });
+    expect(A.fromPeriodInput({ endKind: 'tba' })).toEqual({ start: null, end: null, precision: 'unknown', endKind: 'tba' });
+  });
+
+  it('상태: escalatedAt을 불리언으로, 기록이 없으면 0회', () => {
+    expect(A.toFollowUpState({ reason: 'end_tba', nextCheckAt: null, lastCheckedAt: null, escalatedAt: '2026-10-01T00:00:00.000Z', proposal: null })).toEqual({
+      reason: 'end_tba',
+      nextCheckAt: null,
+      lastCheckedAt: null,
+      unchanged: 0,
+      escalated: true,
+      proposal: null,
+    });
   });
 });

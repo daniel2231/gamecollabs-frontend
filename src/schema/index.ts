@@ -305,6 +305,59 @@ export const collabInputSchema = z.object({
 });
 export type CollabInput = z.infer<typeof collabInputSchema>;
 
+// ── 후속 확인(날짜 미정 콜라보 재확인) ─────────────────────────
+
+/**
+ * 다시 확인할 사유. 백엔드가 기간에서 계산한다.
+ * start_tba: 시작일 미발표 · month_only: 시작 월만 앎 · end_tba: 종료일 미발표 · end_missing: 종료일 누락(fixed인데 비어 있음)
+ */
+export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing'] as const;
+export type FollowUpReason = (typeof FOLLOW_UP_REASONS)[number];
+export const FOLLOW_UP_VIEWS = ['proposals', 'escalated', 'due'] as const;
+export type FollowUpView = (typeof FOLLOW_UP_VIEWS)[number];
+
+/** 재확인에서 찾은 변경. 검수 중·발행된 콜라보는 바로 고치지 않고 관리자가 반영하거나 버린다 */
+export const followUpProposalSchema = z.object({
+  /** 바뀔 기간 전체(보낸 경우만) */
+  period: periodSchema.nullable(),
+  /** 바뀔 제목·요약(보낸 경우만) */
+  i18n: z.object({ ko: z.object({ title: z.string(), summary: z.string() }), en: z.object({ title: z.string(), summary: z.string() }) }).nullable(),
+  /** 근거 출처(반영하면 기존 출처 뒤에 붙는다) */
+  sources: z.array(z.object({ url: z.string(), title: z.string().nullable(), publisher: z.string().nullable() })),
+  note: z.string().nullable(),
+  /** 제안할 때의 rev */
+  rev: z.number().int(),
+  by: z.string(),
+  at: z.iso.datetime(),
+});
+export type FollowUpProposal = z.infer<typeof followUpProposalSchema>;
+
+export const followUpStateSchema = z.object({
+  reason: z.enum(FOLLOW_UP_REASONS).nullable(),
+  nextCheckAt: z.iso.datetime().nullable(),
+  lastCheckedAt: z.iso.datetime().nullable(),
+  /** 연속으로 변화가 없던 확인 횟수 */
+  unchanged: z.number().int(),
+  /** 여러 번 확인해도 소식이 없어 사람이 결정해야 함 */
+  escalated: z.boolean(),
+  proposal: followUpProposalSchema.nullable(),
+});
+export type FollowUpState = z.infer<typeof followUpStateSchema>;
+
+/** GET /v1/admin/followups 항목 */
+export const followUpItemSchema = followUpStateSchema.extend({
+  id: z.string(),
+  slug: z.string(),
+  status: z.enum(COLLAB_STATUSES),
+  rev: z.number().int(),
+  title: z.string(),
+  /** 지금 저장된 제목·요약(제안과 비교용) */
+  text: z.object({ ko: z.object({ title: z.string(), summary: z.string() }), en: z.object({ title: z.string(), summary: z.string() }) }),
+  period: periodSchema,
+  sourceUrls: z.array(z.string()),
+});
+export type FollowUpItem = z.infer<typeof followUpItemSchema>;
+
 /** 관리자 조회용 전체 문서(내부 필드 포함) */
 export const adminCollabSchema = collabInputSchema.extend({
   /** 수집 초안은 아직 작품에 연결되지 않은 참여자(propertyId=null, 수집된 이름만)를 가질 수 있다 */
@@ -328,6 +381,8 @@ export const adminCollabSchema = collabInputSchema.extend({
   duplicates: z.array(
     z.object({ id: z.string(), slug: z.string(), title: z.string(), reason: z.enum(['same_source', 'same_parties_near_date']) }),
   ),
+  /** 후속 확인 상태. undefined면 백엔드가 아직 주지 않음 */
+  followUp: followUpStateSchema.optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

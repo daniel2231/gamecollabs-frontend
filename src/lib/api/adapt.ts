@@ -15,6 +15,9 @@ import type {
   CollabSummary,
   CompanyDetail,
   EntityKind,
+  FollowUpItem,
+  FollowUpProposal,
+  FollowUpState,
   Locale,
   Period,
   PropertyDetail,
@@ -143,8 +146,49 @@ export type BeAdminCollab = {
   duplicateCount?: number;
   /** 백엔드가 아직 관리자 응답에 커버를 넣지 않으면 필드 자체가 없다 */
   cover?: BeAdminCover | null;
+  /** 후속 확인 상태. 이 기능 이전 백엔드는 주지 않는다 */
+  followUp?: BeFollowUp | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/** 재확인 제안의 기간: 입력 형태 그대로(날짜는 `YYYY-MM` 또는 `YYYY-MM-DD`, 정밀도는 없을 수 있다) */
+type BePeriodInput = { start?: string | null; end?: string | null; precision?: Period['precision']; endKind?: Period['endKind'] };
+
+export type BeFollowUpProposal = {
+  changes: { period?: BePeriodInput; i18n?: { ko: { title: string; summary: string }; en: { title: string; summary: string } } };
+  sources: { url: string; title?: string | null; publisher?: string | null }[];
+  note: string | null;
+  rev: number;
+  by: string;
+  at: string;
+};
+
+export type BeFollowUp = {
+  reason: FollowUpState['reason'];
+  nextCheckAt: string | null;
+  lastCheckedAt: string | null;
+  unchanged?: number;
+  escalatedAt?: string | null;
+  proposal: BeFollowUpProposal | null;
+};
+
+/** GET /v1/admin/followups 항목 */
+export type BeFollowUpRow = {
+  id: string;
+  slug: string;
+  status: AdminCollab['status'];
+  rev: number;
+  reason: FollowUpState['reason'];
+  title: { ko: string | null; en: string | null };
+  summary: { ko: string | null; en: string | null };
+  period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+  sourceUrls: string[];
+  lastCheckedAt: string | null;
+  nextCheckAt: string | null;
+  uncheckedRuns: number;
+  escalated: boolean;
+  proposal: BeFollowUpProposal | null;
 };
 
 export type BeAdminCover = {
@@ -469,8 +513,65 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
     // 필드가 없으면 undefined로 남겨, 저장할 때 커버를 건드리지 않게 한다
     cover: c.cover === undefined ? undefined : c.cover && toAdminCover(c.cover, mediaBase),
     venues: c.venues?.map((v) => ({ name: { ko: v.name.ko ?? '', en: v.name.en ?? '' }, address: v.address, url: v.url })),
+    // 기능 이전 문서는 필드가 없거나 비어 있다
+    followUp: c.followUp ? toFollowUpState(c.followUp) : undefined,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
+  };
+}
+
+// ── 후속 확인 ─────────────────────────────────────────────────
+
+/** 입력 형태의 기간 → 화면 기간. 정밀도가 없으면 백엔드처럼 날짜 길이로 정한다 */
+export function fromPeriodInput(p: BePeriodInput): Period {
+  const start = p.start ?? null;
+  const precision = p.precision ?? (!start ? 'unknown' : start.length === 7 ? 'month' : 'day');
+  return { start: isoDay(start), end: isoDay(p.end), precision, endKind: p.endKind ?? 'fixed' };
+}
+
+export function toFollowUpProposal(p: BeFollowUpProposal): FollowUpProposal {
+  const text = (t: { title: string; summary: string }) => ({ title: t.title, summary: t.summary });
+  return {
+    period: p.changes.period ? fromPeriodInput(p.changes.period) : null,
+    i18n: p.changes.i18n ? { ko: text(p.changes.i18n.ko), en: text(p.changes.i18n.en) } : null,
+    sources: p.sources.map((s) => ({ url: s.url, title: s.title ?? null, publisher: s.publisher ?? null })),
+    note: p.note,
+    rev: p.rev,
+    by: p.by,
+    at: p.at,
+  };
+}
+
+export function toFollowUpState(f: BeFollowUp): FollowUpState {
+  return {
+    reason: f.reason,
+    nextCheckAt: f.nextCheckAt,
+    lastCheckedAt: f.lastCheckedAt,
+    unchanged: f.unchanged ?? 0,
+    escalated: Boolean(f.escalatedAt),
+    proposal: f.proposal ? toFollowUpProposal(f.proposal) : null,
+  };
+}
+
+export function toFollowUpItem(r: BeFollowUpRow): FollowUpItem {
+  return {
+    id: r.id,
+    slug: r.slug,
+    status: r.status,
+    rev: r.rev,
+    title: r.title.ko || r.title.en || r.slug,
+    text: {
+      ko: { title: r.title.ko ?? '', summary: r.summary.ko ?? '' },
+      en: { title: r.title.en ?? '', summary: r.summary.en ?? '' },
+    },
+    period: period(r.period),
+    sourceUrls: r.sourceUrls,
+    reason: r.reason,
+    nextCheckAt: r.nextCheckAt,
+    lastCheckedAt: r.lastCheckedAt,
+    unchanged: r.uncheckedRuns,
+    escalated: r.escalated,
+    proposal: r.proposal ? toFollowUpProposal(r.proposal) : null,
   };
 }
 

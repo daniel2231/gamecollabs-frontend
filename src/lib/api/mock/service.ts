@@ -3,6 +3,7 @@
  * 규칙(facetKeys 펼치기, phase 계산, en→ko 대체, 중복 판정)은 PRD 그대로 따른다.
  */
 import { createHash } from 'node:crypto';
+import { followUpReasonOf, nextCheckAt } from '@/lib/followup';
 import { computePhase } from '@/lib/phase';
 import type {
   AdminCollab,
@@ -13,6 +14,8 @@ import type {
   CollabSummary,
   CompanyDetail,
   EntityKind,
+  FollowUpItem,
+  FollowUpState,
   Locale,
   PropertyDetail,
   TaxonomyTerm,
@@ -365,8 +368,40 @@ function toAdmin(c: DbCollab): AdminCollab {
     cover: c.cover ?? null,
     venues: c.venues ?? [],
     duplicates: findDuplicates(c),
+    followUp: followUpOf(c),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
+  };
+}
+
+/** 백엔드 규칙: 사유는 기간에서 계산, 기록이 없으면 만든 지 3일 뒤가 첫 확인 */
+function followUpOf(c: DbCollab): FollowUpState {
+  const reason = followUpReasonOf(c.status, c.period);
+  const f = c.followUp;
+  return {
+    reason,
+    nextCheckAt: reason ? (f ? f.nextCheckAt : nextCheckAt(0, new Date(c.createdAt))) : null,
+    lastCheckedAt: f?.lastCheckedAt ?? null,
+    unchanged: f?.unchanged ?? 0,
+    escalated: Boolean(f?.escalatedAt),
+    proposal: f?.proposal ?? null,
+  };
+}
+
+function toFollowUpItem(c: DbCollab): FollowUpItem {
+  return {
+    ...followUpOf(c),
+    id: c.id,
+    slug: c.slug,
+    status: c.status,
+    rev: c.rev,
+    title: c.i18n.ko.title || c.slug,
+    text: {
+      ko: { title: c.i18n.ko.title, summary: c.i18n.ko.summary },
+      en: { title: c.i18n.en.title, summary: c.i18n.en.summary },
+    },
+    period: c.period,
+    sourceUrls: c.sources.map((s) => s.url),
   };
 }
 
@@ -658,6 +693,49 @@ export const mockAdminApi: AdminApi = {
     if (!c.cover?.originalUrl || c.cover.storageKey) return { result: 'skipped' as const, collab: toAdmin(c) };
     c.cover = { ...c.cover, storageKey: `collabs/${c.slug}/cover-${Date.now().toString(36)}`, mirrorError: null };
     return { result: 'mirrored' as const, collab: toAdmin(c) };
+  },
+
+  async listFollowUps(view, limit = 50) {
+    await delay();
+    const t = new Date().toISOString();
+    const items = db.collabs
+      .filter((c) => c.status !== 'archived')
+      .map(toFollowUpItem)
+      .filter((f) =>
+        view === 'proposals'
+          ? f.proposal
+          : view === 'escalated'
+            ? f.reason && f.escalated
+            : f.reason && !f.proposal && f.nextCheckAt && f.nextCheckAt <= t,
+      );
+    const key = (f: FollowUpItem) => (view === 'proposals' ? f.proposal!.at : view === 'escalated' ? (f.lastCheckedAt ?? '') : (f.nextCheckAt ?? ''));
+    return items.sort((a, b) => key(a).localeCompare(key(b))).slice(0, limit);
+  },
+
+  // 반영: 제안의 기간·제목·요약을 덮어쓰고 출처를 뒤에 붙인다(백엔드처럼 rev 확인 + 증가)
+  async resolveFollowUp(id, action, rev) {
+    await delay();
+    const c = requireCollab(id);
+    const proposal = c.followUp?.proposal;
+    if (!proposal) throw new ApiError(404, 'not_found', '처리할 재확인 제안이 없습니다');
+    if (action === 'apply') {
+      if (rev === undefined) throw new ApiError(428, 'precondition_required', 'rev가 필요합니다');
+      if (c.rev !== rev) throw new ApiError(412, 'rev_conflict', '다른 사람이 먼저 수정했습니다. 새로고침 후 다시 시도하세요.');
+      if (proposal.period) c.period = proposal.period;
+      if (proposal.i18n) {
+        c.i18n = { ko: { ...c.i18n.ko, ...proposal.i18n.ko }, en: { ...c.i18n.en, ...proposal.i18n.en } };
+      }
+      const known = new Set(c.sources.map((s) => s.url));
+      for (const s of proposal.sources.filter((x) => !known.has(x.url))) {
+        c.sources.push({ url: s.url, title: s.title ?? '', publisher: s.publisher ?? '', type: 'press', isPrimary: false, accessedAt: now().slice(0, 10), lastCheckedAt: null, httpStatus: null, archiveUrl: null });
+      }
+      c.rev++;
+      c.updatedAt = now();
+      c.followUp = { nextCheckAt: nextCheckAt(0), lastCheckedAt: now(), unchanged: 0, escalatedAt: null, proposal: null };
+    } else {
+      c.followUp = { ...c.followUp!, proposal: null, nextCheckAt: nextCheckAt(c.followUp!.unchanged) };
+    }
+    return toAdmin(c);
   },
 
   // 저장소 대신 data: 주소로 메모리에 둔다(서버를 재시작하면 사라진다). 크기는 브라우저가 잰 값을 믿는다

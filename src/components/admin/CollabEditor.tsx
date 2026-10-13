@@ -30,7 +30,8 @@ import {
 } from '@radix-ui/themes';
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { getCollabForCompare, mirrorCollabCover, saveCollab, transitionCollab } from '@/app/[locale]/admin/actions';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
+import { FOLLOW_UP_REASON_HINT, FOLLOW_UP_REASON_LABEL } from '@/lib/followup';
 import type { TermNode } from '@/lib/taxonomy';
 import { flatten } from '@/lib/taxonomy';
 import {
@@ -384,6 +385,35 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
               ))}
             </Callout.Text>
             <CompareDialog current={collab} otherId={collab.duplicates[0]!.id} />
+          </Flex>
+        </Callout.Root>
+      )}
+
+      {collab?.followUp && (collab.followUp.reason || collab.followUp.proposal) && (
+        <Callout.Root color={collab.followUp.proposal || collab.followUp.escalated ? 'amber' : 'gray'} role="status">
+          <Callout.Icon>
+            <ExclamationTriangleIcon />
+          </Callout.Icon>
+          <Flex wrap="wrap" align="center" gap="3" style={{ gridColumn: '2' }}>
+            <Callout.Text style={{ flex: '1 1 300px' }}>
+              {collab.followUp.proposal ? (
+                <>재확인에서 찾은 변경 제안이 기다리고 있습니다.</>
+              ) : (
+                <>
+                  후속 확인: <strong>{FOLLOW_UP_REASON_LABEL[collab.followUp.reason!]}</strong> — {FOLLOW_UP_REASON_HINT[collab.followUp.reason!]}{' '}
+                  {collab.followUp.escalated
+                    ? `${collab.followUp.unchanged}번 확인해도 소식이 없습니다.`
+                    : collab.followUp.nextCheckAt && `다음 확인 ${collab.followUp.nextCheckAt.slice(0, 10)}.`}
+                </>
+              )}
+            </Callout.Text>
+            {(collab.followUp.proposal || collab.followUp.escalated) && (
+              <Button asChild size="1" variant="soft">
+                <Link href={collab.followUp.proposal ? '/admin/followups' : '/admin/followups?view=escalated'}>
+                  {collab.followUp.proposal ? '제안 보기' : '알림 목록'}
+                </Link>
+              </Button>
+            )}
           </Flex>
         </Callout.Root>
       )}
