@@ -1,4 +1,5 @@
 import '../globals.css';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import { Theme } from '@radix-ui/themes';
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
@@ -51,6 +52,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
           </Theme>
         </NextIntlClientProvider>
       </body>
+      <GoogleAnalytics gaId="G-KE94MJRC3Z" />
     </html>
   );
 }
