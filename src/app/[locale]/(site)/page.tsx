@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CollabCard } from '@/components/collab/CollabCard';
 import { FilterPanel } from '@/components/collab/FilterPanel';
 import { SortSelect } from '@/components/collab/SortSelect';
+import { AutoLoadMore } from '@/components/site/AutoLoadMore';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
 import { JsonLd } from '@/components/site/JsonLd';
 import { LinkPending } from '@/components/site/Pending';
@@ -232,15 +233,18 @@ export default async function CollabListPage({ params, searchParams }: PageProps
               )}
             </Flex>
 
+            {/* 목록 끝에 닿으면 저절로 다음 20개를 불러온다(버튼은 대기 표시·JS 없는 경우용) */}
             {list.nextCursor && query.limit < 100 && (
-              <Flex justify="center">
-                <Button asChild variant="surface" color="gray" size="3">
-                  <Link href={href({ limit: Math.min(query.limit + 20, 100) })} scroll={false}>
-                    <LinkPending spinner dim={false} />
-                    {t('loadMore')}
-                  </Link>
-                </Button>
-              </Flex>
+              <AutoLoadMore href={href({ limit: Math.min(query.limit + 20, 100) })}>
+                <Flex justify="center">
+                  <Button asChild variant="surface" color="gray" size="3">
+                    <Link href={href({ limit: Math.min(query.limit + 20, 100) })} scroll={false} replace>
+                      <LinkPending spinner dim={false} />
+                      {t('loadMore')}
+                    </Link>
+                  </Button>
+                </Flex>
+              </AutoLoadMore>
             )}
           </Flex>
         </section>
