@@ -145,14 +145,11 @@ export default async function CollabListPage({ params, searchParams }: PageProps
         <h1>
           <SignalX text={heading ?? t('title')} />
         </h1>
-        <Flex direction="column" align="start" gap="3" style={{ maxWidth: 340 }}>
-          {!heading && (
-            <Text as="p" size="2" color="gray" m="0">
-              {tSite('description')}
-            </Text>
-          )}
-          <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
-        </Flex>
+        {!heading && (
+          <Text as="p" size="2" color="gray" m="0" style={{ maxWidth: 340 }}>
+            {tSite('description')}
+          </Text>
+        )}
       </header>
 
       <nav aria-label={t('phaseTabs')}>
@@ -196,6 +193,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                 })}
               </Text>
               <SortSelect query={query} />
+              <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} variant="ghost" />
             </Flex>
 
             {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
