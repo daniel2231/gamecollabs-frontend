@@ -12,6 +12,8 @@
   --ct-line-soft: var(--gray-a4);
   --ct-muted: var(--gray-11);
   --ct-ph-border: var(--gray-a8);
+  /* 헤더와 콜라보 카드가 함께 쓰는 검은 바탕 */
+  --ct-black: #000;
 }
 
 .radix-themes.dark,
@@ -76,7 +78,7 @@ body {
 
 .ct-header {
   border-bottom: 1px solid var(--ct-line);
-  background: var(--ct-surface);
+  background: var(--ct-black);
 }
 
 .ct-logo {
@@ -218,7 +220,7 @@ body {
   width: 100%;
   border: 1px solid var(--ct-line);
   border-radius: var(--radius-4);
-  background: var(--ct-surface);
+  background: var(--ct-black);
   color: var(--gray-12);
   text-decoration: none;
   overflow: hidden;
