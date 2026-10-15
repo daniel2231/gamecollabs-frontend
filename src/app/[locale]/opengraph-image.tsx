@@ -6,7 +6,7 @@ import { loadOgFont } from '@/lib/og-font';
 
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
-export const alt = 'Collab Tracker';
+export const alt = 'GameCollabs';
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

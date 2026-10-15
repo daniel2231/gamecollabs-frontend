@@ -6,7 +6,7 @@ import { OG_SIZE, ogCard } from '@/lib/og-card';
 
 export const size = OG_SIZE;
 export const contentType = 'image/png';
-export const alt = 'Collab Tracker';
+export const alt = 'GameCollabs';
 
 export default async function OgImage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
