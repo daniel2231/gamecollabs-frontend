@@ -145,11 +145,6 @@ export default async function CollabListPage({ params, searchParams }: PageProps
         <h1>
           <SignalX text={heading ?? t('title')} />
         </h1>
-        {!heading && (
-          <Text as="p" size="2" color="gray" m="0" style={{ maxWidth: 340 }}>
-            {tSite('description')}
-          </Text>
-        )}
       </header>
 
       <nav aria-label={t('phaseTabs')}>
