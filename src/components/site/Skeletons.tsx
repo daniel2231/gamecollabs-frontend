@@ -39,26 +39,28 @@ function Grid({ count }: { count: number }) {
   );
 }
 
-/** 홈: 첫 화면(제목·검색·칩) 아래 큰 카드 */
+/** 홈: 대표 카드 | 번호 목록, 아래 카드 그리드 */
 export function HomeSkeleton() {
   return (
     <div aria-busy="true">
       <LoadingStatus />
-      <div className="ct-front">
-        <Flex direction="column" gap="5">
-          <Line width={140} height={14} />
-          <Line width="70%" height={88} />
-          <Line width="55%" height={88} />
-          <Line width="60%" height={48} />
-          <Flex gap="2">
-            {[96, 120, 88].map((w, i) => (
-              <Line key={i} width={w} height={32} />
+      <div className="ct-home">
+        <div className="ct-lead">
+          <Flex direction="column" gap="3">
+            <Block height={400} />
+            <Line width={140} height={14} />
+            <Line width="70%" height={40} />
+          </Flex>
+          <Flex direction="column" gap="4">
+            <Line width={140} height={24} />
+            {Array.from({ length: 6 }, (_, i) => (
+              <Flex key={i} direction="column" gap="2">
+                <Line width="80%" height={18} />
+                <Line width="50%" height={13} />
+              </Flex>
             ))}
           </Flex>
-        </Flex>
-      </div>
-      <div className="ct-home">
-        <Block height={360} />
+        </div>
         <Grid count={4} />
       </div>
     </div>
