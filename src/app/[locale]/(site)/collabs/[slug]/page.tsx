@@ -1,5 +1,4 @@
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import { Badge, Button, Flex, Heading, Link as RadixLink, Table, Text, Tooltip } from '@radix-ui/themes';
+import { Badge, Flex, Heading, Link as RadixLink, Table, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -100,13 +99,7 @@ export default async function CollabDetailPage({ params }: Props) {
                     <SignalX text={collab.title} />
                   </Heading>
                   <Flex gap="2" wrap="wrap" mt="1">
-                    <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
-                    <Tooltip content={t('reportSoon')}>
-                      <Button variant="surface" color="gray" size="2" style={{ whiteSpace: 'nowrap' }} disabled>
-                        <ExclamationTriangleIcon />
-                        {t('report')}
-                      </Button>
-                    </Tooltip>
+                    <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} />
                   </Flex>
                 </Flex>
               </header>
