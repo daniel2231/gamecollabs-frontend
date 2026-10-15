@@ -1,5 +1,5 @@
 import { Cross2Icon } from '@radix-ui/react-icons';
-import { Badge, Button, Flex, Heading, TabNav, Text } from '@radix-ui/themes';
+import { Badge, Button, Flex, Heading, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CollabCard } from '@/components/collab/CollabCard';
@@ -9,6 +9,7 @@ import { AutoLoadMore } from '@/components/site/AutoLoadMore';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
 import { JsonLd } from '@/components/site/JsonLd';
 import { LinkPending } from '@/components/site/Pending';
+import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
@@ -140,30 +141,33 @@ export default async function CollabListPage({ params, searchParams }: PageProps
           ])}
         />
       )}
-      <Flex wrap="wrap" align="center" justify="between" gap="4" mb="5">
-        <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }}>
-          {heading ?? t('title')}
-        </Heading>
-        <Flex wrap="wrap" gap="2">
+      <header className="ct-hero">
+        <h1>
+          <SignalX text={heading ?? t('title')} />
+        </h1>
+        <Flex direction="column" align="start" gap="3" style={{ maxWidth: 340 }}>
+          {!heading && (
+            <Text as="p" size="2" color="gray" m="0">
+              {tSite('description')}
+            </Text>
+          )}
           <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
         </Flex>
-      </Flex>
+      </header>
 
-      <TabNav.Root aria-label={t('phaseTabs')} size="2" mb="5">
-        {PHASE_TABS.map((phase) => (
-          <TabNav.Link key={phase ?? 'all'} asChild active={query.phase === phase}>
-            <Link href={href({ phase, limit: 20 })} scroll={false}>
-              <LinkPending />
-              {phase ? tPhase(phase) : tPhase('all')}
-              {phase && stats.byPhase[phase] > 0 && (
-                <Text size="1" color="gray" ml="2" className="ct-mono">
-                  {stats.byPhase[phase]}
-                </Text>
-              )}
-            </Link>
-          </TabNav.Link>
-        ))}
-      </TabNav.Root>
+      <nav aria-label={t('phaseTabs')}>
+        <ul className="ct-tabs">
+          {PHASE_TABS.map((phase) => (
+            <li key={phase ?? 'all'}>
+              <Link href={href({ phase, limit: 20 })} scroll={false} aria-current={query.phase === phase ? 'page' : undefined}>
+                <LinkPending />
+                {phase ? tPhase(phase) : tPhase('all')}
+                {phase && stats.byPhase[phase] > 0 && <sup>{stats.byPhase[phase]}</sup>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
 
       <div className="ct-split">
         <FilterPanel query={query} facets={facets} />
@@ -172,7 +176,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
           <Flex direction="column" gap="4">
             <Flex wrap="wrap" align="center" gap="2">
               {chips.map((chip) => (
-                <Badge key={chip.href} asChild size="2" radius="full" variant="soft">
+                <Badge key={chip.href} asChild size="2" variant="outline" color="gray" highContrast>
                   <Link href={chip.href} scroll={false} aria-label={t('removeFilter', { label: chip.label })}>
                     <LinkPending />
                     {chip.label}
@@ -215,11 +219,9 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                 // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
                 groups.map((group) => (
                   <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
-                    <Heading as="h2" size="4" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
+                    <Heading as="h2" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
                       {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
-                      <Badge size="2" radius="full" variant="soft" color="gray" className="ct-month-count">
-                        {t('monthCount', { count: group.total })}
-                      </Badge>
+                      <span className="ct-month-count">{t('monthCount', { count: group.total })}</span>
                     </Heading>
                     <ul className="ct-grid">
                       {group.items.map((item) => (

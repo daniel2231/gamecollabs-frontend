@@ -1,5 +1,5 @@
 import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
-import { Badge, Button, Card, Flex, Heading, Link as RadixLink, Table, Text, Tooltip } from '@radix-ui/themes';
+import { Badge, Button, Flex, Heading, Link as RadixLink, Table, Text, Tooltip } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -7,6 +7,7 @@ import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
 import { JsonLd } from '@/components/site/JsonLd';
+import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
@@ -95,8 +96,8 @@ export default async function CollabDetailPage({ params }: Props) {
                       {t('updated', { date: collab.updatedAt.slice(0, 10) })}
                     </Text>
                   </Flex>
-                  <Heading as="h1" size="8" style={{ letterSpacing: '-0.02em' }} lang={collab.fallback ? 'ko' : undefined}>
-                    {collab.title}
+                  <Heading as="h1" size="9" weight="bold" style={{ letterSpacing: '-0.04em', lineHeight: 1.05 }} lang={collab.fallback ? 'ko' : undefined}>
+                    <SignalX text={collab.title} />
                   </Heading>
                   <Flex gap="2" wrap="wrap" mt="1">
                     <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} />
@@ -117,7 +118,7 @@ export default async function CollabDetailPage({ params }: Props) {
                     alt={collab.cover.alt}
                     width={collab.cover.width ?? undefined}
                     height={collab.cover.height ?? undefined}
-                    style={{ width: '100%', height: 'auto', borderRadius: 8, border: '1px solid var(--ct-line)' }}
+                    style={{ width: '100%', height: 'auto', border: '1px solid var(--ct-line)' }}
                   />
                   {collab.cover.credit && (
                     <Text as="p" size="1" color="gray" mt="2">
@@ -156,7 +157,7 @@ export default async function CollabDetailPage({ params }: Props) {
                   <Text as="div" size="1" color="gray">
                     {t('status')}
                   </Text>
-                  <Text as="div" size="5" weight="medium" color={collab.phase === 'ongoing' ? 'grass' : undefined}>
+                  <Text as="div" size="5" weight="medium" style={collab.phase === 'ongoing' ? { color: 'var(--ct-signal)' } : undefined}>
                     {tPhase(collab.phase)}
                   </Text>
                 </div>
@@ -181,13 +182,12 @@ export default async function CollabDetailPage({ params }: Props) {
 
               {collab.venues.length > 0 && (
                 <Section title={t('venues')}>
-                  <Card size="1" style={{ padding: 0 }}>
+                  <div className="ct-rows">
                     {collab.venues.map((v, i) => (
                       <Flex
                         key={`${v.name}-${i}`}
                         direction="column"
                         gap="1"
-                        px="4"
                         py="3"
                         style={i ? { borderTop: '1px solid var(--ct-line-soft)' } : undefined}
                       >
@@ -206,7 +206,7 @@ export default async function CollabDetailPage({ params }: Props) {
                         )}
                       </Flex>
                     ))}
-                  </Card>
+                  </div>
                 </Section>
               )}
 
@@ -247,14 +247,13 @@ export default async function CollabDetailPage({ params }: Props) {
 
               {collab.companies.length > 0 && (
                 <Section title={t('companies')}>
-                  <Card size="1" style={{ padding: 0 }}>
+                  <div className="ct-rows">
                     {collab.companies.map((c, i) => (
                       <Flex
                         key={`${c.slug}-${c.role}`}
                         wrap="wrap"
                         justify="between"
                         gap="2"
-                        px="4"
                         py="3"
                         style={i ? { borderTop: '1px solid var(--ct-line-soft)' } : undefined}
                       >
@@ -266,7 +265,7 @@ export default async function CollabDetailPage({ params }: Props) {
                         </Badge>
                       </Flex>
                     ))}
-                  </Card>
+                  </div>
                 </Section>
               )}
 

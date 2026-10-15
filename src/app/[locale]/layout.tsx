@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Pr
   };
 }
 
-export const viewport: Viewport = { themeColor: '#0b0b0d', colorScheme: 'dark' };
+export const viewport: Viewport = { themeColor: '#0a0a09', colorScheme: 'dark' };
 
 export default async function LocaleLayout({ children, params }: LayoutProps<'/[locale]'>) {
   const { locale } = await params;
@@ -47,7 +47,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
     <html lang={locale} className={`dark ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body>
         <NextIntlClientProvider>
-          <Theme appearance="dark" accentColor="gray" grayColor="slate" radius="medium" panelBackground="solid">
+          <Theme appearance="dark" accentColor="gray" grayColor="sand" radius="none" panelBackground="solid">
             {children}
           </Theme>
         </NextIntlClientProvider>

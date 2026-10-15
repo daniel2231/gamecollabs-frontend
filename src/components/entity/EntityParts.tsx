@@ -1,4 +1,4 @@
-import { Card, Flex, Heading, Text } from '@radix-ui/themes';
+import { Flex, Heading, Text } from '@radix-ui/themes';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
@@ -22,7 +22,7 @@ export function StatGrid({ stats }: { stats: { label: string; value: string }[] 
 export function CountList({ title, items, hrefPrefix }: { title: string; items: { slug: string; name: string; count: number }[]; hrefPrefix: string }) {
   const t = useTranslations('Property');
   return (
-    <Card size="2">
+    <section className="ct-block">
       <Heading as="h2" size="3" mb="3">
         {title}
       </Heading>
@@ -44,7 +44,7 @@ export function CountList({ title, items, hrefPrefix }: { title: string; items: 
           ))}
         </ul>
       )}
-    </Card>
+    </section>
   );
 }
 
@@ -52,7 +52,7 @@ export function Distribution({ title, items }: { title: string; items: { key: st
   const t = useTranslations('Property');
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
-    <Card size="2">
+    <section className="ct-block">
       <Heading as="h2" size="3" mb="3">
         {title}
       </Heading>
@@ -77,6 +77,6 @@ export function Distribution({ title, items }: { title: string; items: { key: st
           ))}
         </Flex>
       )}
-    </Card>
+    </section>
   );
 }

@@ -1,27 +1,12 @@
-import { Badge } from '@radix-ui/themes';
 import { useTranslations } from 'next-intl';
 import type { Phase } from '@/schema';
 
-const COLORS = { ongoing: 'grass', upcoming: 'amber', ended: 'gray', unknown: 'gray' } as const;
-
-/** 모든 상태가 같은 모양(soft 배지 + 점). 상태 미상은 속이 빈 점으로 '종료'와 구분한다 */
+/** 작은 사각형 + 글자. 진행 중만 강조색, 예정·미상은 속이 빈 사각형(globals.css의 .ct-phase) */
 export function PhaseBadge({ phase, size = '1' }: { phase: Phase; size?: '1' | '2' }) {
   const t = useTranslations('Phase');
-  const unknown = phase === 'unknown';
   return (
-    <Badge size={size} color={COLORS[phase]} variant="soft" highContrast={phase === 'ongoing'}>
-      <span
-        aria-hidden="true"
-        style={{
-          width: 6,
-          height: 6,
-          borderRadius: 999,
-          flex: 'none',
-          background: unknown ? 'transparent' : 'currentColor',
-          boxShadow: unknown ? 'inset 0 0 0 1.5px currentColor' : undefined,
-        }}
-      />
+    <span className="ct-phase" data-phase={phase} data-size={size}>
       {t(phase)}
-    </Badge>
+    </span>
   );
 }

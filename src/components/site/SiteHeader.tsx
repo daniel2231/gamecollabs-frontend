@@ -1,4 +1,3 @@
-import { Flex } from '@radix-ui/themes';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { Link } from '@/i18n/navigation';
@@ -11,18 +10,20 @@ export async function SiteHeader() {
   return (
     <header className="ct-header">
       <div className="ct-container">
-        <Flex wrap="wrap" align="center" gapX="5" gapY="3" py="3">
+        <div className="ct-header-row">
           <Link href="/" className="ct-logo">
             <LogoMark />
             {t('name')}
           </Link>
-          <Suspense fallback={<div style={{ flex: '1 1 260px' }} />}>
-            <SearchBox />
-          </Suspense>
+          <div className="ct-header-search">
+            <Suspense fallback={null}>
+              <SearchBox />
+            </Suspense>
+          </div>
           <Suspense fallback={null}>
             <LanguageMenu />
           </Suspense>
-        </Flex>
+        </div>
       </div>
     </header>
   );

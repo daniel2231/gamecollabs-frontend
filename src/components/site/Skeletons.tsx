@@ -11,14 +11,14 @@ function Line({ width, height = 16 }: { width: number | string; height?: number 
 }
 
 function Block({ height }: { height: number }) {
-  return <Skeleton width="100%" height={`${height}px`} style={{ borderRadius: 'var(--radius-3)' }} />;
+  return <Skeleton width="100%" height={`${height}px`} />;
 }
 
 function CardSkeleton() {
   return (
     <div className="ct-card" aria-hidden="true">
       <div className="ct-card-cover" />
-      <Flex direction="column" gap="2" p="4">
+      <Flex direction="column" gap="2">
         <Line width={110} height={12} />
         <Line width="80%" height={20} />
         <Line width="50%" height={14} />
@@ -45,7 +45,7 @@ export function ListSkeleton() {
     <div aria-busy="true">
       <LoadingStatus />
       <Flex align="center" justify="between" mb="5">
-        <Line width={280} height={40} />
+        <Line width={420} height={72} />
       </Flex>
       <Flex gap="5" mb="5" pb="2" style={{ borderBottom: '1px solid var(--ct-line)' }}>
         {[48, 64, 48, 48].map((w, i) => (

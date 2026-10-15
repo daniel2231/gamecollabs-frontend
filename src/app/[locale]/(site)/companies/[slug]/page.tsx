@@ -1,4 +1,4 @@
-import { Badge, Card, Flex, Heading, Text } from '@radix-ui/themes';
+import { Badge, Flex, Heading, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -99,18 +99,18 @@ export default async function CompanyPage({ params }: Props) {
         <aside className="ct-side">
           <Flex direction="column" gap="4">
             <CountList title={t('properties')} items={c.properties} hrefPrefix="/properties" />
-            <Card size="2">
+            <section className="ct-block">
               <Heading as="h2" size="3" mb="3">
                 {t('roles')}
               </Heading>
               <Flex wrap="wrap" gap="2">
                 {c.roles.map((r) => (
-                  <Badge key={r.role} variant="soft" size="2">
+                  <Badge key={r.role} variant="outline" color="gray" size="2">
                     {tRole(r.role)} <span className="ct-mono">{r.count}</span>
                   </Badge>
                 ))}
               </Flex>
-            </Card>
+            </section>
           </Flex>
         </aside>
       </div>

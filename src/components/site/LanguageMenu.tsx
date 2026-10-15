@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDownIcon, GlobeIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { Button, DropdownMenu } from '@radix-ui/themes';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -26,8 +26,7 @@ export function LanguageMenu() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger>
-        <Button variant="surface" color="gray" size="3" aria-label={t('label')} loading={pending}>
-          <GlobeIcon />
+        <Button variant="ghost" color="gray" size="2" aria-label={t('label')} loading={pending} className="ct-mono" style={{ marginInline: 0 }}>
           {locale.toUpperCase()}
           <ChevronDownIcon />
         </Button>
