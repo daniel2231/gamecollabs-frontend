@@ -568,6 +568,11 @@ body {
   .ct-stat-grid {
     grid-template-columns: 1fr;
   }
+
+  /* 세로로 쌓이면 왼쪽 여백 없이 첫 칸과 줄을 맞춘다 */
+  .ct-stat-grid > div + div {
+    padding-left: 0;
+  }
 }
 
 /* 사이드 묶음·목록 행: 상자 대신 위아래 선 */

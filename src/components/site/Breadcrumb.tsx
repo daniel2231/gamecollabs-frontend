@@ -1,5 +1,6 @@
 import { Link as RadixLink, Text } from '@radix-ui/themes';
 import { Link } from '@/i18n/navigation';
+import { SignalX } from '@/components/site/SignalX';
 
 export function Breadcrumb({ label, items }: { label: string; items: { href?: string; label: string }[] }) {
   return (
@@ -18,7 +19,7 @@ export function Breadcrumb({ label, items }: { label: string; items: { href?: st
               </RadixLink>
             ) : (
               <Text size="2" highContrast aria-current="page">
-                {item.label}
+                <SignalX text={item.label} />
               </Text>
             )}
           </li>

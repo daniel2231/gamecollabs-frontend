@@ -282,7 +282,7 @@ export default async function CollabDetailPage({ params }: Props) {
                           {t(`relation.${r.relation}`)}
                         </Text>
                         <Text size="3" weight="bold">
-                          {r.title}
+                          <SignalX text={r.title} />
                         </Text>
                         <Text size="2" color="gray" className={r.period.start && r.period.precision !== 'unknown' ? 'ct-mono' : undefined}>
                           {formatPeriod(r.period, { unknown: tPeriod('unknown'), permanent: tPeriod('permanent'), tba: tPeriod('tba') })}

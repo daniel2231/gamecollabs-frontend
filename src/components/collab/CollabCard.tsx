@@ -1,5 +1,6 @@
 import { Flex, Text } from '@radix-ui/themes';
 import { Link } from '@/i18n/navigation';
+import { SignalX } from '@/components/site/SignalX';
 import { coverFit } from '@/lib/cover';
 import type { CollabSummary } from '@/schema';
 import { PeriodText } from './PeriodText';
@@ -42,11 +43,11 @@ export function CollabCard({ collab }: { collab: CollabSummary }) {
           <PeriodText period={collab.period} />
         </Text>
         <Text size="4" weight="bold" className="ct-card-title">
-          {collab.title}
+          <SignalX text={collab.title} />
         </Text>
         {(host || partner) && (
           <Text size="2" color="gray" className="ct-card-meta">
-            {[host?.kind.label, partner?.kind.label].filter(Boolean).join(' × ')}
+            <SignalX text={[host?.kind.label, partner?.kind.label].filter(Boolean).join(' × ')} />
           </Text>
         )}
         {tags.length > 0 && (

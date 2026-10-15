@@ -3,6 +3,7 @@ import { useTranslations } from 'next-intl';
 import { PeriodText } from '@/components/collab/PeriodText';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { Link } from '@/i18n/navigation';
+import { SignalX } from '@/components/site/SignalX';
 import type { CollabSummary } from '@/schema';
 
 type Item = CollabSummary & { heading: string; extra?: string };
@@ -37,10 +38,10 @@ export function Timeline({ items, order }: { items: Item[]; order: 'desc' | 'asc
               <Link href={`/collabs/${item.slug}`} className="ct-card-link" style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: '8px 20px', padding: '14px 16px' }}>
                 <Flex direction="column" gap="1" style={{ minWidth: 0 }}>
                   <Text size="3" weight="bold">
-                    {item.heading}
+                    <SignalX text={item.heading} />
                   </Text>
                   <Text size="2" color="gray">
-                    {[...item.collabTypes, ...item.platforms, ...item.regions].map((x) => x.label).join(' · ') || item.title}
+                    <SignalX text={[...item.collabTypes, ...item.platforms, ...item.regions].map((x) => x.label).join(' · ') || item.title} />
                   </Text>
                 </Flex>
                 <Flex align="center" gap="2" wrap="wrap">
