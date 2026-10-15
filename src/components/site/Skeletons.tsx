@@ -39,29 +39,27 @@ function Grid({ count }: { count: number }) {
   );
 }
 
-/** 홈: 제목·진행 상태 숫자·카드 묶음 */
+/** 홈: 첫 화면(제목·검색·칩) 아래 큰 카드 */
 export function HomeSkeleton() {
   return (
     <div aria-busy="true">
       <LoadingStatus />
-      <Flex align="center" justify="between" mb="5">
-        <Line width={420} height={72} />
-      </Flex>
-      <div className="ct-stats" aria-hidden="true">
-        {[0, 1, 2].map((i) => (
-          <Flex key={i} direction="column" gap="2" py="4">
-            <Line width={64} height={40} />
-            <Line width={56} height={14} />
+      <div className="ct-front">
+        <Flex direction="column" gap="5">
+          <Line width={140} height={14} />
+          <Line width="70%" height={88} />
+          <Line width="55%" height={88} />
+          <Line width="60%" height={48} />
+          <Flex gap="2">
+            {[96, 120, 88].map((w, i) => (
+              <Line key={i} width={w} height={32} />
+            ))}
           </Flex>
-        ))}
+        </Flex>
       </div>
       <div className="ct-home">
-        {[0, 1].map((i) => (
-          <Flex key={i} direction="column" gap="5">
-            <Line width={160} height={24} />
-            <Grid count={4} />
-          </Flex>
-        ))}
+        <Block height={360} />
+        <Grid count={4} />
       </div>
     </div>
   );

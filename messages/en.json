@@ -34,6 +34,9 @@
   },
   "Home": {
     "title": "Game × IP Collabs",
+    "tagline": "Which games<br></br>met which IPs?",
+    "spotlight": "In the spotlight",
+    "quick": "Jump to a category",
     "stats": "Collabs by status",
     "browseAll": "Browse all collabs",
     "seeAll": "See all",
@@ -41,8 +44,7 @@
     "section": {
       "ongoing": "Happening now",
       "upcoming": "Starting soon",
-      "recent": "Just added",
-      "browse": "Browse by category"
+      "recent": "Just added"
     }
   },
   "List": {

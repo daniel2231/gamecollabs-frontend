@@ -9,8 +9,11 @@ import { PendingMark } from './Pending';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { LIST_PATH } from '@/lib/filters';
 
-/** 헤더 검색. 결과는 목록(/collabs)에 보여준다. 목록 화면에서는 현재 필터를 유지한 채 q만 바꾼다. '/' 키로 포커스 */
-export function SearchBox() {
+/**
+ * 사이트 검색. 결과는 목록(/collabs)에 보여준다. 목록 화면에서는 현재 필터를 유지한 채 q만 바꾼다.
+ * '/' 키로 포커스. 헤더와 홈 첫 화면에 둘 다 있을 수 있어, 화면에 보이는 검색창만 반응한다
+ */
+export function SearchBox({ id = 'site-search' }: { id?: string } = {}) {
   const t = useTranslations('Site.search');
   const router = useRouter();
   const pathname = usePathname();
@@ -27,6 +30,8 @@ export function SearchBox() {
       if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      // 숨겨진 검색창(display: none)은 건너뛴다
+      if (!inputRef.current?.offsetParent) return;
       e.preventDefault();
       inputRef.current?.focus();
     }
@@ -49,10 +54,10 @@ export function SearchBox() {
     <form role="search" onSubmit={onSubmit} style={{ flex: '1 1 260px', minWidth: 0 }}>
       <PendingMark pending={pending} />
       <VisuallyHidden>
-        <label htmlFor="site-search">{t('label')}</label>
+        <label htmlFor={id}>{t('label')}</label>
       </VisuallyHidden>
       <TextField.Root
-        id="site-search"
+        id={id}
         ref={inputRef}
         type="search"
         size="3"

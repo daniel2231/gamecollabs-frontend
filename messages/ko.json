@@ -34,6 +34,9 @@
   },
   "Home": {
     "title": "게임 × IP 콜라보",
+    "tagline": "어떤 게임이<br></br>어떤 IP와 만났을까?",
+    "spotlight": "지금 주목할 콜라보",
+    "quick": "분류 바로가기",
     "stats": "진행 상태별 콜라보 수",
     "browseAll": "전체 콜라보 보기",
     "seeAll": "모두 보기",
@@ -41,8 +44,7 @@
     "section": {
       "ongoing": "지금 진행 중",
       "upcoming": "곧 시작",
-      "recent": "새로 등록됨",
-      "browse": "분류별 둘러보기"
+      "recent": "새로 등록됨"
     }
   },
   "List": {
