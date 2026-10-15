@@ -212,6 +212,182 @@ body {
   top: -0.6em;
 }
 
+/* 헤더 오른쪽: 목록 링크 | 언어 */
+.ct-header-end {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.ct-header-nav {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-11);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ct-header-nav:hover {
+  color: var(--gray-12);
+}
+
+/* ── 홈 ────────────────────────────────────────────────────── */
+
+/* '모두 보기 →' 같은 글자 링크 */
+.ct-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-11);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ct-more:hover {
+  color: var(--gray-12);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ct-more-lg {
+  font-size: 16px;
+  color: var(--gray-12);
+}
+
+/* 진행 상태 숫자 띠: 세 칸, 칸 사이 가는 선. 진행 중 숫자만 강조색 */
+.ct-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 56px;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--ct-line);
+}
+
+.ct-stats > * + * {
+  border-left: 1px solid var(--ct-line);
+}
+
+.ct-stats > * {
+  padding-left: 20px;
+}
+
+.ct-stats > :first-child {
+  padding-left: 0;
+}
+
+.ct-stats a {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-block: 20px;
+  color: var(--gray-12);
+  text-decoration: none;
+}
+
+.ct-stats-num {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.ct-stats a[data-phase='ongoing'] .ct-stats-num {
+  color: var(--ct-signal);
+}
+
+.ct-stats-label {
+  font-size: 14px;
+  color: var(--gray-11);
+}
+
+.ct-stats a:hover .ct-stats-label {
+  color: var(--gray-12);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 640px) {
+  .ct-stats > * {
+    padding-left: 12px;
+  }
+}
+
+.ct-home {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.ct-home-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 섹션 제목: 위쪽 굵은 선, 왼쪽 제목, 오른쪽 '모두 보기' */
+.ct-section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-12);
+}
+
+.ct-section-heading h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* 분류별 둘러보기: 분류마다 한 줄 제목 + 글자 칩 */
+.ct-browse {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px 40px;
+}
+
+.ct-browse-heading {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-10);
+}
+
+.ct-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-chips a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--gray-a6);
+  font-size: 14px;
+  color: var(--gray-12);
+  text-decoration: none;
+}
+
+.ct-chips a:hover {
+  border-color: var(--gray-12);
+}
+
+.ct-chips sup {
+  font-size: 11px;
+  color: var(--gray-10);
+  top: -0.4em;
+}
+
 .ct-logo {
   display: flex;
   align-items: center;

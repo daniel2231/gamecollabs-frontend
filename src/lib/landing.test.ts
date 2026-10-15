@@ -5,7 +5,7 @@ import { landingOf, landingPath } from './landing';
 const q = (params: Record<string, string>) => parseCollabQuery(params);
 
 describe('landingOf', () => {
-  it('필터가 없으면 랜딩이 아니다(홈)', () => {
+  it('필터가 없으면 랜딩이 아니다(전체 목록)', () => {
     expect(landingOf(q({}))).toBeNull();
   });
 
@@ -32,7 +32,7 @@ describe('landingOf', () => {
 
 describe('landingPath', () => {
   it('해당 필터 하나만 남긴 쿼리 문자열', () => {
-    expect(landingPath({ param: 'phase', key: 'ongoing' })).toBe('?phase=ongoing');
-    expect(landingPath({ param: 'partner_category', key: 'partner_category.anime_manga' })).toBe('?partner_category=partner_category.anime_manga');
+    expect(landingPath({ param: 'phase', key: 'ongoing' })).toBe('/collabs?phase=ongoing');
+    expect(landingPath({ param: 'partner_category', key: 'partner_category.anime_manga' })).toBe('/collabs?partner_category=partner_category.anime_manga');
   });
 });

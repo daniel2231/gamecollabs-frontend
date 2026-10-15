@@ -1,5 +1,5 @@
-import { ListSkeleton } from '@/components/site/Skeletons';
+import { HomeSkeleton } from '@/components/site/Skeletons';
 
 export default function Loading() {
-  return <ListSkeleton />;
+  return <HomeSkeleton />;
 }

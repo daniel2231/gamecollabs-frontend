@@ -39,6 +39,34 @@ function Grid({ count }: { count: number }) {
   );
 }
 
+/** 홈: 제목·진행 상태 숫자·카드 묶음 */
+export function HomeSkeleton() {
+  return (
+    <div aria-busy="true">
+      <LoadingStatus />
+      <Flex align="center" justify="between" mb="5">
+        <Line width={420} height={72} />
+      </Flex>
+      <div className="ct-stats" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <Flex key={i} direction="column" gap="2" py="4">
+            <Line width={64} height={40} />
+            <Line width={56} height={14} />
+          </Flex>
+        ))}
+      </div>
+      <div className="ct-home">
+        {[0, 1].map((i) => (
+          <Flex key={i} direction="column" gap="5">
+            <Line width={160} height={24} />
+            <Grid count={4} />
+          </Flex>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** 콜라보 목록: 제목·탭·필터·카드 그리드 */
 export function ListSkeleton() {
   return (

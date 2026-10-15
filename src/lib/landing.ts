@@ -3,7 +3,7 @@
  * 검색어·기간·여러 필터 조합은 지금처럼 noindex. 정렬·더 보기(sort·limit)는 무시하고 canonical에서 뺀다.
  */
 import { FACET_PARAMS, type CollabQuery, type FacetParam, type Phase } from '@/schema';
-import { serializeCollabQuery } from './filters';
+import { listHref } from './filters';
 
 export type Landing = { param: 'phase'; key: Exclude<Phase, 'unknown'> } | { param: FacetParam; key: string };
 
@@ -22,7 +22,7 @@ export function landingOf(query: CollabQuery): Landing | null {
   return { param: facet, key: query[facet][0]! };
 }
 
-/** canonical에 쓰는 경로(언어 접두어 뒤). 예: `?category=category.in_game` */
+/** canonical에 쓰는 경로(언어 접두어 뒤). 예: `/collabs?category=category.in_game` */
 export function landingPath(landing: Landing): string {
-  return serializeCollabQuery(landing.param === 'phase' ? { phase: landing.key } : { [landing.param]: [landing.key] });
+  return listHref(landing.param === 'phase' ? { phase: landing.key } : { [landing.param]: [landing.key] });
 }

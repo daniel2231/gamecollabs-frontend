@@ -32,8 +32,21 @@
     "permanent": "Permanent",
     "tba": "End date TBA"
   },
-  "List": {
+  "Home": {
     "title": "Game × IP Collabs",
+    "stats": "Collabs by status",
+    "browseAll": "Browse all collabs",
+    "seeAll": "See all",
+    "seeAllLabel": "See all: {section}",
+    "section": {
+      "ongoing": "Happening now",
+      "upcoming": "Starting soon",
+      "recent": "Just added",
+      "browse": "Browse by category"
+    }
+  },
+  "List": {
+    "title": "All collabs",
     "landing": {
       "phase": {
         "ongoing": "Ongoing game × IP collabs",

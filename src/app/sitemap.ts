@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { parseCollabQuery } from '@/lib/filters';
+import { LIST_PATH, parseCollabQuery } from '@/lib/filters';
 import { LANDING_PHASES, landingPath, type Landing } from '@/lib/landing';
 import { languageAlternates } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   };
   return [
     ...entries(''),
+    ...entries(LIST_PATH),
     ...landingList.flatMap((l) => entries(landingPath(l))),
     ...data.collabs.flatMap((c) => entries(`/collabs/${c.slug}`, c.updatedAt)),
     ...data.properties.flatMap((p) => entries(`/properties/${p.slug}`, p.updatedAt)),

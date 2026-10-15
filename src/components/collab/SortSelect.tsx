@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useOptimistic, useTransition } from 'react';
 import { PendingMark } from '@/components/site/Pending';
 import { useRouter } from '@/i18n/navigation';
-import { serializeCollabQuery } from '@/lib/filters';
+import { listHref } from '@/lib/filters';
 import { SORTS, type CollabQuery, type Sort } from '@/schema';
 
 export function SortSelect({ query }: { query: CollabQuery }) {
@@ -22,7 +22,7 @@ export function SortSelect({ query }: { query: CollabQuery }) {
         onValueChange={(next) =>
           startTransition(() => {
             setSort(next as Sort);
-            router.replace(`/${serializeCollabQuery({ ...query, sort: next as Sort, limit: 20 })}`, { scroll: false });
+            router.replace(listHref({ ...query, sort: next as Sort, limit: 20 }), { scroll: false });
           })
         }
       >
