@@ -90,16 +90,59 @@ body {
   text-decoration: none;
 }
 
-.ct-logo-mark {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-2);
-  background: var(--accent-9);
-  color: var(--accent-contrast);
-  display: grid;
-  place-items: center;
-  font-family: var(--code-font-family);
-  font-weight: 500;
+/* 엠블럼: 선을 그린 뒤 ＋·▶·× 가 차례로 나타난다. 로고에 마우스를 올리면 다시 그린다 */
+.ct-lm {
+  flex: none;
+  display: block;
+  overflow: visible;
+}
+
+.ct-lm-trace,
+.ct-lm-mark {
+  fill: none;
+  stroke: currentColor;
+  /* 원본 9는 큰 크기용 — 헤더 크기(약 30px)에서도 선이 보이도록 굵게 */
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ct-lm-trace {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
+.ct-lm-mark {
+  opacity: 0;
+}
+
+.ct-lm-t1 { animation: ct-lm-draw 0.95s cubic-bezier(0.4, 0, 0.2, 1) 0s forwards; }
+.ct-lm-t2 { animation: ct-lm-draw 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.23s forwards; }
+.ct-lm-m1 { animation: ct-lm-reveal 0.3s ease 0.56s forwards; }
+.ct-lm-m2 { animation: ct-lm-reveal 0.3s ease 0.78s forwards; }
+.ct-lm-m3 { animation: ct-lm-reveal 0.3s ease 1s forwards; }
+
+/* 키프레임 이름을 바꿔야 브라우저가 애니메이션을 처음부터 다시 돌린다 */
+.ct-logo:hover .ct-lm-t1 { animation: ct-lm-redraw 0.95s cubic-bezier(0.4, 0, 0.2, 1) 0s both; }
+.ct-logo:hover .ct-lm-t2 { animation: ct-lm-redraw 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.23s both; }
+.ct-logo:hover .ct-lm-m1 { animation: ct-lm-rereveal 0.3s ease 0.56s both; }
+.ct-logo:hover .ct-lm-m2 { animation: ct-lm-rereveal 0.3s ease 0.78s both; }
+.ct-logo:hover .ct-lm-m3 { animation: ct-lm-rereveal 0.3s ease 1s both; }
+
+@keyframes ct-lm-draw { to { stroke-dashoffset: 0; } }
+@keyframes ct-lm-reveal { to { opacity: 1; } }
+@keyframes ct-lm-redraw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes ct-lm-rereveal { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-lm-trace,
+  .ct-lm-mark,
+  .ct-logo:hover .ct-lm-trace,
+  .ct-logo:hover .ct-lm-mark {
+    animation: none !important;
+  }
+  .ct-lm-trace { stroke-dashoffset: 0; }
+  .ct-lm-mark { opacity: 1; }
 }
 
 .ct-footer {

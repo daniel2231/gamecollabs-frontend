@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getTranslations } from 'next-intl/server';
 import { routing, type Locale } from '@/i18n/routing';
+import { LOGO_MARKS, LOGO_TRACES, LOGO_VIEWBOX } from '@/components/site/LogoMark';
 import { loadOgFont } from '@/lib/og-font';
 
 export const size = { width: 1200, height: 630 };
@@ -22,7 +23,11 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, background: '#0b0b0d', color: '#ededef', fontFamily: 'Noto Sans KR' }}>
-        <div style={{ width: 96, height: 96, borderRadius: 20, background: '#edeef0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#111113', fontSize: 64 }}>×</div>
+        <svg width={136} height={120} viewBox={LOGO_VIEWBOX} fill="none" stroke="#ededef" strokeWidth={12} strokeLinecap="round" strokeLinejoin="round">
+          {[...LOGO_TRACES, ...LOGO_MARKS].map((d) => (
+            <path key={d} d={d} />
+          ))}
+        </svg>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           <div style={{ fontSize: 88, lineHeight: 1.1, letterSpacing: -2 }}>{name}</div>
           <div style={{ fontSize: 34, lineHeight: 1.4, color: '#a1a4ab', wordBreak: 'keep-all' }}>{description}</div>

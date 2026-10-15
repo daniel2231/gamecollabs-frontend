@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { LogoMark } from '@/components/site/LogoMark';
 import { adminApi, isMockApi } from '@/lib/api';
 import { devBypassEnabled, getAdminSession } from '@/lib/auth/session';
 
@@ -23,9 +24,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
     <div className="ct-admin">
       <nav aria-label="관리자 메뉴" className="ct-admin-nav">
         <Flex align="center" gap="2" px="2" pb="4">
-          <span className="ct-logo-mark" aria-hidden="true" style={{ width: 24, height: 24, fontSize: 13 }}>
-            ×
-          </span>
+          <LogoMark size={22} />
           <Text weight="bold">관리자</Text>
           {isMockApi() && (
             <Badge color="amber" variant="soft" size="1">
