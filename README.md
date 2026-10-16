@@ -31,13 +31,13 @@ pnpm build
 
 | 경로 | 내용 | PRD |
 | --- | --- | --- |
-| `/[locale]` | 홈: 현황 한 줄(등록된 콜라보 전체 수, 진행 중·예정·종료 수) → 대표 콜라보 큰 카드와 진행 중 번호 목록 → 새로 등록됨 카드(위에 나온 콜라보 제외) → 일정표(곧 시작·곧 종료). 옛 목록 주소(`/[locale]?필터…`)는 `/[locale]/collabs`로 301 | — |
+| `/[locale]` | 홈: 현황 한 줄(등록된 콜라보 전체 수, 진행 중·예정·종료 수) → 대표 콜라보 큰 카드와 진행 중 번호 목록 → IP로 찾아보기(관리자가 고른 작품 타일) → 새로 등록됨 카드(위에 나온 콜라보 제외) → 일정표(곧 시작·곧 종료). 옛 목록 주소(`/[locale]?필터…`)는 `/[locale]/collabs`로 301 | — |
 | `/[locale]/collabs` | 목록·검색·필터(카테고리, 파트너 분류, 권역, 플랫폼, 유형, 기간, 진행 상태). 필터 상태는 URL 쿼리에 그대로 들어가 공유 가능. 상위 키를 고르면 하위 항목 포함. 필터를 하나만 건 목록(진행 상태 하나 또는 분류 항목 하나, 결과 1건 이상)은 랜딩 페이지로 색인하고 sitemap에 넣는다. 그 외 필터 조합은 noindex | F-01 |
 | `/[locale]/collabs/[slug]` | 상세: 기간·진행 상태, 요약(ko/en), 참여 작품·회사(역할), 출처(확인일), 관련 콜라보. ISR | F-02 |
 | `/[locale]/properties/[slug]` | 작품(게임·IP) 페이지: 연도별 타임라인, 건수, 협업 작품, 유형 분포. ISR | F-03 |
 | `/[locale]/companies/[slug]` | 회사 페이지: 참여 콜라보와 역할. ISR | F-03 |
 | `/[locale]/admin` | 검수 대기열 + 편집기. draft → in_review → published → archived, 발행 조건 체크리스트, 중복 후보 비교, 분류 매핑 실패 표시, `If-Match: rev` 충돌 처리 | F-04 |
-| `/[locale]/admin/entities` | 작품·회사 자동완성(별칭 일치 표시), 생성·수정, 병합 | F-05 |
+| `/[locale]/admin/entities` | 작품·회사 자동완성(별칭 일치 표시), 생성·수정, 병합. 작품은 홈 ‘IP로 찾아보기’ 노출 순서와 대표 이미지를 정한다(백엔드 명세: [docs/api/featured-properties.md](docs/api/featured-properties.md)) | F-05 |
 | `/[locale]/admin/taxonomy` | 통제 어휘 조회·추가(ko/en 라벨, 기존 표기) | F-06 |
 | `/[locale]/rss.xml` | 최신 발행 콜라보 피드(ko/en 분리) | F-11 |
 | `/sitemap.xml`, `/robots.txt`, OG 이미지, `/tools/game-ip-collab-tracker/*` → 301 | SEO | F-08 |
@@ -66,8 +66,8 @@ messages/{ko,en}.json
 
 브라우저는 Express를 직접 부르지 않는다. 모든 호출은 Next.js 서버(서버 컴포넌트, Server Action, Route Handler)에서 나간다.
 
-- 공개 조회: `Authorization: Bearer $API_SERVICE_TOKEN`, 응답은 태그 캐시(`collabs`, `collab:<slug>`, `property:<slug>`, `company:<slug>`, `taxonomies`).
-- 발행·수정 후 Express가 `POST /api/revalidate`를 호출한다: `Authorization: Bearer $REVALIDATE_SECRET`, 본문 `{ "tags": ["collabs", "collab:<slug>"] }`.
+- 공개 조회: `Authorization: Bearer $API_SERVICE_TOKEN`, 응답은 태그 캐시(`collabs`, `collab:<slug>`, `property:<slug>`, `company:<slug>`, `taxonomies`, 홈 노출 작품은 `featured`).
+- 발행·수정 후 Express가 `POST /api/revalidate`를 호출한다: `Authorization: Bearer $REVALIDATE_SECRET`, 본문 `{ "tags": ["collabs", "collab:<slug>"] }`. 작품의 홈 노출 순서·대표 이미지를 바꾸면 `featured`를 보낸다.
 - 관리자: GitHub 로그인 후 발급한 JWT(HS256, `AUTH_SECRET`, `iss=gamecollabs-web`, `aud=gamecollabs-api`, `sub`=GitHub 로그인, 8시간)를 그대로 `Bearer`로 넘긴다. Express는 같은 값인 `ADMIN_JWT_SECRET`으로 검증하고, `users` 컬렉션에 등록된 GitHub 계정만 통과시킨다(`cli create-user --github <login> --role admin`).
 - Express 응답(`{ data, meta }`, 이름은 요청 언어의 문자열 하나)은 `src/lib/api/adapt.ts`가 화면 스키마(`src/schema/index.ts`)로 바꾸고, `http.ts`가 그 스키마로 다시 검증한다. 형태가 어긋나면 조용히 깨지지 않고 바로 오류가 난다.
 - 수집 초안은 아직 작품에 연결되지 않은 참여자(이름만 있음)를 가질 수 있다. 편집기는 이를 안내하고, 운영자가 작품을 고르기 전까지 저장해도 수집된 이름을 그대로 보존한다.
@@ -81,6 +81,7 @@ messages/{ko,en}.json
 | 작품·회사 | `GET /v1/properties/:slug`, `/v1/companies/:slug` | 상대 작품·유형 분포·회사 역할은 타임라인에서 집계 |
 | 필터·편집기 분류 | `GET /v1/taxonomies` | 트리 → 평면 목록 |
 | 홈 요약 | `GET /v1/stats` | `total`, `byPhase` |
+| 홈 IP로 찾아보기 | `GET /v1/properties?featured=true` (예정, [명세](docs/api/featured-properties.md)) | 대체 텍스트가 없으면 작품 이름. 404·형태 불일치면 섹션을 숨긴다 |
 | sitemap | `GET /v1/sitemap` | 그대로 |
 | 검수 대기열 | `GET /v1/admin/collabs?status=draft,in_review[&cover=missing]` | `meta.counts`(상태별 건수), 항목별 `duplicateCount`. `cover=missing`(커버 없음만)을 백엔드가 모르면 받은 100건 안에서 프론트가 거른다 |
 | 편집기 | `GET /v1/admin/collabs/:id` + `/duplicates` | `origin.unmapped` → 필드별 미해결 값 |

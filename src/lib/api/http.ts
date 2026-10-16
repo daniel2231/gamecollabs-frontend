@@ -7,6 +7,7 @@ import {
   collabDetailSchema,
   collabListResponseSchema,
   companyDetailSchema,
+  featuredPropertySchema,
   followUpItemSchema,
   matchResponseSchema,
   propertyDetailSchema,
@@ -24,7 +25,7 @@ import { ApiError, type AdminApi, type PublicApi } from './types';
 /**
  * Express /v1 HTTP 클라이언트. 브라우저에서는 절대 쓰지 않는다(server-only).
  * 응답(`{ data, meta }`)은 adapt.ts에서 화면 스키마로 바꾼 뒤 그 스키마로 다시 검증한다.
- * 캐시 태그: collabs, collab:<slug>, property:<slug>, company:<slug>, taxonomies
+ * 캐시 태그: collabs, collab:<slug>, property:<slug>, company:<slug>, taxonomies, featured(홈 노출 작품)
  * → Express가 발행·수정 시 /api/revalidate 웹훅으로 무효화한다.
  */
 
@@ -140,6 +141,19 @@ export const httpPublicApi: PublicApi = {
     z.array(taxonomyTermSchema).parse(A.flattenTaxonomy(await data<A.BeTaxonomyTree>('/v1/taxonomies', { tags: ['taxonomies'] }))),
   getStats: async () =>
     statsSchema.parse(A.toStats(await data<Parameters<typeof A.toStats>[0]>('/v1/stats', { tags: ['collabs'] }))),
+  listFeaturedProperties: async (locale) => {
+    // 백엔드가 아직 이 필터를 모르면(404 또는 다른 응답 형태) 섹션을 숨긴다. 홈 전체가 깨지지 않게 한다
+    try {
+      const body = await envelope<A.BeFeaturedProperty[]>(`/v1/properties?featured=true&locale=${locale}`, {
+        tags: ['collabs', 'featured'],
+        nullOn404: true,
+      });
+      return body ? z.array(featuredPropertySchema).parse(body.data.map(A.toFeaturedProperty)) : [];
+    } catch (e) {
+      console.error('featured properties unavailable', e);
+      return [];
+    }
+  },
   getSitemap: async () => A.toSitemap(await data<Parameters<typeof A.toSitemap>[0]>('/v1/sitemap', { tags: ['collabs'] })),
 };
 
@@ -160,7 +174,7 @@ export function createHttpAdminApi(token: string): AdminApi {
     const duplicates = await data<A.BeDuplicate[]>(`/v1/admin/collabs/${doc.id}/duplicates`, o());
     return adminCollabSchema.parse(A.toAdminCollab(doc, duplicates, mediaBase()));
   };
-  const entity = (kind: EntityKind, e: A.BeEntityDoc) => adminEntitySchema.parse(A.fromEntityDoc(kind, e));
+  const entity = (kind: EntityKind, e: A.BeEntityDoc) => adminEntitySchema.parse(A.fromEntityDoc(kind, e, mediaBase()));
 
   return {
     listQueue: async (filter) => {
@@ -211,15 +225,15 @@ export function createHttpAdminApi(token: string): AdminApi {
         o(),
       );
       return matchResponseSchema.parse({
-        properties: res.properties.map((e) => ({ ...A.fromEntitySummary('property', e), matchedAlias: null })),
-        companies: res.companies.map((e) => ({ ...A.fromEntitySummary('company', e), matchedAlias: null })),
+        properties: res.properties.map((e) => ({ ...A.fromEntitySummary('property', e, mediaBase()), matchedAlias: null })),
+        companies: res.companies.map((e) => ({ ...A.fromEntitySummary('company', e, mediaBase()), matchedAlias: null })),
       });
     },
     listEntities: async (kind, q) => {
       const sp = new URLSearchParams({ locale: 'ko' });
       if (q) sp.set('q', q);
       const list = await data<A.BeEntitySummary[]>(`/v1/admin/${entityPath(kind)}?${sp}`, o());
-      return z.array(adminEntitySchema).parse(list.map((e) => A.fromEntitySummary(kind, e)));
+      return z.array(adminEntitySchema).parse(list.map((e) => A.fromEntitySummary(kind, e, mediaBase())));
     },
     createEntity: async (kind, input) =>
       entity(kind, await data(`/v1/admin/${entityPath(kind)}`, o({ method: 'POST', body: A.toEntityBody(kind, input) }))),

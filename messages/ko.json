@@ -38,8 +38,10 @@
     "total": "등록된 콜라보",
     "seeAll": "모두 보기",
     "seeAllLabel": "{section} 모두 보기",
+    "ipCollabs": "콜라보 {count}건",
     "section": {
       "ongoing": "지금 진행 중",
+      "ips": "IP로 찾아보기",
       "upcoming": "곧 시작",
       "ending": "곧 종료",
       "recent": "새로 등록됨"

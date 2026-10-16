@@ -1,7 +1,7 @@
-/** 16:9에서 많이 벗어난 커버(정사각형·세로형 등)는 잘리지 않게 통째로 보여준다 */
-export function coverFit(cover: { width?: number | null; height?: number | null }): 'cover' | 'contain' {
+/** 틀(기본 16:9 카드)과 비율이 많이 다른 커버(정사각형·세로형 등)는 잘리지 않게 통째로 보여준다 */
+export function coverFit(cover: { width?: number | null; height?: number | null }, frame = 16 / 9): 'cover' | 'contain' {
   if (!cover.width || !cover.height) return 'cover';
-  const ratio = cover.width / cover.height / (16 / 9);
+  const ratio = cover.width / cover.height / frame;
   return ratio > 0.8 && ratio < 1.25 ? 'cover' : 'contain';
 }
 

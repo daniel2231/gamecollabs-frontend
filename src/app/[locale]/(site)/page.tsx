@@ -5,6 +5,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { CollabCard } from '@/components/collab/CollabCard';
 import { PeriodText } from '@/components/collab/PeriodText';
+import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { JsonLd } from '@/components/site/JsonLd';
 import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
@@ -16,12 +17,14 @@ import { websiteJsonLd } from '@/lib/jsonld';
 import { LANDING_PHASES } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import type { CollabQuery, CollabSummary, Period } from '@/schema';
+import type { CollabQuery, CollabSummary, FeaturedProperty, Period } from '@/schema';
 
 /** 진행 중 목록에 보여줄 최대 개수(대표 카드 제외) */
 const INDEX_SIZE = 6;
 /** 일정표 한 칸의 최대 개수 */
 const SCHEDULE_SIZE = 5;
+/** IP로 찾아보기 최대 개수 */
+const FEATURED_SIZE = 12;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const locale = (await params).locale as Locale;
@@ -45,11 +48,12 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   setRequestLocale(locale);
 
   const list = (q: Partial<CollabQuery>) => api.listCollabs({ ...parseCollabQuery({}), ...q }, locale);
-  const [t, tPhase, tSite, stats, ongoing, upcoming, recent] = await Promise.all([
+  const [t, tPhase, tSite, stats, featured, ongoing, upcoming, recent] = await Promise.all([
     getTranslations('Home'),
     getTranslations('Phase'),
     getTranslations('Site'),
     api.getStats(),
+    api.listFeaturedProperties(locale),
     // 곧 종료를 고르려면 진행 중 전체가 필요하다(목록 API에 종료일 정렬이 없다)
     list({ phase: 'ongoing', limit: 100 }),
     list({ phase: 'upcoming', sort: 'start_asc', limit: SCHEDULE_SIZE }),
@@ -66,6 +70,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     .sort((a, b) => a.period.end!.localeCompare(b.period.end!))
     .slice(0, SCHEDULE_SIZE);
   const shown = new Set([lead?.slug, ...now.map((c) => c.slug)]);
+  // 운영자가 고른 작품 가운데 발행된 콜라보가 있는 것만
+  const ips = featured.filter((p) => p.collabCount > 0).slice(0, FEATURED_SIZE);
   const fresh = recent.items.filter((c) => !shown.has(c.slug)).slice(0, 4);
 
   const seeAll = (section: string, href: string) => (
@@ -126,6 +132,19 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           </div>
         )}
 
+        {/* IP로 찾아보기: 운영자가 관리자 화면에서 고른 작품. 작품 페이지로 이어진다 */}
+        {ips.length > 0 && (
+          <Section id="ips" title={t('section.ips')}>
+            <ul className="ct-ip-grid">
+              {ips.map((p) => (
+                <li key={p.slug}>
+                  <IpTile property={p} collabs={t('ipCollabs', { count: p.collabCount })} />
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
         {/* 새로 등록됨: 위에서 이미 보인 콜라보는 뺀다 */}
         {fresh.length > 0 && (
           <Section id="recent" title={t('section.recent')} action={seeAll(t('section.recent'), listHref({ sort: 'recent' }))}>
@@ -157,6 +176,33 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         )}
       </div>
     </>
+  );
+}
+
+/** IP 타일: 대표 이미지 → 최근 콜라보 커버 → 이름만(격자 바탕) 순으로 그림을 고른다 */
+function IpTile({ property: p, collabs }: { property: FeaturedProperty; collabs: string }) {
+  const cover = p.image ?? p.latestCover;
+  return (
+    <Link href={`/properties/${p.slug}`} className="ct-ip">
+      <div className="ct-ip-cover">
+        {cover ? (
+          <img src={cover.url} alt="" loading="lazy" width={cover.width ?? undefined} height={cover.height ?? undefined} />
+        ) : (
+          <div className="ct-ip-mono" aria-hidden="true">
+            {p.name.value}
+          </div>
+        )}
+        {p.ongoingCount > 0 && (
+          <span className="ct-card-phase">
+            <PhaseBadge phase="ongoing" />
+          </span>
+        )}
+      </div>
+      <span className="ct-ip-name">{p.name.value}</span>
+      <span className="ct-ip-meta">
+        {p.kind.label} · <span className="ct-mono">{collabs}</span>
+      </span>
+    </Link>
   );
 }
 

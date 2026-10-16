@@ -194,6 +194,25 @@ export const companyDetailSchema = z.object({
 export type CompanyDetail = z.infer<typeof companyDetailSchema>;
 
 /** GET /v1/taxonomies */
+/**
+ * GET /v1/properties?featured=true: 홈 'IP로 찾아보기'에 노출할 작품(운영자가 고른 순서).
+ * 이미지는 작품 대표 이미지(image)가 먼저, 없으면 가장 최근 콜라보 커버(latestCover)를 쓴다.
+ */
+export const featuredPropertySchema = z.object({
+  slug: z.string(),
+  kind: termRefSchema,
+  name: localizedName,
+  /** 발행된 콜라보 수 */
+  collabCount: z.number().int(),
+  /** 함께 콜라보한 상대 작품 수 */
+  counterpartCount: z.number().int(),
+  /** 지금 진행 중인 콜라보 수 */
+  ongoingCount: z.number().int(),
+  image: coverSchema.nullable(),
+  latestCover: coverSchema.nullable(),
+});
+export type FeaturedProperty = z.infer<typeof featuredPropertySchema>;
+
 export const taxonomyResponseSchema = z.object({ terms: z.array(taxonomyTermSchema) });
 
 /** GET /v1/stats (P1, 홈 요약에 일부 사용) */
@@ -416,6 +435,13 @@ export const adminEntitySchema = z.object({
   /** 회사: ISO 3166-1 alpha-2 */
   country: z.string().nullable(),
   collabCount: z.number().int(),
+  /**
+   * 작품: 홈 'IP로 찾아보기' 노출 순서(작은 수가 앞). null이면 노출하지 않는다.
+   * undefined면 백엔드가 알려주지 않음(회사이거나 아직 지원 전). 저장할 때 건드리지 않는다
+   */
+  featuredOrder: z.number().int().min(1).nullable().optional(),
+  /** 작품 대표 이미지. undefined면 백엔드가 알려주지 않음(저장할 때 건드리지 않는다) */
+  image: adminCoverSchema.nullable().optional(),
 });
 export type AdminEntity = z.infer<typeof adminEntitySchema>;
 

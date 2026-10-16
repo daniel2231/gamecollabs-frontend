@@ -38,8 +38,10 @@
     "total": "Collabs tracked",
     "seeAll": "See all",
     "seeAllLabel": "See all: {section}",
+    "ipCollabs": "{count, plural, one {# collab} other {# collabs}}",
     "section": {
       "ongoing": "Happening now",
+      "ips": "Browse by IP",
       "upcoming": "Starting soon",
       "ending": "Ending soon",
       "recent": "Just added"

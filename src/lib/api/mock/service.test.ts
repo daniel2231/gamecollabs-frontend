@@ -100,4 +100,27 @@ describe('목 API: PRD 규칙', () => {
     expect(await admin.listFollowUps('proposals')).toEqual([]);
     await expect(admin.resolveFollowUp(item.id, 'dismiss')).rejects.toMatchObject({ status: 404 });
   });
+
+  it('홈 노출 작품: 순서대로, 노출을 끄면 빠지고, 대표 이미지는 저장한 그대로 나온다', async () => {
+    const order = async () => (await svc.mockPublicApi.listFeaturedProperties('ko')).map((p) => p.slug);
+    expect(await order()).toEqual(['attack-on-titan', 'jagariko']);
+
+    const [aot] = await svc.mockAdminApi.listEntities('property', 'attack-on-titan');
+    const input = { slug: aot!.slug, name: aot!.name, aliases: aot!.aliases, category: aot!.category, country: null };
+    await svc.mockAdminApi.updateEntity('property', aot!.id, { ...input, featuredOrder: 3 });
+    expect(await order()).toEqual(['jagariko', 'attack-on-titan']);
+
+    // featuredOrder를 보내지 않으면(undefined) 그대로 둔다
+    await svc.mockAdminApi.updateEntity('property', aot!.id, input);
+    expect(await order()).toEqual(['jagariko', 'attack-on-titan']);
+
+    const image = { storageKey: 'covers/aot.webp', url: 'https://media.example.com/covers/aot.webp', originalUrl: null, credit: '', alt: { ko: '', en: '' }, width: 800, height: 1000 };
+    await svc.mockAdminApi.updateEntity('property', aot!.id, { ...input, featuredOrder: null, image });
+    expect(await order()).toEqual(['jagariko']);
+    const [saved] = await svc.mockAdminApi.listEntities('property', 'attack-on-titan');
+    expect(saved).toMatchObject({ featuredOrder: null, image: { storageKey: 'covers/aot.webp' } });
+
+    const [jagariko] = await svc.mockPublicApi.listFeaturedProperties('en');
+    expect(jagariko).toMatchObject({ name: { value: 'Jagariko' }, collabCount: 1, counterpartCount: 1, image: null });
+  });
 });

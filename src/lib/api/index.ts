@@ -20,6 +20,7 @@ export const api: PublicApi = {
   getCompany: cache((...a: Parameters<PublicApi['getCompany']>) => pick().getCompany(...a)),
   getTaxonomies: cache(() => pick().getTaxonomies()),
   getStats: () => pick().getStats(),
+  listFeaturedProperties: (...a) => pick().listFeaturedProperties(...a),
   getSitemap: () => pick().getSitemap(),
 };
 

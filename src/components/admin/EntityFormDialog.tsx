@@ -1,9 +1,10 @@
 'use client';
 
-import { Button, Callout, Dialog, Flex, Select, Text, TextField } from '@radix-ui/themes';
+import { Button, Callout, Dialog, Flex, Select, Switch, Text, TextField } from '@radix-ui/themes';
 import { useEffect, useState, useTransition } from 'react';
 import { saveEntity } from '@/app/[locale]/admin/actions';
 import type { AdminEntity, EntityKind } from '@/schema';
+import { CoverField } from './CoverField';
 
 export type KindOption = { key: string; label: string };
 
@@ -47,6 +48,14 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
         aliases: form.aliases.split(',').map((a) => a.trim()).filter(Boolean),
         category: kind === 'property' ? form.category || null : null,
         country: kind === 'company' ? form.country.trim().toUpperCase() || null : null,
+        // 백엔드가 홈 노출 값을 알려주지 않았고 손대지도 않았으면 보내지 않는다(기존 값 유지)
+        featuredOrder:
+          kind !== 'property' || (initial?.featuredOrder === undefined && !form.featuredTouched)
+            ? undefined
+            : form.featured
+              ? Number(form.featuredOrder)
+              : null,
+        image: kind === 'property' ? form.image : undefined,
       });
       if (res.ok) {
         onSaved(res.data);
@@ -59,7 +68,7 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Content maxWidth="520px">
+      <Dialog.Content maxWidth={kind === 'property' ? '640px' : '520px'}>
         <Dialog.Title>{initial ? `${label} 수정` : `새 ${label}`}</Dialog.Title>
         <Dialog.Description size="2" color="gray" mb="4">
           별칭은 쉼표로 구분합니다. 중복 감지와 검색에 쓰입니다.
@@ -123,6 +132,52 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
                 <TextField.Root className="ct-mono" maxLength={2} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="JP" />
               </Field>
             )}
+            {kind === 'property' && (
+              <>
+                <Flex direction="column" gap="2" pt="3" style={{ borderTop: '1px solid var(--gray-a5)' }}>
+                  <Text as="label" size="2" weight="medium">
+                    <Flex gap="2" align="center">
+                      <Switch
+                        checked={form.featured}
+                        onCheckedChange={(featured) =>
+                          setForm((f) => ({ ...f, featured, featuredTouched: true, featuredOrder: f.featuredOrder || '1' }))
+                        }
+                      />
+                      홈 ‘IP로 찾아보기’에 노출
+                    </Flex>
+                  </Text>
+                  {form.featured && (
+                    <Field label="노출 순서 (작은 수가 앞)" error={fieldError('featuredOrder')}>
+                      <TextField.Root
+                        className="ct-mono"
+                        type="number"
+                        min={1}
+                        max={999}
+                        value={form.featuredOrder}
+                        onChange={(e) => setForm({ ...form, featuredOrder: e.target.value, featuredTouched: true })}
+                        style={{ maxWidth: 120 }}
+                      />
+                    </Field>
+                  )}
+                  <Text size="1" color="gray">
+                    콜라보가 한 건도 없는 작품은 노출로 켜 두어도 홈에 나오지 않습니다.
+                  </Text>
+                </Flex>
+                <Flex direction="column" gap="2">
+                  <span className="ct-label">대표 이미지 (선택)</span>
+                  <Text size="1" color="gray">
+                    비워 두면 이 작품의 가장 최근 콜라보 커버를, 그것도 없으면 이름만 씁니다. 작품 자체의 공식 이미지는 권리 확인 후 올리세요.
+                  </Text>
+                  <CoverField
+                    value={form.image}
+                    onChange={(image) => setForm((f) => ({ ...f, image }))}
+                    altFallback={{ ko: '작품 이름', en: 'the name' }}
+                    frame={{ width: 4, height: 5, label: '홈 타일' }}
+                  />
+                  {fieldError('image')}
+                </Flex>
+              </>
+            )}
             {error?.message && !error.fields && (
               <Callout.Root color="red" size="1">
                 <Callout.Text>{error.message}</Callout.Text>
@@ -166,5 +221,10 @@ function toForm(e: AdminEntity | null | undefined, seedName?: string) {
     aliases: e?.aliases.join(', ') ?? '',
     category: e?.category ?? '',
     country: e?.country ?? '',
+    featured: e?.featuredOrder != null,
+    featuredOrder: e?.featuredOrder != null ? String(e.featuredOrder) : '',
+    featuredTouched: false,
+    /** undefined: 백엔드가 알려주지 않음(그대로 두면 기존 값 유지) */
+    image: e ? e.image : null,
   };
 }
