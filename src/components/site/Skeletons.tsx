@@ -39,12 +39,13 @@ function Grid({ count }: { count: number }) {
   );
 }
 
-/** 홈: 대표 카드 | 번호 목록, 아래 카드 그리드 */
+/** 홈: 현황 줄, 대표 카드 | 번호 목록, 아래 카드 그리드 */
 export function HomeSkeleton() {
   return (
     <div aria-busy="true">
       <LoadingStatus />
       <div className="ct-home">
+        <Block height={86} />
         <div className="ct-lead">
           <Flex direction="column" gap="3">
             <Block height={400} />

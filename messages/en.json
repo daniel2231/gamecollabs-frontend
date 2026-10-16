@@ -34,15 +34,15 @@
   },
   "Home": {
     "title": "Game × IP Collabs",
+    "tally": "Collab count",
+    "total": "Collabs tracked",
     "seeAll": "See all",
     "seeAllLabel": "See all: {section}",
     "section": {
       "ongoing": "Happening now",
-      "schedule": "Schedule",
       "upcoming": "Starting soon",
       "ending": "Ending soon",
-      "recent": "Just added",
-      "index": "Categories"
+      "recent": "Just added"
     },
     "empty": {
       "upcoming": "No upcoming collabs with a start date.",

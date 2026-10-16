@@ -34,15 +34,15 @@
   },
   "Home": {
     "title": "게임 × IP 콜라보",
+    "tally": "콜라보 현황",
+    "total": "등록된 콜라보",
     "seeAll": "모두 보기",
     "seeAllLabel": "{section} 모두 보기",
     "section": {
       "ongoing": "지금 진행 중",
-      "schedule": "일정",
       "upcoming": "곧 시작",
       "ending": "곧 종료",
-      "recent": "새로 등록됨",
-      "index": "분류"
+      "recent": "새로 등록됨"
     },
     "empty": {
       "upcoming": "시작일이 잡힌 예정 콜라보가 없습니다.",

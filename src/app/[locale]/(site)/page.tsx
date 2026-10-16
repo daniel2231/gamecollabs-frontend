@@ -10,13 +10,13 @@ import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { listHref, parseCollabQuery } from '@/lib/filters';
+import { LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
 import { formatDate } from '@/lib/format';
 import { websiteJsonLd } from '@/lib/jsonld';
-import { landingPath } from '@/lib/landing';
+import { LANDING_PHASES } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { FACET_PARAMS, type CollabQuery, type CollabSummary, type Period } from '@/schema';
+import type { CollabQuery, CollabSummary, Period } from '@/schema';
 
 /** 진행 중 목록에 보여줄 최대 개수(대표 카드 제외) */
 const INDEX_SIZE = 6;
@@ -45,34 +45,16 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   setRequestLocale(locale);
 
   const list = (q: Partial<CollabQuery>) => api.listCollabs({ ...parseCollabQuery({}), ...q }, locale);
-  const [t, tList, tSite, terms, ongoing, upcoming, recent] = await Promise.all([
+  const [t, tPhase, tSite, stats, ongoing, upcoming, recent] = await Promise.all([
     getTranslations('Home'),
-    getTranslations('List'),
+    getTranslations('Phase'),
     getTranslations('Site'),
-    api.getTaxonomies(),
+    api.getStats(),
     // 곧 종료를 고르려면 진행 중 전체가 필요하다(목록 API에 종료일 정렬이 없다)
     list({ phase: 'ongoing', limit: 100 }),
     list({ phase: 'upcoming', sort: 'start_asc', limit: SCHEDULE_SIZE }),
     list({ sort: 'recent', limit: 5 }),
   ]);
-
-  // 분류 색인: 최상위 항목마다 건수를 센다(목록 응답과 같은 태그 캐시). 빈 항목은 빼서 빈 랜딩으로 보내지 않는다
-  const index = (
-    await Promise.all(
-      FACET_PARAMS.map(async (param) => {
-        const top = terms.filter((x) => x.taxonomy === param && x.parent === null && !x.deprecated).sort((a, b) => a.order - b.order);
-        const counted = await Promise.all(
-          top.map(async (term) => ({
-            key: term.key,
-            label: term.label[locale],
-            href: landingPath({ param, key: term.key }),
-            count: (await list({ [param]: [term.key], limit: 1 })).total,
-          })),
-        );
-        return { param, terms: counted.filter((x) => x.count > 0) };
-      }),
-    )
-  ).filter((g) => g.terms.length > 0);
 
   // 대표 카드: 진행 중 가운데 커버가 있는 것을 먼저, 없으면 최근 등록
   const lead = ongoing.items.find((c) => c.cover) ?? ongoing.items[0] ?? recent.items[0] ?? null;
@@ -101,6 +83,26 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       </VisuallyHidden>
 
       <div className="ct-home">
+        {/* 현황: 등록된 콜라보 전체 수와 진행 상태별 수. 각각 목록으로 이어진다 */}
+        <nav aria-label={t('tally')}>
+          <ul className="ct-tally">
+            <li>
+              <Link href={LIST_PATH}>
+                <span className="ct-tally-label">{t('total')}</span>
+                <span className="ct-tally-num ct-mono">{stats.published}</span>
+              </Link>
+            </li>
+            {LANDING_PHASES.map((phase) => (
+              <li key={phase}>
+                <Link href={listHref({ phase })} data-phase={phase}>
+                  <span className="ct-tally-label">{tPhase(phase)}</span>
+                  <span className="ct-tally-num ct-mono">{stats.byPhase[phase] ?? 0}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         {/* 1면: 대표 카드 | 진행 중 번호 목록 */}
         {lead && (
           <div className={now.length > 0 ? 'ct-lead' : 'ct-lead ct-lead-solo'}>
@@ -151,26 +153,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           </Section>
         )}
 
-        {index.length > 0 && (
-          <Section id="index" title={t('section.index')}>
-            <dl className="ct-facet-index">
-              {index.map((group) => (
-                <div key={group.param}>
-                  <dt>{tList(`facet.${group.param}`)}</dt>
-                  <dd>
-                    <ul>
-                      {group.terms.map((term) => (
-                        <li key={term.key}>
-                          <Link href={term.href}>{term.label}</Link> <span className="ct-mono">{term.count}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </Section>
-        )}
       </div>
     </>
   );
