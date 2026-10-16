@@ -21,6 +21,8 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
   const [searching, startSearch] = useTransition();
   const noun = kind === 'property' ? '작품' : '회사';
   const kindLabel = new Map(kindOptions.map((o) => [o.key, o.label]));
+  // 목록의 어느 작품이든 홈 노출 값을 갖고 오면 백엔드가 지원하는 것이다(목록이 비면 일단 지원한다고 본다)
+  const featuredSupported = kind === 'property' && (entities.length === 0 || entities.some((e) => e.featuredOrder !== undefined));
 
   return (
     <Flex direction="column" gap="4">
@@ -70,7 +72,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
             <Table.ColumnHeaderCell>별칭</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>{kind === 'property' ? '분류' : '국가'}</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell justify="end">콜라보</Table.ColumnHeaderCell>
-            {kind === 'property' && <Table.ColumnHeaderCell justify="center">홈 노출</Table.ColumnHeaderCell>}
+            {featuredSupported && <Table.ColumnHeaderCell justify="center">홈 노출</Table.ColumnHeaderCell>}
             <Table.ColumnHeaderCell>
               <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>작업</span>
             </Table.ColumnHeaderCell>
@@ -99,7 +101,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
               <Table.Cell justify="end" className="ct-mono">
                 {e.collabCount}
               </Table.Cell>
-              {kind === 'property' && (
+              {featuredSupported && (
                 <Table.Cell justify="center">
                   {e.featuredOrder != null && (
                     <Badge color="orange" variant="soft" className="ct-mono" title="홈 ‘IP로 찾아보기’ 노출 순서">
@@ -122,7 +124,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
           ))}
           {entities.length === 0 && (
             <Table.Row>
-              <Table.Cell colSpan={kind === 'property' ? 7 : 6}>
+              <Table.Cell colSpan={featuredSupported ? 7 : 6}>
                 <Text color="gray">결과가 없습니다.</Text>
               </Table.Cell>
             </Table.Row>
@@ -141,6 +143,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
         }}
         initial={editing}
         kindOptions={kindOptions}
+        featuredSupported={featuredSupported}
         onSaved={() => router.refresh()}
       />
       {merging && <MergeDialog kind={kind} source={merging} kindOptions={kindOptions} onClose={() => setMerging(null)} onMerged={() => router.refresh()} />}
