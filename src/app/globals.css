@@ -17,6 +17,14 @@
   /* 유일한 강조색: '지금 진행 중'·× 표시·현재 탭·포커스에만 쓴다 */
   --ct-signal: #ff5b2e;
   --ct-ink: #ede9e1;
+  /* Radix 기본값(default)은 버튼·메뉴 항목에 화살표 커서를 쓴다. 누를 수 있는 것은 모두 손가락으로 */
+  --cursor-button: pointer;
+  --cursor-checkbox: pointer;
+  --cursor-menu-item: pointer;
+  --cursor-radio: pointer;
+  --cursor-switch: pointer;
+  --cursor-slider-thumb: grab;
+  --cursor-slider-thumb-active: grabbing;
 }
 
 .radix-themes.dark,
@@ -1737,8 +1745,175 @@ body {
 
 :root:has([data-pending]) .ct-pending-target,
 :root:has([data-pending='list']) .ct-pending-list {
-  opacity: 0.5;
+  opacity: 0.55;
   transition-delay: 0.12s;
+}
+
+/* ── 상호작용 피드백 ───────────────────────────────────────────
+ * 호버: 테두리·글자가 본문색(잉크)으로 밝아진다. 마우스가 있는 기기에서만.
+ * 누름: 잉크 바탕에 검은 글자로 즉시 뒤집힌다(크기 변화·튕김 없음).
+ * 처리 중: 결과 위 주황 진행선 + 누른 탭·칩을 미리 바꿔 보여준다.
+ * 완료: 누른 자리에서 강조색으로 짧게(링크 복사 등).
+ */
+.rt-Button,
+.rt-SelectTrigger,
+.ct-tabs a,
+.ct-chip,
+.ct-check {
+  transition:
+    color 80ms,
+    background-color 80ms,
+    box-shadow 80ms;
+}
+
+@media (hover: hover) {
+  .rt-Button:where(.rt-variant-surface, .rt-variant-outline, .rt-variant-soft):not(:disabled):hover,
+  .rt-SelectTrigger:where(.rt-variant-surface):not(:disabled):hover,
+  .ct-chip:hover {
+    background-color: var(--gray-a3);
+    box-shadow: inset 0 0 0 1px var(--gray-12);
+    color: var(--gray-12);
+  }
+
+  .rt-Button:where(.rt-variant-ghost):not(:disabled):hover {
+    background-color: var(--gray-a3);
+    color: var(--gray-12);
+  }
+
+  /* 탭: 글자가 밝아지고 가는 회색 밑줄이 미리 보인다 */
+  .ct-tabs a:not([aria-current='page']):hover::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -15px;
+    height: 1px;
+    background: var(--gray-9);
+  }
+
+  /* 필터 줄: 줄 전체가 대상이므로 글자와 체크박스 테두리가 함께 밝아진다 */
+  .ct-check:hover {
+    color: var(--gray-12);
+  }
+
+  .ct-check:hover .rt-CheckboxRoot:not([data-state='checked'])::before {
+    box-shadow: inset 0 0 0 1px var(--gray-12);
+  }
+
+  .ct-header .rt-TextFieldRoot:hover:not(:focus-within) {
+    box-shadow: inset 0 -1px 0 var(--gray-11);
+  }
+}
+
+/* 누름: 즉시 반전. 전환 없이 바로 바뀌어야 눌린 느낌이 난다 */
+.rt-Button:not(:disabled):active,
+.rt-SelectTrigger:not(:disabled):active,
+.ct-chip:active {
+  transition: none;
+  background-color: var(--gray-12);
+  box-shadow: inset 0 0 0 1px var(--gray-12);
+  color: var(--color-background);
+}
+
+.ct-tabs a:active {
+  transition: none;
+  color: var(--ct-signal);
+}
+
+.ct-check:active .rt-CheckboxRoot::before {
+  box-shadow: inset 0 0 0 1px var(--ct-signal);
+}
+
+.ct-card:active .ct-card-cover {
+  transition: none;
+  outline-color: var(--ct-signal);
+}
+
+.ct-card-link:active {
+  border-top-color: var(--ct-signal);
+}
+
+/* 처리 중: 누른 탭으로 밑줄이 바로 옮겨 간다 */
+.ct-tabs a:has([data-pending]) {
+  color: var(--gray-12);
+}
+
+.ct-tabs a:has([data-pending])::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -15px;
+  height: 2px;
+  background: var(--ct-signal);
+}
+
+.ct-tabs:has([data-pending]) a[aria-current='page']:not(:has([data-pending]))::after {
+  opacity: 0;
+}
+
+/* 처리 중: 지우는 필터 칩은 바로 빠지는 것처럼 흐리게 */
+.ct-chip:has([data-pending]) {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* 결과 위 진행선: 대기 중일 때만 주황 조각이 왼쪽에서 오른쪽으로 흐른다 */
+.ct-progress {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 2px;
+  /* 목록과의 간격(space-4)만큼 끌어올려 첫 월 제목의 선 위에 겹친다 */
+  margin-bottom: calc(-2px - var(--space-4));
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ct-progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  background: var(--ct-signal);
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+:root:has([data-pending]) .ct-progress::before {
+  opacity: 1;
+  animation: ct-progress 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes ct-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(340%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:has([data-pending]) .ct-progress::before {
+    animation: none;
+    width: 100%;
+    transform: none;
+  }
+}
+
+/* 완료: 링크 복사 결과 */
+.ct-copy[data-state='copied'],
+.ct-copy[data-state='copied']:hover {
+  color: var(--ct-signal);
+  box-shadow: inset 0 0 0 1px var(--ct-signal);
+}
+
+.ct-copy.rt-variant-ghost[data-state='copied'] {
+  box-shadow: none;
+}
+
+.ct-copy[data-state='failed'] {
+  color: var(--gray-12);
+  white-space: normal !important;
 }
 
 /* 누른 항목을 응답 전에 먼저 선택된 것처럼 보이게 한다 */

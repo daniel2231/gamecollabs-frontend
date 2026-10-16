@@ -165,7 +165,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
           <Flex direction="column" gap="4">
             <Flex wrap="wrap" align="center" gap="2">
               {chips.map((chip) => (
-                <Badge key={chip.href} asChild size="2" variant="outline" color="gray" highContrast>
+                <Badge key={chip.href} asChild size="2" variant="outline" color="gray" highContrast className="ct-chip">
                   <Link href={chip.href} scroll={false} aria-label={t('removeFilter', { label: chip.label })}>
                     <LinkPending />
                     {chip.label}
@@ -185,9 +185,11 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                 })}
               </Text>
               <SortSelect query={query} />
-              <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} variant="ghost" />
+              <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} variant="ghost" />
             </Flex>
 
+            {/* 필터·탭·정렬을 바꾸는 동안 결과 위에서 흐르는 진행선(globals.css의 .ct-progress) */}
+            <div className="ct-progress" aria-hidden="true" />
             {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
             <Flex direction="column" gap="4" className="ct-pending-target">
               {list.items.length === 0 ? (
