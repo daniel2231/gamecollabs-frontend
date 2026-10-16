@@ -45,7 +45,7 @@ export function HomeSkeleton() {
     <div aria-busy="true">
       <LoadingStatus />
       <div className="ct-home">
-        <Block height={86} />
+        <Block height={48} />
         <div className="ct-lead">
           <Flex direction="column" gap="3">
             <Block height={400} />

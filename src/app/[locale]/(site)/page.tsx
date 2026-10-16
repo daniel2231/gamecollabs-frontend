@@ -53,7 +53,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     // 곧 종료를 고르려면 진행 중 전체가 필요하다(목록 API에 종료일 정렬이 없다)
     list({ phase: 'ongoing', limit: 100 }),
     list({ phase: 'upcoming', sort: 'start_asc', limit: SCHEDULE_SIZE }),
-    list({ sort: 'recent', limit: 5 }),
+    // 위 진행 중 목록과 겹치는 것을 빼고도 4개가 남도록 넉넉히
+    list({ sort: 'recent', limit: 4 + 1 + INDEX_SIZE }),
   ]);
 
   // 대표 카드: 진행 중 가운데 커버가 있는 것을 먼저, 없으면 최근 등록
@@ -64,7 +65,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     .filter((c) => c.period.endKind === 'fixed' && c.period.end)
     .sort((a, b) => a.period.end!.localeCompare(b.period.end!))
     .slice(0, SCHEDULE_SIZE);
-  const fresh = recent.items.filter(notLead).slice(0, 4);
+  const shown = new Set([lead?.slug, ...now.map((c) => c.slug)]);
+  const fresh = recent.items.filter((c) => !shown.has(c.slug)).slice(0, 4);
 
   const seeAll = (section: string, href: string) => (
     <Link href={href} className="ct-more" aria-label={t('seeAllLabel', { section })}>
@@ -83,7 +85,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       </VisuallyHidden>
 
       <div className="ct-home">
-        {/* 현황: 등록된 콜라보 전체 수와 진행 상태별 수. 각각 목록으로 이어진다 */}
+        {/* 현황: 얇은 한 줄. 등록된 콜라보 전체 수와 진행 상태별 수, 각각 목록으로 이어진다 */}
         <nav aria-label={t('tally')}>
           <ul className="ct-tally">
             <li>
@@ -124,6 +126,19 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           </div>
         )}
 
+        {/* 새로 등록됨: 위에서 이미 보인 콜라보는 뺀다 */}
+        {fresh.length > 0 && (
+          <Section id="recent" title={t('section.recent')} action={seeAll(t('section.recent'), listHref({ sort: 'recent' }))}>
+            <ul className="ct-grid">
+              {fresh.map((c) => (
+                <li key={c.slug}>
+                  <CollabCard collab={c} />
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
         {/* 일정표: 곧 시작 | 곧 종료. 둘 다 비면 숨긴다 */}
         {(upcoming.items.length > 0 || ending.length > 0) && (
           <div className="ct-schedule">
@@ -140,19 +155,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
             </Section>
           </div>
         )}
-
-        {fresh.length > 0 && (
-          <Section id="recent" title={t('section.recent')} action={seeAll(t('section.recent'), listHref({ sort: 'recent' }))}>
-            <ul className="ct-grid">
-              {fresh.map((c) => (
-                <li key={c.slug}>
-                  <CollabCard collab={c} />
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
-
       </div>
     </>
   );

@@ -403,14 +403,14 @@ body {
   color: var(--gray-10);
 }
 
-/* 홈 현황: 네 칸, 칸 사이 가는 선. 전체 수를 가장 크게, 진행 중 수만 강조색 */
+/* 홈 현황: 얇은 한 줄, 칸 사이 가는 선. 이름 옆에 숫자. 진행 중 수만 강조색 */
 .ct-tally {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
-  border-block: 1px solid var(--gray-12);
+  border-block: 1px solid var(--ct-line);
 }
 
 .ct-tally > li + li {
@@ -419,9 +419,10 @@ body {
 
 .ct-tally a {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 16px 20px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
   color: var(--gray-12);
   text-decoration: none;
 }
@@ -442,37 +443,36 @@ body {
 }
 
 .ct-tally-num {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
 }
 
-.ct-tally > li:first-child .ct-tally-num {
-  font-size: 44px;
+.ct-tally > li:first-child .ct-tally-label {
+  color: var(--gray-12);
 }
 
 .ct-tally a[data-phase='ongoing'] .ct-tally-num {
   color: var(--ct-signal);
 }
 
-/* 좁으면 전체 수를 윗줄 전체에, 진행 상태 셋을 아랫줄에 */
+/* 좁으면 2×2 */
 @media (max-width: 640px) {
   .ct-tally {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .ct-tally > li:first-child {
-    grid-column: 1 / -1;
-    border-bottom: 1px solid var(--ct-line);
-  }
-  .ct-tally > li:nth-child(2) {
+  .ct-tally > li:nth-child(3) {
     border-left: 0;
   }
-  .ct-tally > li:nth-child(2) a {
+  .ct-tally > li:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--ct-line);
+  }
+  .ct-tally > li:nth-child(3) a {
     padding-left: 0;
   }
   .ct-tally a {
-    padding: 14px 12px;
+    padding: 12px;
   }
 }
 
