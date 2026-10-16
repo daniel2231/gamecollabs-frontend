@@ -16,6 +16,11 @@ type Props = {
   /** 새로 만들 때 이름 미리 채우기 */
   seedName?: string;
   kindOptions: KindOption[];
+  /**
+   * 백엔드가 작품의 홈 노출(순서·대표 이미지)을 지원하는지. 모르면 수정 대상이 그 값을 가졌는지로 판단한다.
+   * 지원하지 않으면 입력란 대신 안내를 보여 저장해도 반영되지 않는 값을 받지 않는다
+   */
+  featuredSupported?: boolean;
   onSaved: (entity: AdminEntity) => void;
 };
 
@@ -27,7 +32,8 @@ export function slugify(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, kindOptions, onSaved }: Props) {
+export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, kindOptions, featuredSupported, onSaved }: Props) {
+  const supportsFeatured = kind === 'property' && (featuredSupported ?? (initial ? initial.featuredOrder !== undefined : true));
   const [form, setForm] = useState(() => toForm(initial, seedName));
   const [error, setError] = useState<{ message?: string; fields?: Record<string, string> } | null>(null);
   const [pending, start] = useTransition();
@@ -42,6 +48,13 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
 
   function submit() {
     start(async () => {
+      const featuredOrder =
+        !supportsFeatured || (initial?.featuredOrder === undefined && !form.featuredTouched)
+          ? undefined
+          : form.featured
+            ? Number(form.featuredOrder)
+            : null;
+      const image = supportsFeatured ? form.image : undefined;
       const res = await saveEntity(kind, initial?.id ?? null, {
         slug: form.slug.trim(),
         name: { ko: form.ko.trim(), en: form.en.trim(), original: form.original.trim() || null },
@@ -49,18 +62,16 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
         category: kind === 'property' ? form.category || null : null,
         country: kind === 'company' ? form.country.trim().toUpperCase() || null : null,
         // 백엔드가 홈 노출 값을 알려주지 않았고 손대지도 않았으면 보내지 않는다(기존 값 유지)
-        featuredOrder:
-          kind !== 'property' || (initial?.featuredOrder === undefined && !form.featuredTouched)
-            ? undefined
-            : form.featured
-              ? Number(form.featuredOrder)
-              : null,
-        image: kind === 'property' ? form.image : undefined,
+        featuredOrder,
+        image,
       });
-      if (res.ok) {
-        onSaved(res.data);
-        onOpenChange(false);
-      } else setError(res.error);
+      if (!res.ok) return setError(res.error);
+      onSaved(res.data);
+      // 보낸 홈 노출 값이 응답에 없으면 백엔드가 그 필드를 버린 것이다. 나머지는 저장됐으므로 알리고 창을 열어 둔다
+      if ((featuredOrder !== undefined && res.data.featuredOrder === undefined) || (image && res.data.image === undefined)) {
+        return setError({ message: '이름·별칭 등은 저장했지만, 홈 노출과 대표 이미지는 백엔드가 아직 지원하지 않아 반영되지 않았습니다.' });
+      }
+      onOpenChange(false);
     });
   }
 
@@ -132,7 +143,14 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
                 <TextField.Root className="ct-mono" maxLength={2} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} placeholder="JP" />
               </Field>
             )}
-            {kind === 'property' && (
+            {kind === 'property' && !supportsFeatured && (
+              <Callout.Root color="amber" size="1">
+                <Callout.Text>
+                  홈 ‘IP로 찾아보기’ 노출과 대표 이미지는 백엔드가 아직 지원하지 않아 여기서 설정할 수 없습니다. 백엔드 작업 명세: docs/api/featured-properties.md
+                </Callout.Text>
+              </Callout.Root>
+            )}
+            {supportsFeatured && (
               <>
                 <Flex direction="column" gap="2" pt="3" style={{ borderTop: '1px solid var(--gray-a5)' }}>
                   <Text as="label" size="2" weight="medium">
