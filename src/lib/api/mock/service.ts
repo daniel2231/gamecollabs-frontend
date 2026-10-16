@@ -661,6 +661,10 @@ export const mockAdminApi: AdminApi = {
       .map((e) => toAdminEntity(kind, e));
   },
 
+  async supportsFeatured() {
+    return true;
+  },
+
   async createEntity(kind, input) {
     await delay();
     assertEntityInput(kind, input);

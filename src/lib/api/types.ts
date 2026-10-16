@@ -84,6 +84,11 @@ export interface AdminApi {
   transition(id: string, action: Transition, reason?: string): Promise<AdminCollab>;
   match(name: string): Promise<MatchResponse>;
   listEntities(kind: EntityKind, q?: string): Promise<AdminEntity[]>;
+  /**
+   * 백엔드가 작품 홈 노출(featuredOrder·image)을 지원하는지: 공개 GET /v1/properties?featured=true가 목록을 주는지로 본다.
+   * 캐시하지 않는다(백엔드 배포 직후 바로 바뀌어야 한다)
+   */
+  supportsFeatured(): Promise<boolean>;
   createEntity(kind: EntityKind, input: EntityInput): Promise<AdminEntity>;
   updateEntity(kind: EntityKind, id: string, input: EntityInput): Promise<AdminEntity>;
   mergeEntities(kind: EntityKind, sourceId: string, targetId: string): Promise<AdminEntity>;

@@ -67,8 +67,9 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
       });
       if (!res.ok) return setError(res.error);
       onSaved(res.data);
-      // 보낸 홈 노출 값이 응답에 없으면 백엔드가 그 필드를 버린 것이다. 나머지는 저장됐으므로 알리고 창을 열어 둔다
-      if ((featuredOrder !== undefined && res.data.featuredOrder === undefined) || (image && res.data.image === undefined)) {
+      // 보낸 순서·이미지가 응답에 없으면 백엔드가 그 필드를 버린 것이다. 나머지는 저장됐으므로 알리고 창을 열어 둔다
+      // (null로 끈 경우는 백엔드가 빈 필드를 생략할 수 있어 확인하지 않는다)
+      if ((typeof featuredOrder === 'number' && res.data.featuredOrder == null) || (image && res.data.image == null)) {
         return setError({ message: '이름·별칭 등은 저장했지만, 홈 노출과 대표 이미지는 백엔드가 아직 지원하지 않아 반영되지 않았습니다.' });
       }
       onOpenChange(false);

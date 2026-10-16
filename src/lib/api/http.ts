@@ -37,6 +37,8 @@ type RequestOptions = {
   headers?: Record<string, string>;
   /** 404를 null로 돌려줄지 */
   nullOn404?: boolean;
+  /** 공개 조회도 캐시하지 않는다 */
+  noStore?: boolean;
 };
 
 function baseUrl(): string {
@@ -59,7 +61,7 @@ async function request(path: string, opts: RequestOptions = {}): Promise<Respons
     },
     body: opts.body === undefined ? undefined : opts.body instanceof FormData ? opts.body : JSON.stringify(opts.body),
     // 공개 조회는 태그 캐시(웹훅으로 무효화), 관리자 요청은 항상 최신
-    ...(isRead && !opts.token ? { next: { tags: opts.tags ?? [], revalidate: 3600 } } : { cache: 'no-store' as const }),
+    ...(isRead && !opts.token && !opts.noStore ? { next: { tags: opts.tags ?? [], revalidate: 3600 } } : { cache: 'no-store' as const }),
   });
   if (res.status === 404 && opts.nullOn404) return null;
   if (!res.ok) {
@@ -234,6 +236,17 @@ export function createHttpAdminApi(token: string): AdminApi {
       if (q) sp.set('q', q);
       const list = await data<A.BeEntitySummary[]>(`/v1/admin/${entityPath(kind)}?${sp}`, o());
       return z.array(adminEntitySchema).parse(list.map((e) => A.fromEntitySummary(kind, e, mediaBase())));
+    },
+    supportsFeatured: async () => {
+      // 공개 엔드포인트라 서비스 토큰으로 부른다(관리자 토큰이 공개 경로에서 통하는지와 무관하게)
+      try {
+        const res = await request('/v1/properties?featured=true&locale=ko', { nullOn404: true, noStore: true });
+        if (!res) return false;
+        const body = (await res.json()) as { data?: unknown };
+        return Array.isArray(body.data);
+      } catch {
+        return false;
+      }
     },
     createEntity: async (kind, input) =>
       entity(kind, await data(`/v1/admin/${entityPath(kind)}`, o({ method: 'POST', body: A.toEntityBody(kind, input) }))),
