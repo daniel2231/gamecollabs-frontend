@@ -12,6 +12,7 @@ import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { formatDate, formatPeriod } from '@/lib/format';
 import { breadcrumbJsonLd, collabJsonLd } from '@/lib/jsonld';
+import { LIST_PATH } from '@/lib/filters';
 import { landingPath } from '@/lib/landing';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
@@ -76,7 +77,7 @@ export default async function CollabDetailPage({ params }: Props) {
   const url = `${base}/${locale}/collabs/${slug}`;
   const jsonLd = [
     collabJsonLd(collab, { url, locale }),
-    breadcrumbJsonLd([{ name: navLabel, url: `${base}/${locale}` }, { name: collab.title }]),
+    breadcrumbJsonLd([{ name: navLabel, url: `${base}/${locale}${LIST_PATH}` }, { name: collab.title }]),
   ];
 
   return (
@@ -84,7 +85,7 @@ export default async function CollabDetailPage({ params }: Props) {
       <JsonLd data={jsonLd} />
       {/* 가운데 한 열: 머리 → 핵심 정보 → 내용 → 출처 → 다음에 볼 것 */}
       <div className="ct-article">
-        <Breadcrumb label={t('breadcrumb')} items={[{ href: '/', label: navLabel }, { label: collab.title }]} />
+        <Breadcrumb label={t('breadcrumb')} items={[{ href: LIST_PATH, label: navLabel }, { label: collab.title }]} />
         <article>
           <Flex direction="column" gap="7">
               <header>
@@ -321,7 +322,7 @@ function Fact({ label, param, terms, none }: { label: string; param: FacetParam;
           <Flex wrap="wrap" gap="1">
             {terms.map((term) => (
               <Badge key={term.key} asChild variant="soft" color="gray" size="2" highContrast>
-                <Link href={`/${landingPath({ param, key: term.key })}`}>{term.label}</Link>
+                <Link href={landingPath({ param, key: term.key })}>{term.label}</Link>
               </Badge>
             ))}
           </Flex>

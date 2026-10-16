@@ -1,4 +1,5 @@
 import { routing } from '@/i18n/routing';
+import { LIST_PATH } from './filters';
 
 /** IndexNow 키 형식: 영문·숫자·하이픈 8~128자 */
 const KEY_RE = /^[A-Za-z0-9-]{8,128}$/;
@@ -13,11 +14,12 @@ export function indexNowKey(env: Record<string, string | undefined> = process.en
 
 const TAG_PATH: Record<string, string> = { collab: 'collabs', property: 'properties', company: 'companies' };
 
-/** revalidate 태그 → 바뀐 공개 페이지 URL(언어별). `collabs`는 목록(홈)이 바뀐 것으로 본다 */
+/** revalidate 태그 → 바뀐 공개 페이지 URL(언어별). `collabs`는 홈과 목록이, `featured`는 홈이 바뀐 것으로 본다 */
 export function urlsForTags(tags: string[], base: string): string[] {
   const paths = new Set<string>();
   for (const tag of tags) {
-    if (tag === 'collabs') paths.add('');
+    if (tag === 'collabs' || tag === 'featured') paths.add('');
+    if (tag === 'collabs') paths.add(LIST_PATH);
     const [kind, slug] = tag.split(':');
     if (slug && kind && TAG_PATH[kind]) paths.add(`/${TAG_PATH[kind]}/${slug}`);
   }

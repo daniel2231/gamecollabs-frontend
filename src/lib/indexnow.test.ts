@@ -15,6 +15,8 @@ describe('urlsForTags', () => {
     expect(urlsForTags(['collabs', 'collab:a-x-b', 'collab:a-x-b', 'property:a', 'company:c', 'taxonomies'], 'https://x.test')).toEqual([
       'https://x.test/ko',
       'https://x.test/en',
+      'https://x.test/ko/collabs',
+      'https://x.test/en/collabs',
       'https://x.test/ko/collabs/a-x-b',
       'https://x.test/en/collabs/a-x-b',
       'https://x.test/ko/properties/a',
@@ -22,6 +24,10 @@ describe('urlsForTags', () => {
       'https://x.test/ko/companies/c',
       'https://x.test/en/companies/c',
     ]);
+  });
+
+  it('홈 노출 작품이 바뀌면(featured) 홈만', () => {
+    expect(urlsForTags(['featured'], 'https://x.test')).toEqual(['https://x.test/ko', 'https://x.test/en']);
   });
 });
 

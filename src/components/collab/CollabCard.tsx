@@ -8,20 +8,23 @@ import { PhaseBadge } from './PhaseBadge';
 
 const MAX_TAGS = 3;
 
-/** 콜라보 카드: 위쪽 커버(16:9, 틀 없이), 아래 기간·제목·참여 작품·분류 */
-export function CollabCard({ collab }: { collab: CollabSummary }) {
+/**
+ * 콜라보 카드: 위쪽 커버(16:9, 틀 없이), 아래 기간·제목·참여 작품·분류.
+ * feature는 홈 첫 화면의 큰 카드(넓으면 커버 왼쪽, 글 오른쪽). 커버를 바로 불러온다
+ */
+export function CollabCard({ collab, feature = false }: { collab: CollabSummary; feature?: boolean }) {
   const host = collab.parties.find((p) => p.role === 'host');
   const partner = collab.parties.find((p) => p.role === 'partner');
   const tags = [...collab.regions, ...collab.platforms, ...collab.collabTypes];
 
   return (
-    <Link href={`/collabs/${collab.slug}`} className="ct-card">
+    <Link href={`/collabs/${collab.slug}`} className={feature ? 'ct-card ct-card-feature' : 'ct-card'}>
       <div className="ct-card-cover">
         {collab.cover ? (
           <img
             src={collab.cover.url}
             alt=""
-            loading="lazy"
+            loading={feature ? 'eager' : 'lazy'}
             width={collab.cover.width ?? undefined}
             height={collab.cover.height ?? undefined}
             data-fit={coverFit(collab.cover)}

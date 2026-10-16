@@ -32,8 +32,27 @@
     "permanent": "상시",
     "tba": "종료일 미발표"
   },
-  "List": {
+  "Home": {
     "title": "게임 × IP 콜라보",
+    "tally": "콜라보 현황",
+    "total": "등록된 콜라보",
+    "seeAll": "모두 보기",
+    "seeAllLabel": "{section} 모두 보기",
+    "ipCollabs": "콜라보 {count}건",
+    "section": {
+      "ongoing": "지금 진행 중",
+      "ips": "IP로 찾아보기",
+      "upcoming": "곧 시작",
+      "ending": "곧 종료",
+      "recent": "새로 등록됨"
+    },
+    "empty": {
+      "upcoming": "시작일이 잡힌 예정 콜라보가 없습니다.",
+      "ending": "종료일이 발표된 진행 중 콜라보가 없습니다."
+    }
+  },
+  "List": {
+    "title": "전체 콜라보",
     "landing": {
       "phase": {
         "ongoing": "진행 중인 게임 × IP 콜라보",

@@ -14,7 +14,13 @@ type Props = {
   /** undefined: 백엔드가 현재 커버를 알려주지 않음(그대로 두면 기존 값 유지) */
   value: AdminCover | null | undefined;
   onChange: (cover: AdminCover | null) => void;
+  /** 대체 텍스트를 비웠을 때 대신 쓰는 것(콜라보: 제목, 작품: 이름) */
+  altFallback?: { ko: string; en: string };
+  /** 화면에 보이는 틀(기본: 콜라보 카드 16:9). 미리보기와 안내 문구가 이 비율을 따른다 */
+  frame?: { width: number; height: number; label: string };
 };
+
+const CARD_FRAME = { width: 16, height: 9, label: '카드' };
 
 /** 긴 변 1600px 이하로 줄여 WebP(안 되면 JPEG)로 다시 인코딩한다 */
 async function prepare(file: File): Promise<{ blob: Blob; width: number; height: number }> {
@@ -62,8 +68,10 @@ async function upload(blob: Blob, width: number, height: number): Promise<Upload
   return json.data;
 }
 
-/** 커버 이미지: 끌어다 놓기·클릭·붙여넣기로 올리고, 카드와 같은 16:9로 미리 본다 */
-export function CoverField({ value, onChange }: Props) {
+/** 커버 이미지: 끌어다 놓기·클릭·붙여넣기로 올리고, 화면의 틀(기본: 카드 16:9)과 같은 비율로 미리 본다 */
+export function CoverField({ value, onChange, altFallback = { ko: '제목', en: 'the title' }, frame = CARD_FRAME }: Props) {
+  const ratio = frame.width / frame.height;
+  const ratioText = `${frame.width}:${frame.height}`;
   const inputRef = useRef<HTMLInputElement>(null);
   const helpId = useId();
   const [over, setOver] = useState(false);
@@ -210,6 +218,8 @@ export function CoverField({ value, onChange }: Props) {
         aria-describedby={helpId}
         aria-busy={Boolean(busy)}
         className="ct-dropzone"
+        // 세로형 틀은 폭을 줄여 미리보기가 너무 길어지지 않게 한다
+        style={{ aspectRatio: `${frame.width} / ${frame.height}`, ...(ratio < 1 ? { maxWidth: 280 } : {}) }}
         data-filled={shown ? '' : undefined}
         data-over={over ? '' : undefined}
         onClick={() => !busy && inputRef.current?.click()}
@@ -231,7 +241,7 @@ export function CoverField({ value, onChange }: Props) {
         onDrop={onDrop}
       >
         {shown ? (
-          <img src={shown.url} alt="" data-fit={coverFit(shown)} referrerPolicy="no-referrer" />
+          <img src={shown.url} alt="" data-fit={coverFit(shown, ratio)} referrerPolicy="no-referrer" />
         ) : over ? null : (
           <Flex direction="column" align="center" gap="2" p="4">
             <ImageIcon width="28" height="28" aria-hidden="true" />
@@ -265,13 +275,13 @@ export function CoverField({ value, onChange }: Props) {
         }}
       />
       <Text id={helpId} size="1" color="gray">
-        JPEG·PNG·WebP 파일이나 다른 웹페이지의 이미지를 끌어다 놓으세요. 영역을 선택한 뒤 이미지나 이미지 주소를 붙여넣어도(Ctrl+V) 됩니다. 긴 변 {COVER_MAX_EDGE}px 이하 WebP로 줄여 올리고, 카드에서는 16:9로
+        JPEG·PNG·WebP 파일이나 다른 웹페이지의 이미지를 끌어다 놓으세요. 영역을 선택한 뒤 이미지나 이미지 주소를 붙여넣어도(Ctrl+V) 됩니다. 긴 변 {COVER_MAX_EDGE}px 이하 WebP로 줄여 올리고, {frame.label}에서는 {ratioText}로
         보입니다.
         {value?.width && value.height && (
           <>
             {' '}
             현재 {value.width}×{value.height}
-            {coverFit(value) === 'contain' && ' · 16:9와 비율이 많이 달라 카드에서는 잘리지 않게 전체를 맞춰 보여줍니다'}
+            {coverFit(value, ratio) === 'contain' && ` · ${ratioText}와 비율이 많이 달라 ${frame.label}에서는 잘리지 않게 전체를 맞춰 보여줍니다`}
           </>
         )}
       </Text>
@@ -318,11 +328,11 @@ export function CoverField({ value, onChange }: Props) {
             </div>
             <Text as="label" className="ct-field">
               <span className="ct-label">대체 텍스트 (한국어)</span>
-              <TextField.Root value={value.alt.ko} maxLength={300} placeholder="비우면 제목을 씁니다" onChange={(e) => set({ alt: { ...value.alt, ko: e.target.value } })} />
+              <TextField.Root value={value.alt.ko} maxLength={300} placeholder={`비우면 ${altFallback.ko}을 씁니다`} onChange={(e) => set({ alt: { ...value.alt, ko: e.target.value } })} />
             </Text>
             <Text as="label" className="ct-field">
               <span className="ct-label">Alt text (English)</span>
-              <TextField.Root value={value.alt.en} maxLength={300} placeholder="Falls back to the title" onChange={(e) => set({ alt: { ...value.alt, en: e.target.value } })} />
+              <TextField.Root value={value.alt.en} maxLength={300} placeholder={`Falls back to ${altFallback.en}`} onChange={(e) => set({ alt: { ...value.alt, en: e.target.value } })} />
             </Text>
           </div>
           {(value.alt.ko.trim() === '') !== (value.alt.en.trim() === '') && (

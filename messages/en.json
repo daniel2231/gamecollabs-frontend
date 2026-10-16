@@ -32,8 +32,27 @@
     "permanent": "Permanent",
     "tba": "End date TBA"
   },
-  "List": {
+  "Home": {
     "title": "Game × IP Collabs",
+    "tally": "Collab count",
+    "total": "Collabs tracked",
+    "seeAll": "See all",
+    "seeAllLabel": "See all: {section}",
+    "ipCollabs": "{count, plural, one {# collab} other {# collabs}}",
+    "section": {
+      "ongoing": "Happening now",
+      "ips": "Browse by IP",
+      "upcoming": "Starting soon",
+      "ending": "Ending soon",
+      "recent": "Just added"
+    },
+    "empty": {
+      "upcoming": "No upcoming collabs with a start date.",
+      "ending": "No ongoing collabs with an announced end date."
+    }
+  },
+  "List": {
+    "title": "All collabs",
     "landing": {
       "phase": {
         "ongoing": "Ongoing game × IP collabs",

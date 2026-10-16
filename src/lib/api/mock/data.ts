@@ -75,6 +75,10 @@ export type DbProperty = {
   aliases: string[];
   parentId: string | null;
   officialUrl: string | null;
+  /** 홈 'IP로 찾아보기' 노출 순서(작은 수가 앞). 없거나 null이면 노출하지 않는다 */
+  featuredOrder?: number | null;
+  /** 대표 이미지(목 모드: url이 data: 주소일 수 있다) */
+  image?: AdminCover | null;
 };
 
 export type DbCompany = {
@@ -132,6 +136,7 @@ export const properties: DbProperty[] = [
     aliases: [],
     parentId: null,
     officialUrl: null,
+    featuredOrder: 2,
   },
   {
     id: 'p_aot',
@@ -141,6 +146,7 @@ export const properties: DbProperty[] = [
     aliases: ['Shingeki no Kyojin', 'AoT'],
     parentId: null,
     officialUrl: null,
+    featuredOrder: 1,
   },
   {
     id: 'p_bloodstrike',

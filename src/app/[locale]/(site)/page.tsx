@@ -1,251 +1,267 @@
-import { Cross2Icon } from '@radix-ui/react-icons';
-import { Badge, Button, Flex, Heading, Text } from '@radix-ui/themes';
+import { ArrowRightIcon } from '@radix-ui/react-icons';
+import { VisuallyHidden } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { ReactNode } from 'react';
 import { CollabCard } from '@/components/collab/CollabCard';
-import { FilterPanel } from '@/components/collab/FilterPanel';
-import { SortSelect } from '@/components/collab/SortSelect';
-import { AutoLoadMore } from '@/components/site/AutoLoadMore';
-import { CopyLinkButton } from '@/components/site/CopyLinkButton';
+import { PeriodText } from '@/components/collab/PeriodText';
+import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { JsonLd } from '@/components/site/JsonLd';
-import { LinkPending } from '@/components/site/Pending';
 import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { groupByStartMonth } from '@/lib/format';
-import { hasActiveFilters, parseCollabQuery, serializeCollabQuery } from '@/lib/filters';
-import { breadcrumbJsonLd, websiteJsonLd } from '@/lib/jsonld';
-import { landingOf, landingPath, type Landing } from '@/lib/landing';
+import { LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
+import { formatDate } from '@/lib/format';
+import { websiteJsonLd } from '@/lib/jsonld';
+import { LANDING_PHASES } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { buildTree, labelMap } from '@/lib/taxonomy';
-import { FACET_PARAMS, type CollabQuery, type TaxonomyTerm } from '@/schema';
+import type { CollabQuery, CollabSummary, FeaturedProperty, Period } from '@/schema';
 
-const PHASE_TABS = [undefined, 'ongoing', 'upcoming', 'ended'] as const;
+/** 진행 중 목록에 보여줄 최대 개수(대표 카드 제외) */
+const INDEX_SIZE = 6;
+/** 일정표 한 칸의 최대 개수 */
+const SCHEDULE_SIZE = 5;
+/** IP로 찾아보기 최대 개수 */
+const FEATURED_SIZE = 12;
 
-/** 랜딩 페이지 제목. 분류 키가 없거나 폐기된 항목이면 null(랜딩으로 보지 않는다) */
-async function landingTitle(landing: Landing | null, terms: TaxonomyTerm[], locale: Locale): Promise<string | null> {
-  if (!landing) return null;
-  const t = await getTranslations({ locale, namespace: 'List' });
-  if (landing.param === 'phase') return t(`landing.phase.${landing.key}`);
-  const label = terms.find((x) => x.key === landing.key && !x.deprecated)?.label[locale];
-  return label ? t(`landing.${landing.param}`, { label }) : null;
-}
-
-export async function generateMetadata({ params, searchParams }: PageProps<'/[locale]'>): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const locale = (await params).locale as Locale;
-  const query = parseCollabQuery(await searchParams);
-  const landing = landingOf(query);
-  const [t, tSite, terms, list] = await Promise.all([
-    getTranslations({ locale, namespace: 'List' }),
+  const [t, tSite] = await Promise.all([
+    getTranslations({ locale, namespace: 'Home' }),
     getTranslations({ locale, namespace: 'Site' }),
-    landing ? api.getTaxonomies() : [],
-    landing ? api.listCollabs(query, locale) : null,
   ]);
-  const heading = await landingTitle(landing, terms, locale);
-  const siteName = tSite('name');
-
-  // 필터 하나짜리 랜딩: 결과가 있을 때만 색인. canonical은 그 필터만 남긴 주소
-  if (landing && heading && list && list.total > 0) {
-    const path = landingPath(landing);
-    const title = `${heading} · ${siteName}`;
-    const description = t('landingDescription', { title: heading, count: list.total });
-    return {
-      title: { absolute: title },
-      description,
-      alternates: alternatesFor(locale, path),
-      openGraph: openGraphFor({ locale, path, siteName, title, description, images: [defaultOgImage(locale)] }),
-    };
-  }
-
-  const title = `${t('title')} · ${siteName}`;
+  const title = `${tSite('name')} · ${t('title')}`;
+  const description = tSite('description');
   return {
     title: { absolute: title },
-    // 정렬·더 보기 주소와 색인하지 않는 필터 페이지의 canonical은 필터 없는 목록
+    description,
     alternates: alternatesFor(locale, ''),
-    openGraph: openGraphFor({
-      locale,
-      path: '',
-      siteName,
-      title,
-      description: tSite('description'),
-      images: [defaultOgImage(locale)],
-    }),
-    // 검색어·기간·여러 필터 조합, 결과 없는 랜딩은 색인하지 않는다(중복·빈 콘텐츠 방지)
-    robots: hasActiveFilters(query) ? { index: false, follow: true } : undefined,
+    openGraph: openGraphFor({ locale, path: '', siteName: tSite('name'), title, description, images: [defaultOgImage(locale)] }),
   };
 }
 
-export default async function CollabListPage({ params, searchParams }: PageProps<'/[locale]'>) {
+export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   setRequestLocale(locale);
-  const query = parseCollabQuery(await searchParams);
 
-  const [t, tPhase, tSite, terms, list, stats] = await Promise.all([
-    getTranslations('List'),
+  const list = (q: Partial<CollabQuery>) => api.listCollabs({ ...parseCollabQuery({}), ...q }, locale);
+  const [t, tPhase, tSite, stats, featured, ongoing, upcoming, recent] = await Promise.all([
+    getTranslations('Home'),
     getTranslations('Phase'),
     getTranslations('Site'),
-    api.getTaxonomies(),
-    api.listCollabs(query, locale),
     api.getStats(),
+    api.listFeaturedProperties(locale),
+    // 곧 종료를 고르려면 진행 중 전체가 필요하다(목록 API에 종료일 정렬이 없다)
+    list({ phase: 'ongoing', limit: 100 }),
+    list({ phase: 'upcoming', sort: 'start_asc', limit: SCHEDULE_SIZE }),
+    // 위 진행 중 목록과 겹치는 것을 빼고도 4개가 남도록 넉넉히
+    list({ sort: 'recent', limit: 4 + 1 + INDEX_SIZE }),
   ]);
 
-  const landing = landingOf(query);
-  const heading = await landingTitle(landing, terms, locale);
-  // 시작일 정렬이면 시작 월별로 묶는다. 다음 페이지가 남아 있으면 마지막 달은 일부만 불러온 상태라
-  // 그 달의 전체 개수를 따로 받아 온다(불러온 개수만 세면 '더 보기'를 눌러야 숫자가 맞아진다)
-  const groups = (query.sort === 'recent' ? [] : groupByStartMonth(list.items)).map((g) => ({ ...g, total: g.items.length }));
-  const lastGroup = groups.at(-1);
-  if (lastGroup && list.nextCursor) {
-    lastGroup.total = lastGroup.key
-      ? (await api.listCollabs({ ...query, from: lastGroup.key, to: lastGroup.key, limit: 1, cursor: undefined }, locale)).total
-      : // 시기 미상은 항상 맨 뒤에 오므로 남은 전부가 미상이다
-        list.total - (list.items.length - lastGroup.items.length);
-  }
+  // 대표 카드: 진행 중 가운데 커버가 있는 것을 먼저, 없으면 최근 등록
+  const lead = ongoing.items.find((c) => c.cover) ?? ongoing.items[0] ?? recent.items[0] ?? null;
+  const notLead = (c: CollabSummary) => c.slug !== lead?.slug;
+  const now = ongoing.items.filter(notLead).slice(0, INDEX_SIZE);
+  const ending = ongoing.items
+    .filter((c) => c.period.endKind === 'fixed' && c.period.end)
+    .sort((a, b) => a.period.end!.localeCompare(b.period.end!))
+    .slice(0, SCHEDULE_SIZE);
+  const shown = new Set([lead?.slug, ...now.map((c) => c.slug)]);
+  // 운영자가 고른 작품 가운데 발행된 콜라보가 있는 것만
+  const ips = featured.filter((p) => p.collabCount > 0).slice(0, FEATURED_SIZE);
+  const fresh = recent.items.filter((c) => !shown.has(c.slug)).slice(0, 4);
 
-  const labels = labelMap(terms, locale);
-  const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
-  const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
-  const href = (q: Partial<CollabQuery>) => `/${serializeCollabQuery({ ...query, ...q })}`;
-
-  const chips: { label: string; href: string }[] = [
-    ...(query.q ? [{ label: t('searchChip', { q: query.q }), href: href({ q: undefined, limit: 20 }) }] : []),
-    ...FACET_PARAMS.flatMap((f) =>
-      query[f].map((key) => ({
-        label: labels.get(key) ?? key,
-        href: href({ [f]: query[f].filter((k) => k !== key), limit: 20 }),
-      })),
-    ),
-    ...(query.from || query.to
-      ? [
-          {
-            label: `${query.from?.replace('-', '.') ?? '…'} – ${query.to?.replace('-', '.') ?? '…'}`,
-            href: href({ from: undefined, to: undefined, limit: 20 }),
-          },
-        ]
-      : []),
-  ];
+  const seeAll = (section: string, href: string) => (
+    <Link href={href} className="ct-more" aria-label={t('seeAllLabel', { section })}>
+      {t('seeAll')}
+      <ArrowRightIcon aria-hidden="true" />
+    </Link>
+  );
 
   return (
     <>
-      {!hasActiveFilters(query) && (
-        <JsonLd data={websiteJsonLd({ name: tSite('name'), description: tSite('description'), url: `${siteUrl()}/${locale}`, locale })} />
-      )}
-      {heading && landing && (
-        <JsonLd
-          data={breadcrumbJsonLd([
-            { name: tSite('nav.collabs'), url: `${siteUrl()}/${locale}` },
-            { name: heading, url: `${siteUrl()}/${locale}${landingPath(landing)}` },
-          ])}
-        />
-      )}
-      <header className="ct-hero">
+      <JsonLd data={websiteJsonLd({ name: tSite('name'), description: tSite('description'), url: `${siteUrl()}/${locale}`, locale })} />
+      <VisuallyHidden>
         <h1>
-          <SignalX text={heading ?? t('title')} />
+          {tSite('name')} · {t('title')}
         </h1>
-      </header>
+      </VisuallyHidden>
 
-      <nav aria-label={t('phaseTabs')}>
-        <ul className="ct-tabs">
-          {PHASE_TABS.map((phase) => (
-            <li key={phase ?? 'all'}>
-              <Link href={href({ phase, limit: 20 })} scroll={false} aria-current={query.phase === phase ? 'page' : undefined}>
-                <LinkPending />
-                {phase ? tPhase(phase) : tPhase('all')}
-                {phase && stats.byPhase[phase] > 0 && <sup>{stats.byPhase[phase]}</sup>}
+      <div className="ct-home">
+        {/* 현황: 얇은 한 줄. 등록된 콜라보 전체 수와 진행 상태별 수, 각각 목록으로 이어진다 */}
+        <nav aria-label={t('tally')}>
+          <ul className="ct-tally">
+            <li>
+              <Link href={LIST_PATH}>
+                <span className="ct-tally-label">{t('total')}</span>
+                <span className="ct-tally-num ct-mono">{stats.published}</span>
               </Link>
             </li>
-          ))}
-        </ul>
-      </nav>
+            {LANDING_PHASES.map((phase) => (
+              <li key={phase}>
+                <Link href={listHref({ phase })} data-phase={phase}>
+                  <span className="ct-tally-label">{tPhase(phase)}</span>
+                  <span className="ct-tally-num ct-mono">{stats.byPhase[phase] ?? 0}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-      <div className="ct-split">
-        <FilterPanel query={query} facets={facets} />
-
-        <section aria-label={t('results')} className="ct-main">
-          <Flex direction="column" gap="4">
-            <Flex wrap="wrap" align="center" gap="2">
-              {chips.map((chip) => (
-                <Badge key={chip.href} asChild size="2" variant="outline" color="gray" highContrast className="ct-chip">
-                  <Link href={chip.href} scroll={false} aria-label={t('removeFilter', { label: chip.label })}>
-                    <LinkPending />
-                    {chip.label}
-                    <Cross2Icon aria-hidden="true" />
-                  </Link>
-                </Badge>
-              ))}
-              <span style={{ flex: 1 }} />
-              <Text size="2" color="gray" aria-live="polite">
-                {t.rich('resultCount', {
-                  count: list.total,
-                  strong: (chunks) => (
-                    <Text weight="bold" highContrast className="ct-mono">
-                      {chunks}
-                    </Text>
-                  ),
-                })}
-              </Text>
-              <SortSelect query={query} />
-              <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} variant="ghost" />
-            </Flex>
-
-            {/* 필터·탭·정렬을 바꾸는 동안 결과 위에서 흐르는 진행선(globals.css의 .ct-progress) */}
-            <div className="ct-progress" aria-hidden="true" />
-            {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
-            <Flex direction="column" gap="4" className="ct-pending-target">
-              {list.items.length === 0 ? (
-                <Flex direction="column" align="center" gap="2" py="9" className="ct-panel">
-                  <Text weight="medium">{t('empty')}</Text>
-                  <Text size="2" color="gray">
-                    {t('emptyHint')}
-                  </Text>
-                </Flex>
-              ) : query.sort === 'recent' ? (
-                <ul className="ct-grid">
-                  {list.items.map((item) => (
-                    <li key={item.slug}>
-                      <CollabCard collab={item} />
-                    </li>
+        {/* 1면: 대표 카드 | 진행 중 번호 목록 */}
+        {lead && (
+          <div className={now.length > 0 ? 'ct-lead' : 'ct-lead ct-lead-solo'}>
+            <CollabCard collab={lead} feature />
+            {now.length > 0 && (
+              <Section
+                id="ongoing"
+                title={t('section.ongoing')}
+                count={ongoing.total}
+                action={seeAll(t('section.ongoing'), listHref({ phase: 'ongoing' }))}
+              >
+                <ol className="ct-index">
+                  {now.map((c, i) => (
+                    <IndexRow key={c.slug} collab={c} marker={String(i + 1).padStart(2, '0')} />
                   ))}
-                </ul>
-              ) : (
-                // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
-                groups.map((group) => (
-                  <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
-                    <Heading as="h2" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
-                      {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
-                      <span className="ct-month-count">{t('monthCount', { count: group.total })}</span>
-                    </Heading>
-                    <ul className="ct-grid">
-                      {group.items.map((item) => (
-                        <li key={item.slug}>
-                          <CollabCard collab={item} />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))
-              )}
-            </Flex>
-
-            {/* 목록 끝에 닿으면 저절로 다음 20개를 불러온다(버튼은 대기 표시·JS 없는 경우용) */}
-            {list.nextCursor && query.limit < 100 && (
-              <AutoLoadMore href={href({ limit: Math.min(query.limit + 20, 100) })}>
-                <Flex justify="center">
-                  <Button asChild variant="surface" color="gray" size="3">
-                    <Link href={href({ limit: Math.min(query.limit + 20, 100) })} scroll={false} replace>
-                      <LinkPending spinner dim={false} />
-                      {t('loadMore')}
-                    </Link>
-                  </Button>
-                </Flex>
-              </AutoLoadMore>
+                </ol>
+              </Section>
             )}
-          </Flex>
-        </section>
+          </div>
+        )}
+
+        {/* IP로 찾아보기: 운영자가 관리자 화면에서 고른 작품. 작품 페이지로 이어진다 */}
+        {ips.length > 0 && (
+          <Section id="ips" title={t('section.ips')}>
+            <ul className="ct-ip-grid">
+              {ips.map((p) => (
+                <li key={p.slug}>
+                  <IpTile property={p} collabs={t('ipCollabs', { count: p.collabCount })} />
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
+        {/* 새로 등록됨: 위에서 이미 보인 콜라보는 뺀다 */}
+        {fresh.length > 0 && (
+          <Section id="recent" title={t('section.recent')} action={seeAll(t('section.recent'), listHref({ sort: 'recent' }))}>
+            <ul className="ct-grid">
+              {fresh.map((c) => (
+                <li key={c.slug}>
+                  <CollabCard collab={c} />
+                </li>
+              ))}
+            </ul>
+          </Section>
+        )}
+
+        {/* 일정표: 곧 시작 | 곧 종료. 둘 다 비면 숨긴다 */}
+        {(upcoming.items.length > 0 || ending.length > 0) && (
+          <div className="ct-schedule">
+            <Section
+              id="upcoming"
+              title={t('section.upcoming')}
+              count={upcoming.total}
+              action={upcoming.items.length > 0 && seeAll(t('section.upcoming'), listHref({ phase: 'upcoming', sort: 'start_asc' }))}
+            >
+              <ScheduleList items={upcoming.items} date={(c) => c.period.start} empty={t('empty.upcoming')} />
+            </Section>
+            <Section id="ending" title={t('section.ending')}>
+              <ScheduleList items={ending} date={(c) => c.period.end} empty={t('empty.ending')} />
+            </Section>
+          </div>
+        )}
       </div>
     </>
+  );
+}
+
+/** IP 타일: 대표 이미지 → 최근 콜라보 커버 → 이름만(격자 바탕) 순으로 그림을 고른다 */
+function IpTile({ property: p, collabs }: { property: FeaturedProperty; collabs: string }) {
+  const cover = p.image ?? p.latestCover;
+  return (
+    <Link href={`/properties/${p.slug}`} className="ct-ip">
+      <div className="ct-ip-cover">
+        {cover ? (
+          <img src={cover.url} alt="" loading="lazy" width={cover.width ?? undefined} height={cover.height ?? undefined} />
+        ) : (
+          <div className="ct-ip-mono" aria-hidden="true">
+            {p.name.value}
+          </div>
+        )}
+        {p.ongoingCount > 0 && (
+          <span className="ct-card-phase">
+            <PhaseBadge phase="ongoing" />
+          </span>
+        )}
+      </div>
+      <span className="ct-ip-name">{p.name.value}</span>
+      <span className="ct-ip-meta">
+        {p.kind.label} · <span className="ct-mono">{collabs}</span>
+      </span>
+    </Link>
+  );
+}
+
+function Section({ id, title, count, action, children }: { id: string; title: string; count?: number; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section aria-labelledby={`home-${id}`} className="ct-home-section">
+      <div className="ct-section-heading">
+        <h2 id={`home-${id}`}>
+          {title}
+          {count !== undefined && <span className="ct-month-count">{count}</span>}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** 일정표의 날짜: 일 단위면 올해 표기 없이 10.17, 월 단위면 2026.10 */
+function shortDate(date: string | null, precision: Period['precision']): string {
+  const full = formatDate(date, precision);
+  if (!full) return '—';
+  return precision === 'day' ? full.slice(5) : full;
+}
+
+/** 글자만 있는 한 줄: 왼쪽 표시(번호나 날짜), 오른쪽 제목과 참여 작품 분류 */
+function IndexRow({ collab, marker, period = true }: { collab: CollabSummary; marker: string; period?: boolean }) {
+  const host = collab.parties.find((p) => p.role === 'host');
+  const partner = collab.parties.find((p) => p.role === 'partner');
+  const kinds = [host?.kind.label, partner?.kind.label].filter(Boolean).join(' × ');
+  return (
+    <li>
+      <Link href={`/collabs/${collab.slug}`} className="ct-index-row">
+        <span className="ct-index-marker ct-mono">{marker}</span>
+        <span className="ct-index-body">
+          <span className="ct-index-title">
+            <SignalX text={collab.title} />
+          </span>
+          <span className="ct-index-meta">
+            {kinds && (
+              <span>
+                <SignalX text={kinds} />
+              </span>
+            )}
+            {period && <PeriodText period={collab.period} />}
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function ScheduleList({ items, date, empty }: { items: CollabSummary[]; date: (c: CollabSummary) => string | null; empty: string }) {
+  if (items.length === 0) return <p className="ct-index-empty">{empty}</p>;
+  return (
+    <ol className="ct-index">
+      {items.map((c) => (
+        <IndexRow key={c.slug} collab={c} marker={shortDate(date(c), c.period.precision)} period={false} />
+      ))}
+    </ol>
   );
 }

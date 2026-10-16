@@ -40,6 +40,9 @@ export function parseCollabQuery(params: SearchParamsRecord): CollabQuery {
   });
 }
 
+/** 콜라보 목록 경로(언어 접두어 뒤). 홈(`/`)은 요약 화면이다 */
+export const LIST_PATH = '/collabs';
+
 /** 목록 쿼리 → URL 쿼리 문자열(기본값은 생략해 짧게) */
 export function serializeCollabQuery(query: Partial<CollabQuery>): string {
   const sp = new URLSearchParams();
@@ -55,6 +58,11 @@ export function serializeCollabQuery(query: Partial<CollabQuery>): string {
   if (query.limit && query.limit !== 20) sp.set('limit', String(query.limit));
   const s = sp.toString();
   return s ? `?${s}` : '';
+}
+
+/** 목록 쿼리 → 목록 주소(언어 접두어 뒤). 예: `/collabs?phase=ongoing` */
+export function listHref(query: Partial<CollabQuery>): string {
+  return `${LIST_PATH}${serializeCollabQuery(query)}`;
 }
 
 export function toggleFacet(query: CollabQuery, facet: FacetParam, key: string): CollabQuery {

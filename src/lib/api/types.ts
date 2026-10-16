@@ -1,5 +1,6 @@
 import type {
   AdminCollab,
+  AdminCover,
   AdminEntity,
   AdminQueueItem,
   CollabDetail,
@@ -9,6 +10,7 @@ import type {
   CollabStatus,
   CompanyDetail,
   EntityKind,
+  FeaturedProperty,
   FollowUpItem,
   FollowUpView,
   Locale,
@@ -29,6 +31,8 @@ export interface PublicApi {
   getCompany(slug: string, locale: Locale): Promise<CompanyDetail | null>;
   getTaxonomies(): Promise<TaxonomyTerm[]>;
   getStats(): Promise<Stats>;
+  /** 홈 'IP로 찾아보기': GET /v1/properties?featured=true. 백엔드가 아직 지원하지 않으면 빈 목록 */
+  listFeaturedProperties(locale: Locale): Promise<FeaturedProperty[]>;
   /** 프론트엔드가 추가로 요청하는 엔드포인트: GET /v1/sitemap */
   getSitemap(): Promise<SitemapData>;
 }
@@ -63,6 +67,10 @@ export type EntityInput = {
   aliases: string[];
   category: string | null;
   country: string | null;
+  /** 작품만: 홈 노출 순서(null이면 노출 안 함). undefined면 본문에서 뺀다(건드리지 않음) */
+  featuredOrder?: number | null;
+  /** 작품만: 대표 이미지(null이면 지운다). undefined면 본문에서 뺀다(건드리지 않음) */
+  image?: AdminCover | null;
 };
 
 export type TermInput = Pick<TaxonomyTerm, 'key' | 'taxonomy' | 'parent' | 'label' | 'legacyValues'>;

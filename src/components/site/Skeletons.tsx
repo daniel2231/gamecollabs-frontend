@@ -39,6 +39,35 @@ function Grid({ count }: { count: number }) {
   );
 }
 
+/** 홈: 현황 줄, 대표 카드 | 번호 목록, 아래 카드 그리드 */
+export function HomeSkeleton() {
+  return (
+    <div aria-busy="true">
+      <LoadingStatus />
+      <div className="ct-home">
+        <Block height={48} />
+        <div className="ct-lead">
+          <Flex direction="column" gap="3">
+            <Block height={400} />
+            <Line width={140} height={14} />
+            <Line width="70%" height={40} />
+          </Flex>
+          <Flex direction="column" gap="4">
+            <Line width={140} height={24} />
+            {Array.from({ length: 6 }, (_, i) => (
+              <Flex key={i} direction="column" gap="2">
+                <Line width="80%" height={18} />
+                <Line width="50%" height={13} />
+              </Flex>
+            ))}
+          </Flex>
+        </div>
+        <Grid count={4} />
+      </div>
+    </div>
+  );
+}
+
 /** 콜라보 목록: 제목·탭·필터·카드 그리드 */
 export function ListSkeleton() {
   return (

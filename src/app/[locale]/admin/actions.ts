@@ -6,6 +6,7 @@ import { adminApi, ApiError, isMockApi } from '@/lib/api';
 import type { EntityInput, QueueFilter, QueueResponse, TermInput } from '@/lib/api/types';
 import { getAdminSession } from '@/lib/auth/session';
 import {
+  adminCoverSchema,
   COLLAB_STATUSES,
   collabInputSchema,
   entityKindSchema,
@@ -105,6 +106,8 @@ const entityInputSchema = z.object({
   aliases: z.array(z.string().trim().min(1)).max(50),
   category: z.string().nullable(),
   country: z.string().regex(/^[A-Z]{2}$/, 'ISO 3166-1 alpha-2 (예: JP)').nullable(),
+  featuredOrder: z.number().int().min(1, '1 이상').max(999, '999 이하').nullable().optional(),
+  image: adminCoverSchema.nullable().optional(),
 });
 
 export async function saveEntity(kind: EntityKind, id: string | null, input: EntityInput): Promise<ActionResult<AdminEntity>> {

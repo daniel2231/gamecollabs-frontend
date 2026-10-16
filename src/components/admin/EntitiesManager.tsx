@@ -70,6 +70,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
             <Table.ColumnHeaderCell>별칭</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>{kind === 'property' ? '분류' : '국가'}</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell justify="end">콜라보</Table.ColumnHeaderCell>
+            {kind === 'property' && <Table.ColumnHeaderCell justify="center">홈 노출</Table.ColumnHeaderCell>}
             <Table.ColumnHeaderCell>
               <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>작업</span>
             </Table.ColumnHeaderCell>
@@ -98,6 +99,15 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
               <Table.Cell justify="end" className="ct-mono">
                 {e.collabCount}
               </Table.Cell>
+              {kind === 'property' && (
+                <Table.Cell justify="center">
+                  {e.featuredOrder != null && (
+                    <Badge color="orange" variant="soft" className="ct-mono" title="홈 ‘IP로 찾아보기’ 노출 순서">
+                      {e.featuredOrder}
+                    </Badge>
+                  )}
+                </Table.Cell>
+              )}
               <Table.Cell>
                 <Flex gap="2" justify="end">
                   <Button size="1" variant="soft" color="gray" onClick={() => setEditing(e)}>
@@ -112,7 +122,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
           ))}
           {entities.length === 0 && (
             <Table.Row>
-              <Table.Cell colSpan={6}>
+              <Table.Cell colSpan={kind === 'property' ? 7 : 6}>
                 <Text color="gray">결과가 없습니다.</Text>
               </Table.Cell>
             </Table.Row>

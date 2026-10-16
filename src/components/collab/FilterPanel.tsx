@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useId, useOptimistic, useState, useTransition } from 'react';
 import { PendingMark } from '@/components/site/Pending';
 import { useRouter } from '@/i18n/navigation';
-import { serializeCollabQuery, toggleFacet } from '@/lib/filters';
+import { listHref, toggleFacet } from '@/lib/filters';
 import { flatten, type TermNode } from '@/lib/taxonomy';
 import type { CollabQuery, FacetParam } from '@/schema';
 
@@ -29,7 +29,7 @@ export function FilterPanel({ query, facets }: Props) {
   function navigate(next: CollabQuery) {
     startTransition(() => {
       setOptimistic(next);
-      router.replace(`/${serializeCollabQuery(next)}`, { scroll: false });
+      router.replace(listHref(next), { scroll: false });
     });
   }
 

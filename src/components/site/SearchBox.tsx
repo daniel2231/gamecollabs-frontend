@@ -7,14 +7,15 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react';
 import { PendingMark } from './Pending';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { LIST_PATH } from '@/lib/filters';
 
-/** 헤더 검색. 목록 화면에서는 현재 필터를 유지한 채 q만 바꾼다. '/' 키로 포커스 */
+/** 헤더 검색. 결과는 목록(/collabs)에 보여준다. 목록 화면에서는 현재 필터를 유지한 채 q만 바꾼다. '/' 키로 포커스 */
 export function SearchBox() {
   const t = useTranslations('Site.search');
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const current = pathname === '/' ? (params.get('q') ?? '') : '';
+  const current = pathname === LIST_PATH ? (params.get('q') ?? '') : '';
   const [value, setValue] = useState(current);
   const inputRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
@@ -35,13 +36,13 @@ export function SearchBox() {
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const next = new URLSearchParams(pathname === '/' ? params.toString() : '');
+    const next = new URLSearchParams(pathname === LIST_PATH ? params.toString() : '');
     const q = value.trim();
     if (q) next.set('q', q);
     else next.delete('q');
     next.delete('limit');
     const qs = next.toString();
-    startTransition(() => router.push(qs ? `/?${qs}` : '/'));
+    startTransition(() => router.push(qs ? `${LIST_PATH}?${qs}` : LIST_PATH));
   }
 
   return (

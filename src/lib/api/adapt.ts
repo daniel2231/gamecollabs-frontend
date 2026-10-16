@@ -14,7 +14,9 @@ import type {
   CollabQuery,
   CollabSummary,
   CompanyDetail,
+  Cover,
   EntityKind,
+  FeaturedProperty,
   FollowUpItem,
   FollowUpProposal,
   FollowUpState,
@@ -97,8 +99,24 @@ export type BeEntityPage = {
 export type BeTaxonomyNode = { key: string; label: string; labels: { ko: string; en: string }; children: BeTaxonomyNode[] };
 export type BeTaxonomyTree = Partial<Record<TaxonomyTerm['taxonomy'], BeTaxonomyNode[]>>;
 
+/** GET /v1/properties?featured=true 항목 */
+export type BeFeaturedProperty = {
+  slug: string;
+  name: string | null;
+  names: BeNames;
+  kind?: Ref;
+  collabCount: number;
+  counterpartCount: number;
+  ongoingCount: number;
+  image: BeCover | null;
+  latestCover: BeCover | null;
+};
+
+/** 작품 홈 노출 필드. 백엔드가 지원하기 전에는 둘 다 없다 */
+type BeFeaturedFields = { featuredOrder?: number | null; image?: BeAdminCover | null };
+
 /** 관리자 목록·검색 항목 (`entitySummary`) */
-export type BeEntitySummary = {
+export type BeEntitySummary = BeFeaturedFields & {
   id: string;
   slug: string;
   names: BeNames;
@@ -109,7 +127,7 @@ export type BeEntitySummary = {
 };
 
 /** 생성·수정·병합 응답은 저장된 문서 그대로다 */
-export type BeEntityDoc = {
+export type BeEntityDoc = BeFeaturedFields & {
   _id: string;
   slug: string;
   name: BeNames;
@@ -257,17 +275,34 @@ export function toSummary(c: BeCard): CollabSummary {
     regions: terms(c.regions),
     platforms: terms(c.platforms),
     collabTypes: terms(c.collabTypes),
-    cover: c.cover
-      ? {
-          url: c.cover.url,
-          originalUrl: c.cover.originalUrl ?? null,
-          credit: c.cover.credit,
-          alt: c.cover.alt ?? c.title,
-          width: c.cover.width,
-          height: c.cover.height,
-        }
-      : null,
+    cover: c.cover && toCover(c.cover, c.title),
     publishedAt: c.publishedAt ?? null,
+  };
+}
+
+/** 공개 커버. 대체 텍스트가 없으면 제목(작품이면 이름)을 쓴다 */
+function toCover(c: BeCover, fallbackAlt: string): Cover {
+  return {
+    url: c.url,
+    originalUrl: c.originalUrl ?? null,
+    credit: c.credit,
+    alt: c.alt ?? fallbackAlt,
+    width: c.width,
+    height: c.height,
+  };
+}
+
+export function toFeaturedProperty(p: BeFeaturedProperty): FeaturedProperty {
+  const name = p.name ?? p.names.ko ?? p.names.en ?? p.slug;
+  return {
+    slug: p.slug,
+    kind: term(p.kind ?? null),
+    name: named(name, p.names.original),
+    collabCount: p.collabCount,
+    counterpartCount: p.counterpartCount,
+    ongoingCount: p.ongoingCount,
+    image: p.image && toCover(p.image, name),
+    latestCover: p.latestCover && toCover(p.latestCover, name),
   };
 }
 
@@ -672,8 +707,18 @@ function toCoverBody(cover: AdminCover | null) {
   };
 }
 
-export function fromEntitySummary(kind: EntityKind, e: BeEntitySummary): AdminEntity {
+/** 작품 홈 노출 필드: 백엔드가 준 것만 옮긴다(없으면 undefined로 두어 저장할 때 건드리지 않는다) */
+function featuredFields(kind: EntityKind, e: BeFeaturedFields, mediaBase: string | null): Pick<AdminEntity, 'featuredOrder' | 'image'> {
+  if (kind !== 'property') return {};
   return {
+    ...(e.featuredOrder === undefined ? {} : { featuredOrder: e.featuredOrder }),
+    ...(e.image === undefined ? {} : { image: e.image && toAdminCover(e.image, mediaBase) }),
+  };
+}
+
+export function fromEntitySummary(kind: EntityKind, e: BeEntitySummary, mediaBase: string | null = null): AdminEntity {
+  return {
+    ...featuredFields(kind, e, mediaBase),
     id: e.id,
     kind,
     slug: e.slug,
@@ -685,8 +730,9 @@ export function fromEntitySummary(kind: EntityKind, e: BeEntitySummary): AdminEn
   };
 }
 
-export function fromEntityDoc(kind: EntityKind, e: BeEntityDoc): AdminEntity {
+export function fromEntityDoc(kind: EntityKind, e: BeEntityDoc, mediaBase: string | null = null): AdminEntity {
   return {
+    ...featuredFields(kind, e, mediaBase),
     id: String(e._id),
     kind,
     slug: e.slug,
@@ -700,7 +746,13 @@ export function fromEntityDoc(kind: EntityKind, e: BeEntityDoc): AdminEntity {
 
 export function toEntityBody(kind: EntityKind, input: EntityInput) {
   const base = { slug: input.slug, name: input.name, aliases: input.aliases };
-  return kind === 'property' ? { ...base, kind: input.category } : { ...base, country: input.country };
+  if (kind === 'company') return { ...base, country: input.country };
+  return {
+    ...base,
+    kind: input.category,
+    ...(input.featuredOrder === undefined ? {} : { featuredOrder: input.featuredOrder }),
+    ...(input.image === undefined ? {} : { image: toCoverBody(input.image) }),
+  };
 }
 
 export function toTermBody(input: TermInput) {

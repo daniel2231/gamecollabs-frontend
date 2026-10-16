@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { adminCollabSchema, collabDetailSchema, collabListResponseSchema, followUpItemSchema, type CollabInput } from '@/schema';
+import { z } from 'zod';
+import {
+  adminCollabSchema,
+  adminEntitySchema,
+  collabDetailSchema,
+  collabListResponseSchema,
+  featuredPropertySchema,
+  followUpItemSchema,
+  type CollabInput,
+} from '@/schema';
 import * as A from './adapt';
 
 const card: A.BeCard = {
@@ -311,5 +320,55 @@ describe('후속 확인 변환', () => {
       escalated: true,
       proposal: null,
     });
+  });
+});
+
+describe('홈 노출 작품', () => {
+  const names = { ko: '진격의 거인', en: 'Attack on Titan', original: '進撃の巨人' };
+
+  it('공개 목록: 대체 텍스트가 없으면 작품 이름을 쓴다', () => {
+    const [p] = z.array(featuredPropertySchema).parse([
+      A.toFeaturedProperty({
+        slug: 'attack-on-titan',
+        name: 'Attack on Titan',
+        names,
+        kind: { key: 'partner_category.anime_manga', label: 'Anime / Manga' },
+        collabCount: 3,
+        counterpartCount: 2,
+        ongoingCount: 1,
+        image: null,
+        latestCover: { url: 'https://media.example.com/c.webp', credit: null, alt: null, width: 1600, height: 900 },
+      }),
+    ]);
+    expect(p!.name).toEqual({ value: 'Attack on Titan', fallback: false, original: '進撃の巨人' });
+    expect(p!.latestCover).toMatchObject({ alt: 'Attack on Titan', originalUrl: null });
+    expect(p!.image).toBeNull();
+  });
+
+  it('관리자: 백엔드가 주지 않은 필드는 undefined로 둔다(저장할 때 건드리지 않음)', () => {
+    const summary: A.BeEntitySummary = { id: 'p1', slug: 'aot', names, aliases: [], collabCount: 3 };
+    const before = adminEntitySchema.parse(A.fromEntitySummary('property', summary));
+    expect(before.featuredOrder).toBeUndefined();
+    expect(before.image).toBeUndefined();
+
+    const after = adminEntitySchema.parse(
+      A.fromEntitySummary(
+        'property',
+        { ...summary, featuredOrder: 2, image: { storageKey: 'properties/aot.webp', originalUrl: null, credit: null, alt: null, width: 800, height: 1000 } },
+        'https://media.example.com',
+      ),
+    );
+    expect(after.featuredOrder).toBe(2);
+    expect(after.image?.url).toBe('https://media.example.com/properties/aot.webp');
+    // 회사에는 홈 노출 필드가 없다
+    expect(A.fromEntitySummary('company', { ...summary, featuredOrder: 2 }).featuredOrder).toBeUndefined();
+  });
+
+  it('저장 본문: undefined인 필드는 빼고, null은 그대로(노출 해제·이미지 삭제) 보낸다', () => {
+    const base = { slug: 'aot', name: names, aliases: [], category: 'partner_category.anime_manga', country: null };
+    expect(A.toEntityBody('property', base)).not.toHaveProperty('featuredOrder');
+    expect(A.toEntityBody('property', base)).not.toHaveProperty('image');
+    expect(A.toEntityBody('property', { ...base, featuredOrder: null, image: null })).toMatchObject({ featuredOrder: null, image: null });
+    expect(A.toEntityBody('company', { ...base, featuredOrder: 1 })).not.toHaveProperty('featuredOrder');
   });
 });

@@ -7,13 +7,16 @@ import { followUpReasonOf, nextCheckAt } from '@/lib/followup';
 import { computePhase } from '@/lib/phase';
 import type {
   AdminCollab,
+  AdminCover,
   AdminEntity,
   CollabDetail,
   CollabInput,
   CollabQuery,
   CollabSummary,
   CompanyDetail,
+  Cover,
   EntityKind,
+  FeaturedProperty,
   FollowUpItem,
   FollowUpState,
   Locale,
@@ -117,6 +120,18 @@ function toSummary(c: DbCollab, locale: Locale): CollabSummary {
 
 const published = () => db.collabs.filter((c) => c.status === 'published');
 
+/** 관리자 커버 → 공개 커버(요청 언어의 대체 텍스트, 없으면 fallbackAlt) */
+function publicCover(c: AdminCover, locale: Locale, fallbackAlt: string): Cover {
+  return {
+    url: c.url,
+    originalUrl: c.originalUrl,
+    credit: c.credit || null,
+    alt: (locale === 'en' ? c.alt.en : c.alt.ko) || fallbackAlt,
+    width: c.width,
+    height: c.height,
+  };
+}
+
 function compareStart(a: DbCollab, b: DbCollab, dir: 1 | -1): number {
   const sa = a.period.precision === 'unknown' ? null : a.period.start;
   const sb = b.period.precision === 'unknown' ? null : b.period.start;
@@ -207,6 +222,31 @@ export const mockPublicApi: PublicApi = {
       related,
       updatedAt: c.updatedAt,
     };
+  },
+
+  async listFeaturedProperties(locale): Promise<FeaturedProperty[]> {
+    await delay();
+    return db.properties
+      .filter((p) => p.featuredOrder != null)
+      .sort((a, b) => a.featuredOrder! - b.featuredOrder! || a.name.ko.localeCompare(b.name.ko, 'ko'))
+      .map((p) => {
+        const list = published()
+          .filter((c) => c.parties.some((x) => x.propertyId === p.id))
+          .sort((a, b) => compareStart(a, b, -1));
+        const others = new Set(list.flatMap((c) => c.parties.filter((x) => x.propertyId !== p.id).map((x) => x.propertyId)));
+        const name = localize(p.name, locale);
+        const latest = list.find((c) => c.cover);
+        return {
+          slug: p.slug,
+          kind: termRef(p.kind, locale),
+          name,
+          collabCount: list.length,
+          counterpartCount: others.size,
+          ongoingCount: list.filter((c) => computePhase(c.period) === 'ongoing').length,
+          image: p.image ? publicCover(p.image, locale, name.value) : null,
+          latestCover: latest?.cover ? publicCover(latest.cover, locale, name.value) : null,
+        };
+      });
   },
 
   async getProperty(slug, locale): Promise<PropertyDetail | null> {
@@ -459,6 +499,7 @@ function toAdminEntity(kind: EntityKind, e: DbProperty | DbCompany): AdminEntity
     category: 'kind' in e ? e.kind : null,
     country: 'country' in e ? e.country : null,
     collabCount: count,
+    ...('kind' in e ? { featuredOrder: e.featuredOrder ?? null, image: e.image ?? null } : {}),
   };
 }
 
@@ -625,7 +666,17 @@ export const mockAdminApi: AdminApi = {
     assertEntityInput(kind, input);
     const id = `${kind === 'property' ? 'p' : 'c'}_${crypto.randomUUID().slice(0, 8)}`;
     if (kind === 'property') {
-      const p: DbProperty = { id, slug: input.slug, kind: input.category!, name: input.name, aliases: input.aliases, parentId: null, officialUrl: null };
+      const p: DbProperty = {
+        id,
+        slug: input.slug,
+        kind: input.category!,
+        name: input.name,
+        aliases: input.aliases,
+        parentId: null,
+        officialUrl: null,
+        featuredOrder: input.featuredOrder ?? null,
+        image: input.image ?? null,
+      };
       db.properties.push(p);
       return toAdminEntity(kind, p);
     }
@@ -641,6 +692,8 @@ export const mockAdminApi: AdminApi = {
     assertEntityInput(kind, input, id);
     Object.assign(e, { slug: input.slug, name: input.name, aliases: input.aliases });
     if ('kind' in e && input.category) e.kind = input.category;
+    if ('kind' in e && input.featuredOrder !== undefined) e.featuredOrder = input.featuredOrder;
+    if ('kind' in e && input.image !== undefined) e.image = input.image;
     if ('country' in e) e.country = input.country;
     return toAdminEntity(kind, e);
   },
