@@ -10,9 +10,16 @@ import type { AdminEntity, EntityKind } from '@/schema';
 import { EntityCombobox, type EntityChoice } from './EntityCombobox';
 import { EntityFormDialog, type KindOption } from './EntityFormDialog';
 
-type Props = { kind: EntityKind; q: string; entities: AdminEntity[]; kindOptions: KindOption[] };
+type Props = {
+  kind: EntityKind;
+  q: string;
+  entities: AdminEntity[];
+  kindOptions: KindOption[];
+  /** 백엔드가 작품 홈 노출(순서·대표 이미지)을 지원하는지(페이지가 판단해 넘긴다) */
+  featuredSupported: boolean;
+};
 
-export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
+export function EntitiesManager({ kind, q, entities, kindOptions, featuredSupported }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState<AdminEntity | null>(null);
   const [creating, setCreating] = useState(false);
@@ -21,8 +28,6 @@ export function EntitiesManager({ kind, q, entities, kindOptions }: Props) {
   const [searching, startSearch] = useTransition();
   const noun = kind === 'property' ? '작품' : '회사';
   const kindLabel = new Map(kindOptions.map((o) => [o.key, o.label]));
-  // 목록의 어느 작품이든 홈 노출 값을 갖고 오면 백엔드가 지원하는 것이다(목록이 비면 일단 지원한다고 본다)
-  const featuredSupported = kind === 'property' && (entities.length === 0 || entities.some((e) => e.featuredOrder !== undefined));
 
   return (
     <Flex direction="column" gap="4">

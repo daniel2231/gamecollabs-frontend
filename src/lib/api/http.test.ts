@@ -105,3 +105,33 @@ describe('검수 큐: 커버 없음 필터를 백엔드가 모를 때', () => {
     expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('작품 홈 노출 지원 확인(HTTP)', () => {
+  beforeEach(() => {
+    vi.stubEnv('API_BASE_URL', 'https://api.example.com');
+    vi.stubEnv('API_SERVICE_TOKEN', 'service');
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it('공개 목록이 배열을 주면 지원(아직 아무것도 노출하지 않아 비어 있어도), 서비스 토큰으로 캐시 없이 부른다', async () => {
+    const fetchMock = vi.fn(async () => json(200, { data: [] }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await createHttpAdminApi('admin').supportsFeatured()).toBe(true);
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe('https://api.example.com/v1/properties?featured=true&locale=ko');
+    expect((init.headers as Record<string, string>).Authorization).toBe('Bearer service');
+    expect(init.cache).toBe('no-store');
+  });
+
+  it('404·오류·다른 형태면 미지원', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json(404, { error: { code: 'not_found' } })));
+    expect(await createHttpAdminApi('admin').supportsFeatured()).toBe(false);
+    vi.stubGlobal('fetch', vi.fn(async () => json(400, { error: { code: 'validation_failed' } })));
+    expect(await createHttpAdminApi('admin').supportsFeatured()).toBe(false);
+    vi.stubGlobal('fetch', vi.fn(async () => json(200, { data: { slug: 'x' } })));
+    expect(await createHttpAdminApi('admin').supportsFeatured()).toBe(false);
+  });
+});

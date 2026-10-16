@@ -60,6 +60,7 @@
 
 ## 3. 관리자 API
 
+- 프론트는 관리자 응답에 이 필드가 있거나, 공개 `GET /v1/properties?featured=true`가 `data` 배열을 주면 백엔드가 지원한다고 본다. 둘 다 아니면 관리자 화면이 "지원하지 않음" 안내를 띄운다. 값이 없을 때도 `null`로 주는 것을 권장한다.
 - **목록·검색 응답**(`GET /v1/admin/properties`, `/v1/admin/match`의 작품 항목): `featuredOrder`와 `image`를 함께 준다. `image`는 콜라보 관리자 응답의 `cover`와 같은 형태다(`storageKey`, `url?`, `originalUrl`, `credit`, `alt`, `width`, `height`).
 - **생성·수정 응답**(`POST /v1/admin/properties`, `PATCH /v1/admin/properties/:id`): 저장된 문서에 두 필드를 포함한다.
 - **생성·수정 본문**: 두 필드 모두 **생략 가능**하다.

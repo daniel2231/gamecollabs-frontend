@@ -12,7 +12,11 @@ export default async function EntitiesPage({ params, searchParams }: PageProps<'
   const sp = await searchParams;
   const kind = sp.kind === 'company' ? 'company' : 'property';
   const q = typeof sp.q === 'string' ? sp.q.slice(0, 100) : '';
-  const [entities, trees] = await Promise.all([adminApi(session.token).listEntities(kind, q || undefined), loadTrees()]);
+  const api = adminApi(session.token);
+  const [entities, trees] = await Promise.all([api.listEntities(kind, q || undefined), loadTrees()]);
+  // 작품 홈 노출 지원 여부: 목록에 그 값이 오면 지원. 아직 아무것도 노출하지 않아 값이 비어 올 수 있으니 공개 목록도 확인한다
+  const featuredSupported =
+    kind === 'property' && (entities.some((e) => e.featuredOrder !== undefined || e.image !== undefined) || (await api.supportsFeatured()));
   return (
     <main className="ct-admin-main">
       <EntitiesManager
@@ -20,6 +24,7 @@ export default async function EntitiesPage({ params, searchParams }: PageProps<'
         kind={kind}
         q={q}
         entities={entities}
+        featuredSupported={featuredSupported}
         kindOptions={flatten(trees.partner_category).map((n) => ({ key: n.key, label: n.label }))}
       />
     </main>
