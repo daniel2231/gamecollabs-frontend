@@ -38,6 +38,12 @@
     "total": "등록된 콜라보",
     "seeAll": "모두 보기",
     "seeAllLabel": "{section} 모두 보기",
+    "carousel": {
+      "label": "주요 콜라보",
+      "prev": "이전 콜라보",
+      "next": "다음 콜라보",
+      "slide": "{index} / {total}"
+    },
     "ipCollabs": "콜라보 {count}건",
     "section": {
       "ongoing": "지금 진행 중",

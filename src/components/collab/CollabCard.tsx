@@ -10,9 +10,9 @@ const MAX_TAGS = 3;
 
 /**
  * 콜라보 카드: 위쪽 커버(16:9, 틀 없이), 아래 기간·제목·참여 작품·분류.
- * feature는 홈 첫 화면의 큰 카드(넓으면 커버 왼쪽, 글 오른쪽). 커버를 바로 불러온다
+ * feature는 홈 첫 화면의 큰 카드(넓으면 커버 왼쪽, 글 오른쪽). 커버를 바로 불러온다(eager로 바꿀 수 있다)
  */
-export function CollabCard({ collab, feature = false }: { collab: CollabSummary; feature?: boolean }) {
+export function CollabCard({ collab, feature = false, eager = feature }: { collab: CollabSummary; feature?: boolean; eager?: boolean }) {
   const host = collab.parties.find((p) => p.role === 'host');
   const partner = collab.parties.find((p) => p.role === 'partner');
   const tags = [...collab.regions, ...collab.platforms, ...collab.collabTypes];
@@ -24,7 +24,7 @@ export function CollabCard({ collab, feature = false }: { collab: CollabSummary;
           <img
             src={collab.cover.url}
             alt=""
-            loading={feature ? 'eager' : 'lazy'}
+            loading={eager ? 'eager' : 'lazy'}
             width={collab.cover.width ?? undefined}
             height={collab.cover.height ?? undefined}
             data-fit={coverFit(collab.cover)}

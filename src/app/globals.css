@@ -1921,3 +1921,100 @@ body {
 .ct-admin-nav a:has([data-pending]) {
   background: var(--accent-a3);
 }
+
+/* ── 홈 대표 캐러셀 ───────────────────────────────────────── */
+/* 가로 스크롤 스냅 한 줄. 손가락으로도 넘기고, 아래 버튼·점으로도 넘긴다 */
+.ct-carousel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ct-carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.ct-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+
+.ct-carousel-slide {
+  flex: 0 0 100%;
+  min-width: 0;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* 이전 | 점 | 01 / 05 | 다음 */
+.ct-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ct-carousel-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--ct-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--gray-12);
+  cursor: pointer;
+}
+
+.ct-carousel-btn:hover {
+  border-color: var(--gray-12);
+}
+
+.ct-carousel-dots {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-carousel-dots > li {
+  flex: 1;
+  max-width: 48px;
+}
+
+/* 점 대신 가는 막대. 현재 슬라이드만 강조색 */
+.ct-carousel-dot {
+  display: block;
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: linear-gradient(var(--ct-line), var(--ct-line)) center / 100% 2px no-repeat;
+  cursor: pointer;
+}
+
+.ct-carousel-dot:hover {
+  background-image: linear-gradient(var(--gray-11), var(--gray-11));
+}
+
+.ct-carousel-dot[aria-current='true'] {
+  background-image: linear-gradient(var(--ct-signal), var(--ct-signal));
+}
+
+.ct-carousel-count {
+  font-size: 13px;
+  color: var(--gray-10);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-carousel-track {
+    scroll-behavior: auto;
+  }
+}

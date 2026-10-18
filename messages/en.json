@@ -38,6 +38,12 @@
     "total": "Collabs tracked",
     "seeAll": "See all",
     "seeAllLabel": "See all: {section}",
+    "carousel": {
+      "label": "Featured collabs",
+      "prev": "Previous collab",
+      "next": "Next collab",
+      "slide": "{index} of {total}"
+    },
     "ipCollabs": "{count, plural, one {# collab} other {# collabs}}",
     "section": {
       "ongoing": "Happening now",

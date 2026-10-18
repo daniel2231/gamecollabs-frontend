@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { CollabCard } from '@/components/collab/CollabCard';
+import { LeadCarousel } from '@/components/collab/LeadCarousel';
 import { PeriodText } from '@/components/collab/PeriodText';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { JsonLd } from '@/components/site/JsonLd';
@@ -19,6 +20,8 @@ import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
 import type { CollabQuery, CollabSummary, FeaturedProperty, Period } from '@/schema';
 
+/** 대표 캐러셀의 최대 슬라이드 수 */
+const LEAD_SIZE = 5;
 /** 진행 중 목록에 보여줄 최대 개수(대표 카드 제외) */
 const INDEX_SIZE = 6;
 /** 일정표 한 칸의 최대 개수 */
@@ -58,18 +61,21 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     list({ phase: 'ongoing', limit: 100 }),
     list({ phase: 'upcoming', sort: 'start_asc', limit: SCHEDULE_SIZE }),
     // 위 진행 중 목록과 겹치는 것을 빼고도 4개가 남도록 넉넉히
-    list({ sort: 'recent', limit: 4 + 1 + INDEX_SIZE }),
+    list({ sort: 'recent', limit: 4 + LEAD_SIZE + INDEX_SIZE }),
   ]);
 
-  // 대표 카드: 진행 중 가운데 커버가 있는 것을 먼저, 없으면 최근 등록
-  const lead = ongoing.items.find((c) => c.cover) ?? ongoing.items[0] ?? recent.items[0] ?? null;
-  const notLead = (c: CollabSummary) => c.slug !== lead?.slug;
-  const now = ongoing.items.filter(notLead).slice(0, INDEX_SIZE);
+  // 대표 캐러셀: 진행 중(커버 있는 것 먼저), 모자라면 최근 등록(역시 커버 있는 것 먼저)으로 채운다
+  const coverFirst = (items: CollabSummary[]) => [...items.filter((c) => c.cover), ...items.filter((c) => !c.cover)];
+  // Map은 처음 넣은 순서를 지키므로 겹치는 콜라보는 앞자리 하나만 남는다
+  const pool = new Map([...coverFirst(ongoing.items), ...coverFirst(recent.items)].map((c) => [c.slug, c]));
+  const leads = [...pool.values()].slice(0, LEAD_SIZE);
+  const leadSlugs = new Set(leads.map((c) => c.slug));
+  const now = ongoing.items.filter((c) => !leadSlugs.has(c.slug)).slice(0, INDEX_SIZE);
   const ending = ongoing.items
     .filter((c) => c.period.endKind === 'fixed' && c.period.end)
     .sort((a, b) => a.period.end!.localeCompare(b.period.end!))
     .slice(0, SCHEDULE_SIZE);
-  const shown = new Set([lead?.slug, ...now.map((c) => c.slug)]);
+  const shown = new Set([...leadSlugs, ...now.map((c) => c.slug)]);
   // 운영자가 고른 작품 가운데 발행된 콜라보가 있는 것만
   const ips = featured.filter((p) => p.collabCount > 0).slice(0, FEATURED_SIZE);
   const fresh = recent.items.filter((c) => !shown.has(c.slug)).slice(0, 4);
@@ -111,10 +117,18 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           </ul>
         </nav>
 
-        {/* 1면: 대표 카드 | 진행 중 번호 목록 */}
-        {lead && (
+        {/* 1면: 대표 카드 캐러셀 | 진행 중 번호 목록 */}
+        {leads.length > 0 && (
           <div className={now.length > 0 ? 'ct-lead' : 'ct-lead ct-lead-solo'}>
-            <CollabCard collab={lead} feature />
+            <LeadCarousel
+              label={t('carousel.label')}
+              prevLabel={t('carousel.prev')}
+              nextLabel={t('carousel.next')}
+              slideLabels={leads.map((_, i) => t('carousel.slide', { index: i + 1, total: leads.length }))}
+              slides={leads.map((c, i) => (
+                <CollabCard key={c.slug} collab={c} feature eager={i === 0} />
+              ))}
+            />
             {now.length > 0 && (
               <Section
                 id="ongoing"
