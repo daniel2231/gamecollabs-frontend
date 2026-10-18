@@ -60,8 +60,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     // 곧 종료를 고르려면 진행 중 전체가 필요하다(목록 API에 종료일 정렬이 없다)
     list({ phase: 'ongoing', limit: 100 }),
     list({ phase: 'upcoming', sort: 'start_asc', limit: SCHEDULE_SIZE }),
-    // 위 진행 중 목록과 겹치는 것을 빼고도 4개가 남도록 넉넉히
-    list({ sort: 'recent', limit: 4 + LEAD_SIZE + INDEX_SIZE }),
+    // 진행 중이 모자랄 때 대표 캐러셀을 채운다
+    list({ sort: 'recent', limit: LEAD_SIZE }),
   ]);
 
   // 대표 캐러셀: 진행 중(커버 있는 것 먼저), 모자라면 최근 등록(역시 커버 있는 것 먼저)으로 채운다
@@ -75,10 +75,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     .filter((c) => c.period.endKind === 'fixed' && c.period.end)
     .sort((a, b) => a.period.end!.localeCompare(b.period.end!))
     .slice(0, SCHEDULE_SIZE);
-  const shown = new Set([...leadSlugs, ...now.map((c) => c.slug)]);
   // 운영자가 고른 작품 가운데 발행된 콜라보가 있는 것만
   const ips = featured.filter((p) => p.collabCount > 0).slice(0, FEATURED_SIZE);
-  const fresh = recent.items.filter((c) => !shown.has(c.slug)).slice(0, 4);
 
   const seeAll = (section: string, href: string) => (
     <Link href={href} className="ct-more" aria-label={t('seeAllLabel', { section })}>
@@ -153,19 +151,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
               {ips.map((p) => (
                 <li key={p.slug}>
                   <IpTile property={p} collabs={t('ipCollabs', { count: p.collabCount })} />
-                </li>
-              ))}
-            </ul>
-          </Section>
-        )}
-
-        {/* 새로 등록됨: 위에서 이미 보인 콜라보는 뺀다 */}
-        {fresh.length > 0 && (
-          <Section id="recent" title={t('section.recent')} action={seeAll(t('section.recent'), listHref({ sort: 'recent' }))}>
-            <ul className="ct-grid">
-              {fresh.map((c) => (
-                <li key={c.slug}>
-                  <CollabCard collab={c} />
                 </li>
               ))}
             </ul>

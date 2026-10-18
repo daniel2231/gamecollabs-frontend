@@ -49,8 +49,7 @@
       "ongoing": "지금 진행 중",
       "ips": "IP로 찾아보기",
       "upcoming": "곧 시작",
-      "ending": "곧 종료",
-      "recent": "새로 등록됨"
+      "ending": "곧 종료"
     },
     "empty": {
       "upcoming": "시작일이 잡힌 예정 콜라보가 없습니다.",

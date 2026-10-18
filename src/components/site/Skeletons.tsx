@@ -39,7 +39,7 @@ function Grid({ count }: { count: number }) {
   );
 }
 
-/** 홈: 현황 줄, 대표 카드 | 번호 목록, 아래 카드 그리드 */
+/** 홈: 현황 줄, 대표 캐러셀 | 번호 목록, 아래 IP 그리드 */
 export function HomeSkeleton() {
   return (
     <div aria-busy="true">
