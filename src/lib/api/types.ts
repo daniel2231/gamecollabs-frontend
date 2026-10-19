@@ -18,6 +18,10 @@ import type {
   OriginType,
   PropertyDetail,
   Stats,
+  Submission,
+  SubmissionInput,
+  SubmissionKind,
+  SubmissionStatus,
   TaxonomyTerm,
   Transition,
   UploadedMedia,
@@ -35,6 +39,11 @@ export interface PublicApi {
   listFeaturedProperties(locale: Locale): Promise<FeaturedProperty[]>;
   /** 프론트엔드가 추가로 요청하는 엔드포인트: GET /v1/sitemap */
   getSitemap(): Promise<SitemapData>;
+  /**
+   * 방문자 제보: POST /v1/submissions. 브라우저는 Express를 직접 부르지 않으므로 방문자 IP를 X-Client-IP로 넘긴다
+   * (백엔드가 IP당 시간당 10건으로 제한). 실패는 ApiError(rate_limited, bot_check_failed, not_found, validation_failed)
+   */
+  submitReport(input: SubmissionInput, clientIp: string | null): Promise<void>;
 }
 
 export type SitemapData = {
@@ -73,6 +82,13 @@ export type EntityInput = {
   image?: AdminCover | null;
 };
 
+export type SubmissionFilter = { status: SubmissionStatus; kind?: SubmissionKind };
+export type SubmissionList = {
+  items: Submission[];
+  /** 종류별 미처리(new) 건수 */
+  counts: Record<SubmissionKind, number>;
+};
+
 export type TermInput = Pick<TaxonomyTerm, 'key' | 'taxonomy' | 'parent' | 'label' | 'legacyValues'>;
 
 /** Express /v1/admin (호출자: 관리자 화면, 단기 JWT) */
@@ -107,6 +123,10 @@ export interface AdminApi {
    * apply는 일반 수정과 같아서 현재 rev가 필요하다(If-Match). dismiss는 rev를 쓰지 않는다.
    */
   resolveFollowUp(id: string, action: 'apply' | 'dismiss', rev?: number): Promise<AdminCollab>;
+  /** 제보 큐: GET /v1/admin/submissions?status=&kind= (최신순, 최대 100건) */
+  listSubmissions(filter: SubmissionFilter): Promise<SubmissionList>;
+  /** 제보 처리: PATCH /v1/admin/submissions/:id */
+  updateSubmission(id: string, status: SubmissionStatus): Promise<Submission>;
 }
 
 export class ApiError extends Error {

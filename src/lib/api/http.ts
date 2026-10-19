@@ -12,6 +12,7 @@ import {
   matchResponseSchema,
   propertyDetailSchema,
   statsSchema,
+  submissionSchema,
   taxonomyTermSchema,
   uploadedMediaSchema,
   type CollabQuery,
@@ -157,6 +158,13 @@ export const httpPublicApi: PublicApi = {
     }
   },
   getSitemap: async () => A.toSitemap(await data<Parameters<typeof A.toSitemap>[0]>('/v1/sitemap', { tags: ['collabs'] })),
+  submitReport: async (input, clientIp) => {
+    await request('/v1/submissions', {
+      method: 'POST',
+      body: input,
+      ...(clientIp ? { headers: { 'X-Client-IP': clientIp } } : {}),
+    });
+  },
 };
 
 /** 커버 없음 필터를 프론트에서 거를 때: 이만큼 모이거나 이 페이지 수(100건씩)에 닿을 때까지 읽는다 */
@@ -280,6 +288,19 @@ export function createHttpAdminApi(token: string): AdminApi {
           ...o({ method: 'POST', body: { action } }),
           ...(rev ? { headers: { 'If-Match': String(rev) } } : {}),
         }),
+      ),
+    listSubmissions: async ({ status, kind }) => {
+      const sp = new URLSearchParams({ status, limit: '100' });
+      if (kind) sp.set('kind', kind);
+      const body = await envelope<A.BeSubmission[], { counts?: Partial<Record<'tip' | 'correction', number>> }>(`/v1/admin/submissions?${sp}`, o());
+      if (!body) throw new ApiError(404, 'not_found');
+      // 오류 제보 이전 백엔드는 kind를 몰라 걸러 주지 않는다
+      const items = z.array(submissionSchema).parse(body.data.map(A.toSubmission)).filter((s) => !kind || s.kind === kind);
+      return { items, counts: A.submissionCounts(items, body.meta?.counts) };
+    },
+    updateSubmission: async (id, status) =>
+      submissionSchema.parse(
+        A.toSubmission(await data<A.BeSubmission>(`/v1/admin/submissions/${encodeURIComponent(id)}`, o({ method: 'PATCH', body: { status } }))),
       ),
     uploadMedia: async (file) => {
       const form = new FormData();

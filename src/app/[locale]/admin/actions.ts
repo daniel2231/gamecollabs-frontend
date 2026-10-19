@@ -11,6 +11,7 @@ import {
   collabInputSchema,
   entityKindSchema,
   ORIGIN_TYPES,
+  SUBMISSION_STATUSES,
   taxonomySchema,
   TRANSITIONS,
   type AdminCollab,
@@ -18,6 +19,8 @@ import {
   type CollabInput,
   type EntityKind,
   type MatchResponse,
+  type Submission,
+  type SubmissionStatus,
   type TaxonomyTerm,
   type Transition,
 } from '@/schema';
@@ -83,6 +86,11 @@ export async function resolveFollowUp(id: string, action: 'apply' | 'dismiss', r
       rev === undefined ? undefined : z.number().int().min(1).parse(rev),
     ),
   );
+}
+
+/** 제보 처리: 반영함(accepted)·버림(dismissed)·다시 열기(new) */
+export async function updateSubmission(id: string, status: SubmissionStatus): Promise<ActionResult<Submission>> {
+  return run((api) => api.updateSubmission(z.string().min(1).max(64).parse(id), z.enum(SUBMISSION_STATUSES).parse(status)));
 }
 
 export async function transitionCollab(id: string, action: Transition, reason?: string): Promise<ActionResult<AdminCollab>> {

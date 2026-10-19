@@ -22,6 +22,7 @@ export const api: PublicApi = {
   getStats: () => pick().getStats(),
   listFeaturedProperties: (...a) => pick().listFeaturedProperties(...a),
   getSitemap: () => pick().getSitemap(),
+  submitReport: (...a) => pick().submitReport(...a),
 };
 
 export function adminApi(token: string): AdminApi {

@@ -463,3 +463,48 @@ export const apiErrorSchema = z.object({
   }),
 });
 export type ApiErrorBody = z.infer<typeof apiErrorSchema>;
+
+// ── 제보 (F-15) ───────────────────────────────────────────────
+
+/** tip: 아직 없는 콜라보 제보 · correction: 발행된 콜라보의 오류 제보 */
+export const SUBMISSION_KINDS = ['tip', 'correction'] as const;
+export type SubmissionKind = (typeof SUBMISSION_KINDS)[number];
+export const SUBMISSION_STATUSES = ['new', 'accepted', 'dismissed'] as const;
+export type SubmissionStatus = (typeof SUBMISSION_STATUSES)[number];
+
+/** 방문자 제보: POST /v1/submissions 본문(서버 액션이 검증 후 X-Client-IP와 함께 보낸다) */
+export const submissionInputSchema = z
+  .object({
+    kind: z.enum(SUBMISSION_KINDS),
+    url: z.url({ protocol: /^https?$/, error: 'invalid_url' }).max(2000, 'too_long').optional(),
+    collab: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).max(200).optional(),
+    note: z.string().trim().max(1000, 'too_long').optional(),
+    locale: localeSchema,
+    turnstileToken: z.string().max(4096).optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.kind === 'tip') {
+      if (!v.url) ctx.addIssue({ code: 'custom', path: ['url'], message: 'required' });
+      return;
+    }
+    if (!v.collab) ctx.addIssue({ code: 'custom', path: ['collab'], message: 'required' });
+    if (!v.note) ctx.addIssue({ code: 'custom', path: ['note'], message: 'required' });
+    else if (v.note.length < 5) ctx.addIssue({ code: 'custom', path: ['note'], message: 'too_short' });
+  });
+export type SubmissionInput = z.infer<typeof submissionInputSchema>;
+
+/** GET /v1/admin/submissions 항목 */
+export const submissionSchema = z.object({
+  id: z.string(),
+  kind: z.enum(SUBMISSION_KINDS),
+  status: z.enum(SUBMISSION_STATUSES),
+  url: z.string().nullable(),
+  note: z.string().nullable(),
+  locale: localeSchema.nullable(),
+  /** correction은 대상 콜라보, tip은 처리하며 연결한 콜라보 */
+  collab: z
+    .object({ id: z.string(), slug: z.string(), status: z.enum(COLLAB_STATUSES), title: z.object({ ko: z.string(), en: z.string() }) })
+    .nullable(),
+  createdAt: z.iso.datetime(),
+});
+export type Submission = z.infer<typeof submissionSchema>;

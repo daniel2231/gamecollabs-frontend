@@ -7,6 +7,8 @@ import {
   collabListResponseSchema,
   featuredPropertySchema,
   followUpItemSchema,
+  submissionInputSchema,
+  submissionSchema,
   type CollabInput,
 } from '@/schema';
 import * as A from './adapt';
@@ -370,5 +372,30 @@ describe('홈 노출 작품', () => {
     expect(A.toEntityBody('property', base)).not.toHaveProperty('image');
     expect(A.toEntityBody('property', { ...base, featuredOrder: null, image: null })).toMatchObject({ featuredOrder: null, image: null });
     expect(A.toEntityBody('company', { ...base, featuredOrder: 1 })).not.toHaveProperty('featuredOrder');
+  });
+});
+
+describe('제보', () => {
+  it('새 백엔드 응답은 그대로, 이전 백엔드의 원본 문서는 tip으로 읽는다', () => {
+    const collab = { id: 'c1', slug: 'a-x-b-2026-10', status: 'published' as const, title: { ko: '가 × 나', en: 'A x B' } };
+    const current = A.toSubmission({ id: 's1', kind: 'correction', status: 'new', url: null, note: '날짜가 틀림', locale: 'ko', collab, createdAt: '2026-10-19T01:00:00.000Z' });
+    expect(submissionSchema.parse(current)).toMatchObject({ id: 's1', kind: 'correction', collab });
+    const legacy = A.toSubmission({ _id: 's2', status: 'new', url: 'https://example.com', note: null, locale: null, createdAt: '2026-10-19T01:00:00.000Z' });
+    expect(submissionSchema.parse(legacy)).toMatchObject({ id: 's2', kind: 'tip', collab: null, locale: null });
+    expect(A.submissionCounts([current, legacy])).toEqual({ tip: 1, correction: 1 });
+    expect(A.submissionCounts([current, legacy], { tip: 7, correction: 3 })).toEqual({ tip: 7, correction: 3 });
+  });
+
+  it('입력 검증: tip은 주소, correction은 콜라보와 5자 이상 내용이 필요하다', () => {
+    const issues = (v: unknown) => {
+      const r = submissionInputSchema.safeParse(v);
+      return r.success ? {} : Object.fromEntries(r.error.issues.map((i) => [i.path.join('.'), i.message]));
+    };
+    expect(issues({ kind: 'tip', locale: 'ko' })).toEqual({ url: 'required' });
+    expect(issues({ kind: 'tip', url: 'javascript:alert(1)', locale: 'ko' })).toEqual({ url: 'invalid_url' });
+    expect(issues({ kind: 'tip', url: 'https://example.com/a', locale: 'ko' })).toEqual({});
+    expect(issues({ kind: 'correction', collab: 'a-x-b', note: '틀림', locale: 'en' })).toEqual({ note: 'too_short' });
+    expect(issues({ kind: 'correction', note: '종료일이 틀렸습니다', locale: 'en' })).toEqual({ collab: 'required' });
+    expect(issues({ kind: 'correction', collab: 'a-x-b', note: '종료일이 틀렸습니다', locale: 'en' })).toEqual({});
   });
 });

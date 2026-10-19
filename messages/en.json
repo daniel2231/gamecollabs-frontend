@@ -18,7 +18,8 @@
       "en": "English"
     },
     "mockBanner": "Development mode: showing mock data. Set API_BASE_URL to use the real API.",
-    "skip": "Skip to content"
+    "skip": "Skip to content",
+    "report": "Submit a collab"
   },
   "Phase": {
     "all": "All",
@@ -159,7 +160,6 @@
     "copied": "Copied",
     "copyFailed": "Couldn't copy — use the address bar",
     "report": "Report issue",
-    "reportSoon": "Reporting is coming soon.",
     "related": "Related collabs",
     "relation": {
       "same_host": "Same game",
@@ -206,5 +206,56 @@
   "Error": {
     "title": "Couldn't load the data",
     "retry": "Try again"
+  },
+  "Report": {
+    "open": "Report issue",
+    "dialogTitle": "Report an issue",
+    "dialogDescription": "Tell us what is wrong or missing on “{title}”. We check the sources before fixing it.",
+    "pageTitle": "Submit a collab",
+    "pageDescription": "Know a game × IP collab we haven’t listed yet? Send us the link and we’ll add it once we’ve checked the public sources.",
+    "url": {
+      "tip": "Source link",
+      "correction": "Supporting link"
+    },
+    "urlHint": {
+      "tip": "An official announcement, news article or official social post that confirms the collab",
+      "correction": "An official announcement or article that shows the correct information"
+    },
+    "note": {
+      "tip": "Note",
+      "correction": "What is wrong?"
+    },
+    "noteHint": {
+      "tip": "Anything the link doesn’t make clear, such as the game, IP or dates (up to 1000 characters)",
+      "correction": "Tell us which detail is wrong and what it should be (5–1000 characters)"
+    },
+    "notePlaceholder": {
+      "tip": "e.g. Korea server only, starts late October",
+      "correction": "e.g. The end date was announced as October 31."
+    },
+    "required": "(required)",
+    "optional": "(optional)",
+    "privacy": "We don’t ask for your name or contact details. To prevent abuse we only keep a hash of your IP address.",
+    "submit": "Send",
+    "cancel": "Cancel",
+    "close": "Close",
+    "again": "Send another",
+    "sent": {
+      "tip": "Thanks! We’ll check the sources and add it.",
+      "correction": "Thanks! We’ll check it and fix the page."
+    },
+    "fieldError": {
+      "required": "This field is required.",
+      "invalid_url": "Enter an address starting with http:// or https://.",
+      "too_short": "Please add a bit more detail (5+ characters).",
+      "too_long": "This is too long."
+    },
+    "error": {
+      "invalid": "Please check what you entered.",
+      "rate_limited": "Too many reports. Please try again in an hour.",
+      "bot_check": "The bot check failed. Please try again.",
+      "not_found": "We couldn’t find this collab. Please reload the page.",
+      "unknown": "We couldn’t send your report. Please try again shortly."
+    }
   }
 }
