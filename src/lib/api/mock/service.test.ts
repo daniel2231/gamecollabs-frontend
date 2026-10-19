@@ -123,4 +123,29 @@ describe('목 API: PRD 규칙', () => {
     const [jagariko] = await svc.mockPublicApi.listFeaturedProperties('en');
     expect(jagariko).toMatchObject({ name: { value: 'Jagariko' }, collabCount: 1, counterpartCount: 1, image: null });
   });
+
+  it('제보: 오류 제보는 발행된 콜라보에 연결되고, 열린 같은 제보는 한 번만 쌓이며, 처리하면 미처리 수에서 빠진다', async () => {
+    const slug = 'taiko-no-tatsujin-jagariko-2026-10';
+    const report = { kind: 'correction' as const, collab: slug, note: '종료일이 발표되었습니다.', locale: 'ko' as const };
+    await svc.mockPublicApi.submitReport(report, '1.2.3.4');
+    await svc.mockPublicApi.submitReport(report, '1.2.3.4');
+    await svc.mockPublicApi.submitReport({ kind: 'tip', url: 'https://example.com/news', locale: 'en' }, '1.2.3.4');
+    await expect(svc.mockPublicApi.submitReport({ ...report, collab: 'sample-draft-attack-on-titan' }, '1.2.3.4')).rejects.toMatchObject({ status: 404 });
+
+    const open = await svc.mockAdminApi.listSubmissions({ status: 'new' });
+    expect(open.counts).toEqual({ tip: 1, correction: 1 });
+    const correction = (await svc.mockAdminApi.listSubmissions({ status: 'new', kind: 'correction' })).items;
+    expect(correction).toHaveLength(1);
+    expect(correction[0]).toMatchObject({ url: null, note: report.note, collab: { id: 'k_taiko_jagariko', slug, status: 'published' } });
+
+    await svc.mockAdminApi.updateSubmission(correction[0]!.id, 'accepted');
+    expect((await svc.mockAdminApi.listSubmissions({ status: 'new' })).counts).toEqual({ tip: 1, correction: 0 });
+    expect((await svc.mockAdminApi.listSubmissions({ status: 'accepted' })).items).toHaveLength(1);
+  });
+
+  it('제보: IP당 시간당 10건까지만 받는다', async () => {
+    for (let i = 0; i < 10; i++) await svc.mockPublicApi.submitReport({ kind: 'tip', url: `https://example.com/${i}`, locale: 'ko' }, '5.6.7.8');
+    await expect(svc.mockPublicApi.submitReport({ kind: 'tip', url: 'https://example.com/x', locale: 'ko' }, '5.6.7.8')).rejects.toMatchObject({ code: 'rate_limited' });
+    await svc.mockPublicApi.submitReport({ kind: 'tip', url: 'https://example.com/x', locale: 'ko' }, '9.9.9.9');
+  });
 });

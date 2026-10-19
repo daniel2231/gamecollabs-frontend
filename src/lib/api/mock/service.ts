@@ -21,6 +21,7 @@ import type {
   FollowUpState,
   Locale,
   PropertyDetail,
+  Submission,
   TaxonomyTerm,
   TermRef,
   Transition,
@@ -29,7 +30,9 @@ import { ApiError, type AdminApi, type EntityInput, type PublicApi, type QueueFi
 import * as seed from './data';
 import type { DbCollab, DbCompany, DbProperty } from './data';
 
-type Store = { terms: TaxonomyTerm[]; properties: DbProperty[]; companies: DbCompany[]; collabs: DbCollab[] };
+/** 제보: 대상 콜라보는 id로만 두고 조회할 때 붙인다. ipHash는 백엔드처럼 주소 대신 해시 */
+type DbSubmission = Omit<Submission, 'collab'> & { collabId: string | null; ipHash: string };
+type Store = { terms: TaxonomyTerm[]; properties: DbProperty[]; companies: DbCompany[]; collabs: DbCollab[]; submissions: DbSubmission[] };
 // 개발 서버 핫 리로드에도 수정 내용이 유지되도록 전역에 둔다
 const g = globalThis as { __collabTrackerMock?: Store };
 const db: Store = (g.__collabTrackerMock ??= structuredClone({
@@ -37,7 +40,10 @@ const db: Store = (g.__collabTrackerMock ??= structuredClone({
   properties: seed.properties,
   companies: seed.companies,
   collabs: seed.collabs,
+  submissions: [],
 }));
+// 제보가 생기기 전에 띄운 개발 서버의 전역 저장소에는 submissions가 없다
+db.submissions ??= [];
 
 // ── 공통 도우미 ───────────────────────────────────────────────
 
@@ -354,7 +360,48 @@ export const mockPublicApi: PublicApi = {
       companies: db.companies.filter((c) => compIds.has(c.id)).map((c) => ({ slug: c.slug })),
     };
   },
+
+  // 백엔드 규칙 그대로: IP당 시간당 10건, 오류 제보는 발행된 콜라보만, 열린 같은 제보는 다시 쌓지 않는다
+  async submitReport(input, clientIp) {
+    await delay();
+    const ipHash = createHash('sha256').update(clientIp ?? 'unknown').digest('hex').slice(0, 32);
+    const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    if (db.submissions.filter((x) => x.ipHash === ipHash && x.createdAt > hourAgo).length >= 10) {
+      throw new ApiError(429, 'rate_limited', 'too many submissions');
+    }
+    let collabId: string | null = null;
+    if (input.kind === 'correction') {
+      const c = published().find((x) => x.slug === input.collab);
+      if (!c) throw new ApiError(404, 'not_found', 'collab not found');
+      collabId = c.id;
+    }
+    const url = input.url ?? null;
+    const note = input.note || null;
+    const open = db.submissions.find(
+      (x) => x.status === 'new' && x.kind === input.kind && (input.kind === 'tip' ? x.url === url : x.collabId === collabId && x.note === note),
+    );
+    if (open) return;
+    db.submissions.push({
+      id: `sub_${Date.now().toString(36)}${db.submissions.length}`,
+      kind: input.kind,
+      status: 'new',
+      url,
+      note,
+      locale: input.locale,
+      collabId,
+      ipHash,
+      createdAt: now(),
+    });
+  },
 };
+
+function toSubmission({ collabId, ipHash: _ipHash, ...s }: DbSubmission): Submission {
+  const c = collabId ? db.collabs.find((x) => x.id === collabId) : undefined;
+  return {
+    ...s,
+    collab: c ? { id: c.id, slug: c.slug, status: c.status, title: { ko: c.i18n.ko.title, en: c.i18n.en.title } } : null,
+  };
+}
 
 // ── 관리자 API ───────────────────────────────────────────────
 
@@ -793,6 +840,25 @@ export const mockAdminApi: AdminApi = {
       c.followUp = { ...c.followUp!, proposal: null, nextCheckAt: nextCheckAt(c.followUp!.unchanged) };
     }
     return toAdmin(c);
+  },
+
+  async listSubmissions({ status, kind }) {
+    await delay();
+    const items = db.submissions
+      .filter((x) => x.status === status && (!kind || x.kind === kind))
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 100)
+      .map(toSubmission);
+    const open = (k: Submission['kind']) => db.submissions.filter((x) => x.status === 'new' && x.kind === k).length;
+    return { items, counts: { tip: open('tip'), correction: open('correction') } };
+  },
+
+  async updateSubmission(id, status) {
+    await delay();
+    const s = db.submissions.find((x) => x.id === id);
+    if (!s) throw new ApiError(404, 'not_found', 'submission not found');
+    s.status = status;
+    return toSubmission(s);
   },
 
   // 저장소 대신 data: 주소로 메모리에 둔다(서버를 재시작하면 사라진다). 크기는 브라우저가 잰 값을 믿는다

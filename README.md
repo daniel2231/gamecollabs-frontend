@@ -39,6 +39,8 @@ pnpm build
 | `/[locale]/admin` | 검수 대기열 + 편집기. draft → in_review → published → archived, 발행 조건 체크리스트, 중복 후보 비교, 분류 매핑 실패 표시, `If-Match: rev` 충돌 처리 | F-04 |
 | `/[locale]/admin/entities` | 작품·회사 자동완성(별칭 일치 표시), 생성·수정, 병합. 작품은 홈 ‘IP로 찾아보기’ 노출 순서와 대표 이미지를 정한다(백엔드 명세: [docs/api/featured-properties.md](docs/api/featured-properties.md)) | F-05 |
 | `/[locale]/admin/taxonomy` | 통제 어휘 조회·추가(ko/en 라벨, 기존 표기) | F-06 |
+| `/[locale]/report` | 콜라보 제보: 아직 없는 콜라보의 출처 링크(필수)와 메모. 상세 페이지의 “오류 제보” 버튼은 같은 폼을 대화상자로 열어 그 콜라보의 틀린 내용(필수)과 근거 링크를 받는다. 푸터에서 연결, noindex | F-15 |
+| `/[locale]/admin/submissions` | 제보 큐: 미처리·반영함·버림, 오류 제보/새 콜라보로 거르기. 오류 제보는 편집기에서 고친 뒤 “반영함”, 새 콜라보는 등록한 뒤 “반영함”. 메뉴에 미처리 건수 | F-15 |
 | `/[locale]/rss.xml` | 최신 발행 콜라보 피드(ko/en 분리) | F-11 |
 | `/sitemap.xml`, `/robots.txt`, OG 이미지, `/tools/game-ip-collab-tracker/*` → 301 | SEO | F-08 |
 
@@ -89,6 +91,8 @@ messages/{ko,en}.json
 | 엔티티 | `GET /v1/admin/{properties,companies}[?q=]` | `q`가 없으면 전체 목록 |
 | 병합 | `POST /v1/admin/{…}/:targetId/merge` `{ from }` | `from`(원본)이 `:targetId`에 흡수된다 |
 | 커버 업로드 | `POST /v1/admin/media` (multipart, `file`) | 응답 `url`이 없으면(`null`) `MEDIA_BASE_URL` + `storageKey` |
+| 제보 | `POST /v1/submissions` (서비스 토큰, `X-Client-IP`) | `kind: tip`(`url` 필수) 또는 `correction`(`collab` slug, 5자 이상 `note`). 429·`bot_check_failed`·404는 폼에 안내 문구로 |
+| 제보 큐 | `GET /v1/admin/submissions?status=&kind=`, `PATCH …/:id { status }` | `meta.counts`(종류별 미처리 수)가 없으면 받은 항목으로 센다. `kind`가 없는 이전 문서는 tip |
 
 ### 커버 이미지 업로드
 
@@ -121,10 +125,21 @@ Express(`gamecollabs-backend`의 `POST /v1/admin/media`)가 형식 확인(JPEG·
 | `REVALIDATE_SECRET` | `WEB_REVALIDATE_SECRET` (같은 값), `WEB_REVALIDATE_URL=https://<사이트>/api/revalidate` |
 | `MEDIA_BASE_URL` | `MEDIA_BASE_URL` (같은 값, 커버 이미지 주소) |
 
+제보 폼의 Cloudflare Turnstile은 백엔드에 `TURNSTILE_SECRET`을 넣었을 때 프론트에 짝이 되는 사이트 키 `NEXT_PUBLIC_TURNSTILE_SITE_KEY`를 넣으면 켜진다(빌드 때 들어가므로 바꾸면 다시 배포). 둘 다 비우면 honeypot과 IP당 시간당 10건 제한만 쓴다.
+
+## 제보 (F-15)
+
+방문자는 두 가지를 보낼 수 있다. 이름·연락처는 받지 않는다.
+
+- **새 콜라보** (`/[locale]/report`): 출처 링크(필수)와 메모.
+- **오류 제보** (상세 페이지 “오류 제보” 버튼): 발행된 콜라보에서 틀린 내용(5자 이상, 필수)과 근거 링크(선택).
+
+폼은 서버 액션(`src/app/[locale]/(site)/actions.ts`)으로 보내고, 서버 액션이 입력을 다시 검증한 뒤 서비스 토큰과 방문자 IP(`X-Forwarded-For`의 첫 값 → `X-Client-IP`)를 붙여 Express로 넘긴다. 봇 거르기는 숨은 `website` 칸(채워져 있으면 받은 척하고 버림), 백엔드의 IP당 시간당 10건 제한, 설정했을 때 Turnstile. 아직 열린 같은 제보(같은 URL, 같은 콜라보·같은 내용)는 한 번만 쌓인다. 운영자는 `/admin/submissions`에서 처리한다. 목 모드에서도 같은 규칙으로 메모리에 쌓인다.
+
 그 밖에 `NEXT_PUBLIC_SITE_URL`, `GITHUB_CLIENT_ID`·`GITHUB_CLIENT_SECRET`(콜백 `https://<사이트>/api/auth/github/callback`), `ADMIN_GITHUB_LOGINS`.
 
 ## 알려 둘 점
 
 - ESLint는 넣지 않았다. TypeScript 7(네이티브 컴파일러)을 typescript-eslint가 아직 지원하지 않는다. 타입 검사는 `tsc`(TS 7)와 `next build`가 맡는다.
 - 상세·작품·회사 페이지는 ISR(1시간 + 태그 무효화)이라, 진행 상태(예정 → 진행 중)가 바뀌는 시점에 최대 1시간 늦게 반영될 수 있다.
-- 헤더의 “작품·회사·통계” 목록 페이지와 통계 대시보드(F-12), 제보 폼(F-15)은 아직 없다. 상세 페이지의 “오류 제보” 버튼은 비활성 상태다.
+- 헤더의 “작품·회사·통계” 목록 페이지와 통계 대시보드(F-12)는 아직 없다.

@@ -20,8 +20,8 @@ const DATA_LINKS = [
   { href: '/admin/taxonomy', label: '분류 어휘' },
 ] as const;
 
-/** followUps: 처리할 재확인 제안 수(백엔드가 기능을 모르면 null) */
-export function AdminNav({ counts, followUps }: { counts: Counts; followUps: number | null }) {
+/** followUps: 처리할 재확인 제안 수, submissions: 처리하지 않은 제보 수(백엔드가 기능을 모르거나 실패하면 null) */
+export function AdminNav({ counts, followUps, submissions }: { counts: Counts; followUps: number | null; submissions: number | null }) {
   const pathname = usePathname();
   const params = useSearchParams();
   const current = pathname === '/admin' ? (params.get('status') ?? 'review') : null;
@@ -45,6 +45,15 @@ export function AdminNav({ counts, followUps }: { counts: Counts; followUps: num
         {followUps !== null && (
           <span className="ct-mono" style={{ color: pathname.startsWith('/admin/followups') ? undefined : 'var(--gray-11)' }}>
             {followUps >= 50 ? '50+' : followUps}
+          </span>
+        )}
+      </Link>
+      <Link href="/admin/submissions" aria-current={pathname.startsWith('/admin/submissions') ? 'page' : undefined}>
+        <LinkPending scope="list" />
+        제보
+        {submissions !== null && (
+          <span className="ct-mono" style={{ color: pathname.startsWith('/admin/submissions') ? undefined : 'var(--gray-11)' }}>
+            {submissions >= 100 ? '100+' : submissions}
           </span>
         )}
       </Link>

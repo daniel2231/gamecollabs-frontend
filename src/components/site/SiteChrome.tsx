@@ -1,5 +1,6 @@
 import { Flex, Link as RadixLink, Text } from '@radix-ui/themes';
 import { getLocale, getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { isMockApi } from '@/lib/api';
 
 export async function MockBanner() {
@@ -24,9 +25,14 @@ export async function SiteFooter() {
           <Text size="2" color="gray">
             {t('name')}
           </Text>
-          <RadixLink size="2" color="gray" href={`/${locale}/rss.xml`} className="ct-mono">
-            RSS
-          </RadixLink>
+          <Flex gap="4" align="baseline">
+            <RadixLink asChild size="2" color="gray">
+              <Link href="/report">{t('report')}</Link>
+            </RadixLink>
+            <RadixLink size="2" color="gray" href={`/${locale}/rss.xml`} className="ct-mono">
+              RSS
+            </RadixLink>
+          </Flex>
         </Flex>
       </div>
     </footer>

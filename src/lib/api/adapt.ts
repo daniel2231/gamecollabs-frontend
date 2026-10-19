@@ -24,6 +24,8 @@ import type {
   Period,
   PropertyDetail,
   Stats,
+  Submission,
+  SubmissionKind,
   TaxonomyTerm,
   TermRef,
   UploadedMedia,
@@ -776,4 +778,39 @@ export function fromTerm(t: BeTerm): TaxonomyTerm {
 export function flattenFields(fields: Record<string, string[] | string> | undefined): Record<string, string> | undefined {
   if (!fields) return undefined;
   return Object.fromEntries(Object.entries(fields).map(([k, v]) => [k, Array.isArray(v) ? v.join(' ') : v]));
+}
+
+/**
+ * GET /v1/admin/submissions 항목. 오류 제보(kind) 이전 백엔드는 Mongo 문서를 그대로 줘서
+ * id 대신 _id만 있고 kind·collab이 없다(그때 제보는 모두 tip).
+ */
+export type BeSubmission = {
+  id?: string;
+  _id?: string;
+  kind?: SubmissionKind;
+  status: Submission['status'];
+  url: string | null;
+  note: string | null;
+  locale: string | null;
+  collab?: Submission['collab'];
+  createdAt: string;
+};
+
+export function toSubmission(s: BeSubmission): Submission {
+  return {
+    id: s.id ?? s._id ?? '',
+    kind: s.kind ?? 'tip',
+    status: s.status,
+    url: s.url ?? null,
+    note: s.note ?? null,
+    locale: s.locale === 'ko' || s.locale === 'en' ? s.locale : null,
+    collab: s.collab ?? null,
+    createdAt: s.createdAt,
+  };
+}
+
+/** 종류별 미처리 건수. 백엔드가 meta.counts를 주지 않으면 받은 미처리 항목으로 센다 */
+export function submissionCounts(items: Submission[], counts?: Partial<Record<SubmissionKind, number>>): Record<SubmissionKind, number> {
+  const open = (kind: SubmissionKind) => items.filter((s) => s.kind === kind && s.status === 'new').length;
+  return { tip: counts?.tip ?? open('tip'), correction: counts?.correction ?? open('correction') };
 }
