@@ -59,11 +59,11 @@ export function FollowUpBoard({ view, items, unavailable }: Props) {
           {current.empty}
         </Text>
       ) : (
-        <Flex direction="column" gap="3" className="ct-pending-target">
+        <div className="ct-admin-cards ct-pending-target">
           {items.map((item) => (
             <FollowUpCard key={item.id} item={item} view={view} />
           ))}
-        </Flex>
+        </div>
       )}
     </Flex>
   );

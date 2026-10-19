@@ -71,11 +71,11 @@ export function SubmissionBoard({ status, kind, items, counts }: Props) {
           {current.empty}
         </Text>
       ) : (
-        <Flex direction="column" gap="3" className="ct-pending-target">
+        <div className="ct-admin-cards ct-pending-target">
           {items.map((item) => (
             <SubmissionCard key={item.id} item={item} />
           ))}
-        </Flex>
+        </div>
       )}
     </Flex>
   );

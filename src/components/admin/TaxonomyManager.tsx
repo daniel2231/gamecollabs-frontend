@@ -28,57 +28,59 @@ export function TaxonomyManager({ terms }: { terms: TaxonomyTerm[] }) {
           콜라보의 분류값은 여기 있는 키만 쓸 수 있습니다. 상위 키를 고르면 필터에서 하위 항목이 함께 포함됩니다.
         </Text>
       </Flex>
-      {TAXONOMIES.map((tax) => {
-        const list = terms.filter((t) => t.taxonomy === tax);
-        const ordered = order(list);
-        return (
-          <Card key={tax} size="2">
-            <Flex justify="between" align="center" mb="3">
-              <Heading as="h2" size="4">
-                {TAXONOMY_LABEL[tax]} <Text size="2" color="gray" className="ct-mono">{tax}</Text>
-              </Heading>
-              <Button size="1" variant="soft" onClick={() => setAdding(tax)}>
-                <PlusIcon /> 추가
-              </Button>
-            </Flex>
-            <Table.Root size="1">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeaderCell>키</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell>한국어</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell>English</Table.ColumnHeaderCell>
-                  <Table.ColumnHeaderCell>기존 표기</Table.ColumnHeaderCell>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {ordered.map(({ term, depth }) => (
-                  <Table.Row key={term.key}>
-                    <Table.Cell className="ct-mono" style={{ paddingLeft: 12 + depth * 20 }}>
-                      {term.key}
-                      {term.deprecated && (
-                        <Badge color="gray" ml="2">
-                          폐기
-                        </Badge>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell>{term.label.ko}</Table.Cell>
-                    <Table.Cell>{term.label.en}</Table.Cell>
-                    <Table.Cell>
-                      <Flex wrap="wrap" gap="1">
-                        {term.legacyValues.map((v) => (
-                          <Badge key={v} color="gray" variant="soft">
-                            {v}
-                          </Badge>
-                        ))}
-                      </Flex>
-                    </Table.Cell>
+      <div className="ct-admin-cards">
+        {TAXONOMIES.map((tax) => {
+          const list = terms.filter((t) => t.taxonomy === tax);
+          const ordered = order(list);
+          return (
+            <Card key={tax} size="2">
+              <Flex justify="between" align="center" mb="3">
+                <Heading as="h2" size="4">
+                  {TAXONOMY_LABEL[tax]} <Text size="2" color="gray" className="ct-mono">{tax}</Text>
+                </Heading>
+                <Button size="1" variant="soft" onClick={() => setAdding(tax)}>
+                  <PlusIcon /> 추가
+                </Button>
+              </Flex>
+              <Table.Root size="1">
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeaderCell>키</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>한국어</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>English</Table.ColumnHeaderCell>
+                    <Table.ColumnHeaderCell>기존 표기</Table.ColumnHeaderCell>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          </Card>
-        );
-      })}
+                </Table.Header>
+                <Table.Body>
+                  {ordered.map(({ term, depth }) => (
+                    <Table.Row key={term.key}>
+                      <Table.Cell className="ct-mono" style={{ paddingLeft: 12 + depth * 20 }}>
+                        {term.key}
+                        {term.deprecated && (
+                          <Badge color="gray" ml="2">
+                            폐기
+                          </Badge>
+                        )}
+                      </Table.Cell>
+                      <Table.Cell>{term.label.ko}</Table.Cell>
+                      <Table.Cell>{term.label.en}</Table.Cell>
+                      <Table.Cell>
+                        <Flex wrap="wrap" gap="1">
+                          {term.legacyValues.map((v) => (
+                            <Badge key={v} color="gray" variant="soft">
+                              {v}
+                            </Badge>
+                          ))}
+                        </Flex>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Card>
+          );
+        })}
+      </div>
       {adding && <AddTermDialog taxonomy={adding} terms={terms.filter((t) => t.taxonomy === adding)} onClose={() => setAdding(null)} />}
     </Flex>
   );

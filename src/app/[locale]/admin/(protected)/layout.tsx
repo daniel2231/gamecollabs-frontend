@@ -24,7 +24,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
   return (
     <div className="ct-admin">
       <nav aria-label="관리자 메뉴" className="ct-admin-nav">
-        <Flex align="center" gap="2" px="2" pb="4">
+        <Flex align="center" gap="2" className="ct-admin-nav-brand">
           <LogoMark size={22} />
           <Text weight="bold">관리자</Text>
           {isMockApi() && (
@@ -36,7 +36,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
         <Suspense fallback={null}>
           <AdminNav counts={counts} followUps={followUps} submissions={submissions} />
         </Suspense>
-        <Flex direction="column" gap="2" mt="6" px="2">
+        <Flex direction="column" gap="2" className="ct-admin-nav-foot">
           <Text size="1" color="gray">
             {session.name ?? session.login}
             {devBypassEnabled() && ' · 인증 생략(개발)'}

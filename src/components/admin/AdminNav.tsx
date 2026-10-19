@@ -27,7 +27,7 @@ export function AdminNav({ counts, followUps, submissions }: { counts: Counts; f
   const current = pathname === '/admin' ? (params.get('status') ?? 'review') : null;
   return (
     <>
-      <Text as="div" size="1" color="gray" style={{ padding: "0 8px 4px" }}>
+      <Text as="div" size="1" color="gray" className="ct-admin-nav-label">
         콜라보
       </Text>
       {STATUS_LINKS.map((l) => (
@@ -60,7 +60,7 @@ export function AdminNav({ counts, followUps, submissions }: { counts: Counts; f
       <Link href="/admin/new" aria-current={pathname === '/admin/new' ? 'page' : undefined}>
         + 새 콜라보
       </Link>
-      <Text as="div" size="1" color="gray" style={{ padding: "16px 8px 4px" }}>
+      <Text as="div" size="1" color="gray" className="ct-admin-nav-label" style={{ paddingTop: 16 }}>
         데이터
       </Text>
       {DATA_LINKS.map((l) => (

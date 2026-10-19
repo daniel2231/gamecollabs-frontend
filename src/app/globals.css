@@ -1460,6 +1460,10 @@ body {
 }
 
 /* ── 관리자 ───────────────────────────────────────────────── */
+/* 화면 폭에 따라 세 가지 배치를 쓴다.
+ * 넓은 화면(1280~): 메뉴 | 검수 큐 | 편집기. 메뉴와 큐는 화면에 고정하고 각자 스크롤한다.
+ * 중간(761~1279): 메뉴는 위쪽 한 줄 가로 막대, 그 아래 큐 | 편집기를 나란히 둔다.
+ * 좁은 화면(~760): 메뉴 막대 아래 큐(높이 제한, 안에서 스크롤)와 편집기를 차례로 둔다 */
 .ct-admin {
   display: flex;
   flex-wrap: wrap;
@@ -1469,16 +1473,29 @@ body {
 }
 
 .ct-admin-nav {
-  flex: 1 1 220px;
-  max-width: 260px;
+  flex: 0 0 220px;
   background: var(--ct-surface);
   border-right: 1px solid var(--ct-line);
   padding: 16px 12px;
 }
 
+.ct-admin-nav-brand {
+  padding: 0 8px 16px;
+}
+
+.ct-admin-nav-label {
+  padding: 0 8px 4px;
+}
+
+.ct-admin-nav-foot {
+  margin-top: 24px;
+  padding: 0 8px;
+}
+
 .ct-admin-nav a {
   display: flex;
   justify-content: space-between;
+  gap: 6px;
   padding: 8px 10px;
   border-radius: var(--radius-2);
   color: var(--gray-12);
@@ -1497,8 +1514,8 @@ body {
 }
 
 .ct-admin-queue {
-  flex: 1 1 300px;
-  max-width: 360px;
+  flex: 0 0 320px;
+  min-width: 0;
   border-right: 1px solid var(--ct-line);
   background: var(--ct-surface);
 }
@@ -1523,24 +1540,26 @@ body {
 }
 
 .ct-admin-main {
-  flex: 999 1 560px;
+  --main-x: 32px;
+  --main-top: 24px;
+  flex: 1 1 0;
   min-width: 0;
-  padding: 24px 32px 48px;
+  padding: var(--main-top) var(--main-x) 48px;
+  /* 편집기 안의 두 열 배치가 화면이 아니라 이 영역의 폭을 보고 정해지도록 */
+  container-type: inline-size;
 }
 
 /* 편집기 머리말(상태·제목·저장/발행 버튼, 저장 결과): 편집기를 스크롤해도 위에 붙어 있다.
    main의 안쪽 여백만큼 바깥으로 넓혀 내용이 뒤로 비치지 않게 한다 */
 .ct-editor-bar {
-  --bar-x: 32px;
-  --bar-top: 24px;
   position: sticky;
   top: 0;
   z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: calc(-1 * var(--bar-top)) calc(-1 * var(--bar-x)) 0;
-  padding: var(--bar-top) var(--bar-x) 14px;
+  margin: calc(-1 * var(--main-top)) calc(-1 * var(--main-x)) 0;
+  padding: var(--main-top) var(--main-x) 14px;
   background: var(--gray-1);
   border-bottom: 1px solid var(--ct-line);
 }
@@ -1551,15 +1570,46 @@ body {
   overflow-y: auto;
 }
 
-@media (max-width: 900px) {
-  .ct-editor-bar {
-    --bar-x: 16px;
-    --bar-top: 20px;
+/* 편집기 구역: 좁으면 한 줄로 쌓고, 넓으면 짧은 구역끼리 두 열로 나란히 둔다 */
+.ct-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+@container (min-width: 760px) {
+  .ct-editor-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'title title'
+      'summary summary'
+      'cover parties'
+      'cover companies'
+      'period taxonomy'
+      'venues venues'
+      'sources sources';
+    column-gap: 32px;
+    row-gap: var(--space-6);
+    align-items: start;
+  }
+
+  /* 반 폭 열에서는 호스트·파트너를 위아래로 */
+  .ct-editor-form > [data-area='parties'] .ct-two {
+    grid-template-columns: 1fr;
   }
 }
 
+/* 후속 확인·제보·분류 어휘 카드: 넓으면 여러 열로 */
+.ct-admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
 /* 넓은 화면: 메뉴와 검수 큐는 화면에 고정하고 각자 스크롤한다. 편집기만 페이지와 함께 내려간다 */
-@media (min-width: 901px) {
+@media (min-width: 1280px) {
   .ct-admin {
     flex-wrap: nowrap;
   }
@@ -1576,16 +1626,82 @@ body {
   }
 }
 
-@media (max-width: 900px) {
-  .ct-admin-nav,
-  .ct-admin-queue {
-    max-width: none;
+/* 중간·좁은 화면: 메뉴는 위쪽 한 줄 막대. 넘치면 가로로 스크롤한다 */
+@media (max-width: 1279px) {
+  .ct-admin-nav {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px;
     border-right: 0;
     border-bottom: 1px solid var(--ct-line);
+    overflow-x: auto;
+    scrollbar-width: thin;
+    white-space: nowrap;
+  }
+
+  .ct-admin-nav-brand {
+    flex: none;
+    padding: 0 12px 0 4px;
+  }
+
+  .ct-admin-nav-label {
+    display: none;
+  }
+
+  .ct-admin-nav a {
+    flex: none;
+    padding: 6px 10px;
+  }
+
+  .ct-admin-nav-foot {
+    flex: none;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 0 auto;
+    padding: 0 0 0 12px;
+  }
+
+  .ct-admin-nav-foot .rt-Flex {
+    flex-wrap: nowrap;
   }
 
   .ct-admin-main {
-    padding: 20px 16px 40px;
+    --main-x: 24px;
+    --main-top: 20px;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1279px) {
+  .ct-admin-queue {
+    flex-basis: 300px;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 760px) {
+  .ct-admin-queue {
+    flex: 1 1 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--ct-line);
+    max-height: 50vh;
+    max-height: 50dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ct-admin-main {
+    flex-basis: 100%;
+    --main-x: 16px;
+    padding-bottom: 40px;
   }
 }
 
@@ -1659,7 +1775,7 @@ body {
 
 .ct-checklist {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 8px;
 }
 

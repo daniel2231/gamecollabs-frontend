@@ -441,8 +441,9 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       </section>
 
       <Card size="3">
-        <Flex direction="column" gap="6">
-          <FormSection title="제목·slug">
+        {/* 넓은 화면에서는 짧은 구역끼리 두 열로 나란히 놓는다(.ct-editor-form의 grid-area) */}
+        <div className="ct-editor-form">
+          <FormSection title="제목·slug" area="title">
             <div className="ct-two">
               <Text as="label" className="ct-field">
                 <span className="ct-label">한국어 제목 *</span>
@@ -479,7 +480,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             </Text>
           </FormSection>
 
-          <FormSection title="요약">
+          <FormSection title="요약" area="summary">
             <div className="ct-two">
               <Text as="label" className="ct-field">
                 <span className="ct-label">한국어</span>
@@ -492,7 +493,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             </div>
           </FormSection>
 
-          <FormSection title="커버 이미지">
+          <FormSection title="커버 이미지" area="cover">
             <CoverField
               value={form.cover}
               onChange={(cover) => {
@@ -503,7 +504,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             {fieldError('cover')}
           </FormSection>
 
-          <FormSection title="참여 작품">
+          <FormSection title="참여 작품" area="parties">
             <div className="ct-two" style={{ alignItems: 'start' }}>
               <EntityCombobox kind="property" label="호스트 (게임) *" value={form.host} onChange={(host) => setForm({ host })} kindOptions={kindOptions} invalid={Boolean(error?.fields?.parties) && !form.host} />
               <div>
@@ -530,7 +531,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             )}
           </FormSection>
 
-          <FormSection title="참여 회사">
+          <FormSection title="참여 회사" area="companies">
             <Flex direction="column" gap="3">
               {form.companies.map((row, i) => (
                 <Flex key={row.key} gap="2" align="end" wrap="wrap">
@@ -569,11 +570,11 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             </Flex>
           </FormSection>
 
-          <FormSection title="기간">
+          <FormSection title="기간" area="period">
             <PeriodFields period={form.period} onChange={(period) => setForm({ period })} />
           </FormSection>
 
-          <FormSection title="분류" hint="taxonomy_terms 키만 선택 가능">
+          <FormSection title="분류" hint="taxonomy_terms 키만 선택 가능" area="taxonomy">
             {(collab?.unmappedOther.length ?? 0) > 0 && (
               <Text as="p" size="1" color="gray" mt="0" mb="3">
                 참고용 수집 원본값: {collab!.unmappedOther.map((u) => `${u.field} “${u.raw}”`).join(', ')}
@@ -630,12 +631,12 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             </div>
           </FormSection>
 
-          <FormSection title="장소" hint="오프라인 콜라보만. 이름은 한·영 필수, 주소는 공식 표기 그대로">
+          <FormSection area="venues" title="장소" hint="오프라인 콜라보만. 이름은 한·영 필수, 주소는 공식 표기 그대로">
             <VenuesEditor rows={form.venues} errors={error?.fields} onChange={(venues) => setForm({ venues })} />
             {fieldError('venues')}
           </FormSection>
 
-          <FormSection title="출처" hint="최소 1개, 주 출처 1개">
+          <FormSection title="출처" hint="최소 1개, 주 출처 1개" area="sources">
             <SourcesEditor
               rows={form.sources}
               status={new Map((collab?.sourceStatus ?? []).map((s) => [s.url, s.httpStatus]))}
@@ -643,7 +644,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             />
             {fieldError('sources')}
           </FormSection>
-        </Flex>
+        </div>
       </Card>
     </Flex>
   );
@@ -655,9 +656,9 @@ function normalizePeriod(p: Period): Period {
   return { ...p, start: fix(p.start), end: p.endKind === 'fixed' ? fix(p.end) : null };
 }
 
-function FormSection({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+function FormSection({ title, hint, area, children }: { title: string; hint?: string; area: string; children: React.ReactNode }) {
   return (
-    <fieldset style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+    <fieldset data-area={area} style={{ border: 0, margin: 0, padding: 0, minWidth: 0, gridArea: area }}>
       <legend style={{ padding: '0 0 12px' }}>
         <Text weight="bold">{title}</Text>
         {hint && (
