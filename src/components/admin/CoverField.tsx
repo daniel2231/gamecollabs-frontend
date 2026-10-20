@@ -241,7 +241,12 @@ export function CoverField({ value, onChange, altFallback = { ko: '제목', en: 
         onDrop={onDrop}
       >
         {shown ? (
-          <img src={shown.url} alt="" data-fit={coverFit(shown, ratio)} referrerPolicy="no-referrer" />
+          <>
+            {coverFit(shown, ratio) === 'contain' && (
+              <img src={shown.url} alt="" aria-hidden="true" className="ct-cover-backdrop" referrerPolicy="no-referrer" />
+            )}
+            <img src={shown.url} alt="" data-fit={coverFit(shown, ratio)} referrerPolicy="no-referrer" />
+          </>
         ) : over ? null : (
           <Flex direction="column" align="center" gap="2" p="4">
             <ImageIcon width="28" height="28" aria-hidden="true" />
