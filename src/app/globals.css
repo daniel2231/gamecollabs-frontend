@@ -1124,6 +1124,15 @@ body {
   object-fit: contain;
 }
 
+/* 통째로 보여주는 커버 뒤의 빈 곳을 같은 이미지를 흐리게 깔아 채운다 */
+.ct-card-cover img.ct-cover-backdrop,
+.ct-dropzone img.ct-cover-backdrop {
+  object-fit: cover;
+  filter: blur(24px) brightness(0.6) saturate(1.2);
+  /* 흐린 가장자리가 비치지 않게 조금 키운다 */
+  transform: scale(1.2);
+}
+
 .ct-card-mono {
   position: absolute;
   inset: 0;

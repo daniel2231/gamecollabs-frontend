@@ -16,10 +16,14 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
   const host = collab.parties.find((p) => p.role === 'host');
   const partner = collab.parties.find((p) => p.role === 'partner');
   const tags = [...collab.regions, ...collab.platforms, ...collab.collabTypes];
+  const fit = collab.cover ? coverFit(collab.cover) : 'cover';
 
   return (
     <Link href={`/collabs/${collab.slug}`} className={feature ? 'ct-card ct-card-feature' : 'ct-card'}>
       <div className="ct-card-cover">
+        {collab.cover && fit === 'contain' && (
+          <img src={collab.cover.url} alt="" aria-hidden="true" loading={eager ? 'eager' : 'lazy'} className="ct-cover-backdrop" />
+        )}
         {collab.cover ? (
           <img
             src={collab.cover.url}
@@ -27,7 +31,7 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
             loading={eager ? 'eager' : 'lazy'}
             width={collab.cover.width ?? undefined}
             height={collab.cover.height ?? undefined}
-            data-fit={coverFit(collab.cover)}
+            data-fit={fit}
           />
         ) : (
           <div className="ct-card-mono" aria-hidden="true">
