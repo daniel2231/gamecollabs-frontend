@@ -7,6 +7,7 @@ export const FOLLOW_UP_REASON_LABEL: Record<FollowUpReason, string> = {
   month_only: '시작 월만 앎',
   end_tba: '종료일 미발표',
   end_missing: '종료일 누락',
+  content_tba: '내용 미발표',
 };
 
 /** 사유마다 찾아야 할 정보(관리자 안내) */
@@ -15,6 +16,7 @@ export const FOLLOW_UP_REASON_HINT: Record<FollowUpReason, string> = {
   month_only: '정확한 시작일이 나오면 일 단위로 바꿉니다.',
   end_tba: '종료일이 나오면 넣고, 계속 남는 콘텐츠면 “상시”로 바꿉니다.',
   end_missing: '종료 방식이 “기간 확정”인데 종료일이 비어 있습니다. 종료일을 넣거나 “미발표”·“상시”로 바꿉니다.',
+  content_tba: '콜라보 내용(아이템·스킨·이벤트 등)이 발표되면 요약을 채우고 “내용 미발표”를 해제합니다.',
 };
 
 /** 백엔드에서 연속 무변화 이 횟수부터 알림(escalated)으로 넘어간다 */
@@ -35,9 +37,9 @@ const utc = (date: string) => {
 
 /**
  * 백엔드 followUpReasonOf와 같은 규칙(목 API용). 화면 기간은 날짜가 `YYYY-MM-DD`(월 정밀도면 1일)다.
- * null이면 더 확인할 것이 없다(날짜 확정, 종료, 상시, 보관).
+ * null이면 더 확인할 것이 없다(날짜·내용 확정, 종료, 보관). 빠진 날짜가 내용보다 먼저다.
  */
-export function followUpReasonOf(status: CollabStatus, period: Period, now: Date = new Date()): FollowUpReason | null {
+export function followUpReasonOf(status: CollabStatus, period: Period, now: Date = new Date(), contentTba = false): FollowUpReason | null {
   if (status === 'archived') return null;
   if (!period.start) return 'start_tba';
   const t = now.getTime();
@@ -54,6 +56,7 @@ export function followUpReasonOf(status: CollabStatus, period: Period, now: Date
     if (period.endKind === 'tba') return 'end_tba';
     if (period.endKind === 'fixed') return 'end_missing';
   }
+  if (contentTba) return 'content_tba';
   return null;
 }
 

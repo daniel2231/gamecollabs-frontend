@@ -108,6 +108,7 @@ function initialState(collab: AdminCollab | null, entities: Record<string, Entit
     platforms: collab?.platforms ?? [],
     collabTypes: collab?.collabTypes ?? [],
     period: collab?.period ?? ({ start: null, end: null, precision: 'day', endKind: 'tba' } satisfies Period),
+    contentTba: collab?.contentTba ?? false,
     sources: collab?.sources.length
       ? collab.sources.map((s) => ({ ...s, key: crypto.randomUUID() }))
       : [blankSource(true)],
@@ -200,6 +201,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       ...(coverTouched || !collab ? { cover: form.cover ?? null } : {}),
       // 백엔드가 현재 장소를 주지 않았으면(undefined) 사람이 입력했을 때만 보낸다
       ...(!collab || collab.venues !== undefined || venues.length > 0 ? { venues } : {}),
+      // 백엔드가 현재 값을 주지 않았으면(undefined) 켰을 때만 보낸다
+      ...(!collab || collab.contentTba !== undefined || form.contentTba ? { contentTba: form.contentTba } : {}),
     };
   }
 
@@ -572,6 +575,10 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
 
           <FormSection title="기간" area="period">
             <PeriodFields period={form.period} onChange={(period) => setForm({ period })} />
+            <Text as="label" size="2" className="ct-check" mt="3">
+              <Checkbox checked={form.contentTba} onCheckedChange={(checked) => setForm({ contentTba: checked === true })} />
+              콜라보 내용 미발표 — 아이템·스킨·이벤트 등이 아직 안 나왔으면 켭니다. 수집기가 다시 확인합니다.
+            </Text>
           </FormSection>
 
           <FormSection title="분류" hint="taxonomy_terms 키만 선택 가능" area="taxonomy">

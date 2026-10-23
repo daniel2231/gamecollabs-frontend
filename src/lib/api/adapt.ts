@@ -156,6 +156,8 @@ export type BeAdminCollab = {
   period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
   sources: (BeDetail['sources'][number] & { httpStatus: number | null })[];
   venues?: { name: { ko: string | null; en: string | null }; address: string | null; url: string | null }[];
+  /** 내용 미정. 이 기능 이전 백엔드는 주지 않는다 */
+  contentTba?: boolean;
   origin: {
     type: AdminCollab['origin']['type'];
     runId: string | null;
@@ -176,7 +178,7 @@ export type BeAdminCollab = {
 type BePeriodInput = { start?: string | null; end?: string | null; precision?: Period['precision']; endKind?: Period['endKind'] };
 
 export type BeFollowUpProposal = {
-  changes: { period?: BePeriodInput; i18n?: { ko: { title: string; summary: string }; en: { title: string; summary: string } } };
+  changes: { period?: BePeriodInput; i18n?: { ko: { title: string; summary: string }; en: { title: string; summary: string } }; contentTba?: boolean };
   sources: { url: string; title?: string | null; publisher?: string | null }[];
   note: string | null;
   rev: number;
@@ -203,6 +205,8 @@ export type BeFollowUpRow = {
   title: { ko: string | null; en: string | null };
   summary: { ko: string | null; en: string | null };
   period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+  /** 이 기능 이전 백엔드는 주지 않는다 */
+  contentTba?: boolean;
   sourceUrls: string[];
   lastCheckedAt: string | null;
   nextCheckAt: string | null;
@@ -550,6 +554,7 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
     // 필드가 없으면 undefined로 남겨, 저장할 때 커버를 건드리지 않게 한다
     cover: c.cover === undefined ? undefined : c.cover && toAdminCover(c.cover, mediaBase),
     venues: c.venues?.map((v) => ({ name: { ko: v.name.ko ?? '', en: v.name.en ?? '' }, address: v.address, url: v.url })),
+    contentTba: c.contentTba,
     // 기능 이전 문서는 필드가 없거나 비어 있다
     followUp: c.followUp ? toFollowUpState(c.followUp) : undefined,
     createdAt: c.createdAt,
@@ -571,6 +576,7 @@ export function toFollowUpProposal(p: BeFollowUpProposal): FollowUpProposal {
   return {
     period: p.changes.period ? fromPeriodInput(p.changes.period) : null,
     i18n: p.changes.i18n ? { ko: text(p.changes.i18n.ko), en: text(p.changes.i18n.en) } : null,
+    contentTba: p.changes.contentTba ?? null,
     sources: p.sources.map((s) => ({ url: s.url, title: s.title ?? null, publisher: s.publisher ?? null })),
     note: p.note,
     rev: p.rev,
@@ -602,6 +608,7 @@ export function toFollowUpItem(r: BeFollowUpRow): FollowUpItem {
       en: { title: r.title.en ?? '', summary: r.summary.en ?? '' },
     },
     period: period(r.period),
+    contentTba: r.contentTba ?? false,
     sourceUrls: r.sourceUrls,
     reason: r.reason,
     nextCheckAt: r.nextCheckAt,
@@ -691,6 +698,7 @@ export function toCollabBody(input: CollabInput, existing?: BeAdminCollab['parti
     // 커버를 건드리지 않았으면 필드를 보내지 않는다(PATCH는 보낸 최상위 필드만 바꾼다)
     ...(input.cover === undefined ? {} : { cover: toCoverBody(input.cover) }),
     ...(input.venues === undefined ? {} : { venues: input.venues }),
+    ...(input.contentTba === undefined ? {} : { contentTba: input.contentTba }),
   };
 }
 

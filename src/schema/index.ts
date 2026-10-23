@@ -321,16 +321,22 @@ export const collabInputSchema = z.object({
   cover: adminCoverSchema.nullable().optional(),
   /** 오프라인 콜라보 장소. undefined면 본문에서 뺀다(백엔드가 관리자 응답에 주지 않아 현재 값을 모를 때) */
   venues: z.array(adminVenueSchema).max(20, '20곳 이하').optional(),
+  /**
+   * 콜라보 내용(아이템·스킨·이벤트 등)이 아직 발표되지 않음. 켜 두면 후속 확인 대상이 된다.
+   * undefined면 본문에서 뺀다(백엔드가 관리자 응답에 주지 않아 현재 값을 모를 때)
+   */
+  contentTba: z.boolean().optional(),
 });
 export type CollabInput = z.infer<typeof collabInputSchema>;
 
 // ── 후속 확인(날짜 미정 콜라보 재확인) ─────────────────────────
 
 /**
- * 다시 확인할 사유. 백엔드가 기간에서 계산한다.
+ * 다시 확인할 사유. 백엔드가 기간과 contentTba에서 계산한다(날짜가 먼저).
  * start_tba: 시작일 미발표 · month_only: 시작 월만 앎 · end_tba: 종료일 미발표 · end_missing: 종료일 누락(fixed인데 비어 있음)
+ * · content_tba: 날짜는 다 있고 내용만 미발표
  */
-export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing'] as const;
+export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing', 'content_tba'] as const;
 export type FollowUpReason = (typeof FOLLOW_UP_REASONS)[number];
 export const FOLLOW_UP_VIEWS = ['proposals', 'escalated', 'due'] as const;
 export type FollowUpView = (typeof FOLLOW_UP_VIEWS)[number];
@@ -341,6 +347,8 @@ export const followUpProposalSchema = z.object({
   period: periodSchema.nullable(),
   /** 바뀔 제목·요약(보낸 경우만) */
   i18n: z.object({ ko: z.object({ title: z.string(), summary: z.string() }), en: z.object({ title: z.string(), summary: z.string() }) }).nullable(),
+  /** 바뀔 내용 미정 여부(보낸 경우만, 보통 내용이 발표되어 false) */
+  contentTba: z.boolean().nullable(),
   /** 근거 출처(반영하면 기존 출처 뒤에 붙는다) */
   sources: z.array(z.object({ url: z.string(), title: z.string().nullable(), publisher: z.string().nullable() })),
   note: z.string().nullable(),
@@ -373,6 +381,8 @@ export const followUpItemSchema = followUpStateSchema.extend({
   /** 지금 저장된 제목·요약(제안과 비교용) */
   text: z.object({ ko: z.object({ title: z.string(), summary: z.string() }), en: z.object({ title: z.string(), summary: z.string() }) }),
   period: periodSchema,
+  /** 내용 미정. 사유가 날짜여도 켜져 있으면 내용도 같이 확인한다 */
+  contentTba: z.boolean(),
   sourceUrls: z.array(z.string()),
 });
 export type FollowUpItem = z.infer<typeof followUpItemSchema>;

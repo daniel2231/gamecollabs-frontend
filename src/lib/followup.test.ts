@@ -21,6 +21,15 @@ describe('후속 확인 사유 (백엔드와 같은 규칙)', () => {
     expect(followUpReasonOf('archived', p({ endKind: 'tba' }), now)).toBeNull();
   });
 
+  it('날짜가 다 있으면 내용 미발표를 확인한다', () => {
+    expect(followUpReasonOf('published', p({ start: '2026-10-01', end: '2026-10-31' }), now, true)).toBe('content_tba');
+    expect(followUpReasonOf('published', p({ start: '2026-10-01', endKind: 'permanent' }), now, true)).toBe('content_tba');
+    // 빠진 날짜가 먼저, 끝났거나 보관이면 확인하지 않는다
+    expect(followUpReasonOf('draft', p({ precision: 'unknown', endKind: 'tba' }), now, true)).toBe('start_tba');
+    expect(followUpReasonOf('published', p({ start: '2026-08-01', end: '2026-09-30' }), now, true)).toBeNull();
+    expect(followUpReasonOf('archived', p({ start: '2026-10-01', end: '2026-10-31' }), now, true)).toBeNull();
+  });
+
   it('3 → 7 → 14 → 30일 간격', () => {
     expect([0, 1, 2, 3, 8].map((n) => (Date.parse(nextCheckAt(n, now)) - now.getTime()) / 86_400_000)).toEqual([3, 7, 14, 30, 30]);
   });

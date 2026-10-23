@@ -454,6 +454,7 @@ function toAdmin(c: DbCollab): AdminCollab {
     sourceStatus: c.sources.map((s) => ({ url: s.url, httpStatus: s.httpStatus ?? null })),
     cover: c.cover ?? null,
     venues: c.venues ?? [],
+    contentTba: c.contentTba ?? false,
     duplicates: findDuplicates(c),
     followUp: followUpOf(c),
     createdAt: c.createdAt,
@@ -463,7 +464,7 @@ function toAdmin(c: DbCollab): AdminCollab {
 
 /** 백엔드 규칙: 사유는 기간에서 계산, 기록이 없으면 만든 지 3일 뒤가 첫 확인 */
 function followUpOf(c: DbCollab): FollowUpState {
-  const reason = followUpReasonOf(c.status, c.period);
+  const reason = followUpReasonOf(c.status, c.period, undefined, c.contentTba);
   const f = c.followUp;
   return {
     reason,
@@ -488,6 +489,7 @@ function toFollowUpItem(c: DbCollab): FollowUpItem {
       en: { title: c.i18n.en.title, summary: c.i18n.en.summary },
     },
     period: c.period,
+    contentTba: c.contentTba ?? false,
     sourceUrls: c.sources.map((s) => s.url),
   };
 }
@@ -649,6 +651,7 @@ export const mockAdminApi: AdminApi = {
       period: input.period,
       ...(input.cover === undefined ? {} : { cover: input.cover }),
       ...(input.venues === undefined ? {} : { venues: input.venues }),
+      ...(input.contentTba === undefined ? {} : { contentTba: input.contentTba }),
       sources: input.sources.map((s) => ({
         lastCheckedAt: null,
         httpStatus: null,
@@ -829,6 +832,7 @@ export const mockAdminApi: AdminApi = {
       if (proposal.i18n) {
         c.i18n = { ko: { ...c.i18n.ko, ...proposal.i18n.ko }, en: { ...c.i18n.en, ...proposal.i18n.en } };
       }
+      if (proposal.contentTba !== null) c.contentTba = proposal.contentTba;
       const known = new Set(c.sources.map((s) => s.url));
       for (const s of proposal.sources.filter((x) => !known.has(x.url))) {
         c.sources.push({ url: s.url, title: s.title ?? '', publisher: s.publisher ?? '', type: 'press', isPrimary: false, accessedAt: now().slice(0, 10), lastCheckedAt: null, httpStatus: null, archiveUrl: null });

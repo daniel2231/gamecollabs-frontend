@@ -22,7 +22,7 @@ const day = (iso: string | null) => (iso ? iso.slice(0, 10) : '—');
 type Props = { view: FollowUpView; items: FollowUpItem[]; unavailable?: string };
 
 /**
- * 후속 확인(날짜가 덜 발표된 콜라보 재확인) 관리 화면.
+ * 후속 확인(날짜나 내용이 덜 발표된 콜라보 재확인) 관리 화면.
  * 제안: 수집기가 검수 중·발행된 콜라보에서 찾은 변경 → 반영 또는 버리기.
  * 알림: 여러 번 확인해도 소식이 없음 → 편집기에서 날짜를 넣거나 “상시”로 바꾸거나 보관.
  * 확인 예정: 수집기가 다음에 볼 목록(참고용).
@@ -36,7 +36,7 @@ export function FollowUpBoard({ view, items, unavailable }: Props) {
           후속 확인
         </Heading>
         <Text size="2" color="gray">
-          날짜가 덜 발표된 콜라보는 수집기가 3 → 7 → 14 → 30일 간격으로 다시 확인합니다. 초안은 바로 고쳐지고, 검수 중·발행된 콜라보는 여기서
+          날짜나 내용이 덜 발표된 콜라보는 수집기가 3 → 7 → 14 → 30일 간격으로 다시 확인합니다. 초안은 바로 고쳐지고, 검수 중·발행된 콜라보는 여기서
           반영 여부를 정합니다.
         </Text>
       </Flex>
@@ -83,6 +83,11 @@ function FollowUpCard({ item, view }: { item: FollowUpItem; view: FollowUpView }
               {item.reason && (
                 <Badge size="1" variant="soft" color="amber">
                   {FOLLOW_UP_REASON_LABEL[item.reason]}
+                </Badge>
+              )}
+              {item.contentTba && item.reason !== 'content_tba' && (
+                <Badge size="1" variant="soft" color="amber">
+                  {FOLLOW_UP_REASON_LABEL.content_tba}
                 </Badge>
               )}
               {item.escalated && (
@@ -170,6 +175,14 @@ function ProposalDiff({ item }: { item: FollowUpItem }) {
                   {adminPeriodLabel(p.period)}
                 </Text>
               </Flex>
+            </DataList.Value>
+          </DataList.Item>
+        )}
+        {p.contentTba !== null && p.contentTba !== item.contentTba && (
+          <DataList.Item>
+            <DataList.Label>내용</DataList.Label>
+            <DataList.Value>
+              <Text weight="bold">{p.contentTba ? '내용 미발표로 표시' : '내용 발표됨 — “내용 미발표” 해제'}</Text>
             </DataList.Value>
           </DataList.Item>
         )}

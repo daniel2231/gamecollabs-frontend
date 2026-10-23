@@ -252,7 +252,7 @@ describe('venues', () => {
     ).toEqual([{ name: '시부야점', address: '東京都渋谷区', url: null }]);
   });
 
-  it('관리자 저장: venues를 정했을 때만 본문에 넣는다', () => {
+  it('관리자 저장: venues·contentTba를 정했을 때만 본문에 넣는다', () => {
     const input = {
       slug: 'a',
       i18n: { ko: { title: 't', summary: 's', note: '' }, en: { title: 't', summary: 's', note: '' } },
@@ -269,6 +269,9 @@ describe('venues', () => {
     const venues = [{ name: { ko: '시부야점', en: 'Shibuya' }, address: null, url: 'https://shop.test' }];
     expect(A.toCollabBody({ ...input, venues }).venues).toEqual(venues);
     expect(A.toCollabBody({ ...input, venues: [] }).venues).toEqual([]);
+    expect(A.toCollabBody(input)).not.toHaveProperty('contentTba');
+    expect(A.toCollabBody({ ...input, contentTba: true }).contentTba).toBe(true);
+    expect(A.toCollabBody({ ...input, contentTba: false }).contentTba).toBe(false);
   });
 });
 
@@ -306,6 +309,31 @@ describe('후속 확인 변환', () => {
     expect(item.unchanged).toBe(2);
     expect(item.proposal!.period).toEqual({ start: '2026-11-01', end: null, precision: 'month', endKind: 'tba' });
     expect(item.proposal!.sources).toEqual([{ url: 'https://example.com/dates', title: null, publisher: null }]);
+  });
+
+  it('내용 미발표: 사유 content_tba와 제안의 contentTba, 없으면 false·null', () => {
+    const row: A.BeFollowUpRow = {
+      id: 'c2',
+      slug: 'a-b-2026-10',
+      status: 'published',
+      rev: 2,
+      reason: 'content_tba',
+      title: { ko: '가 × 나', en: 'A x B' },
+      summary: { ko: '예고', en: 'Teased' },
+      period: { start: '2026-10-01', end: '2026-10-31', precision: 'day', endKind: 'fixed' },
+      contentTba: true,
+      sourceUrls: [],
+      lastCheckedAt: null,
+      nextCheckAt: null,
+      uncheckedRuns: 0,
+      escalated: false,
+      proposal: { ...proposal, changes: { i18n: proposal.changes.i18n, contentTba: false } },
+    };
+    const item = followUpItemSchema.parse(A.toFollowUpItem(row));
+    expect(item).toMatchObject({ reason: 'content_tba', contentTba: true, proposal: { contentTba: false, period: null } });
+    const { contentTba: _omit, ...older } = row;
+    expect(followUpItemSchema.parse(A.toFollowUpItem({ ...older, proposal })).contentTba).toBe(false);
+    expect(A.toFollowUpProposal(proposal).contentTba).toBeNull();
   });
 
   it('입력형 기간: 정밀도·종료 방식 기본값', () => {

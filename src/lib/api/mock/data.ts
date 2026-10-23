@@ -111,7 +111,9 @@ export type DbCollab = {
   /** 관리자 편집기에서 올린 커버(목 모드: url이 data: 주소) */
   cover?: AdminCover | null;
   venues?: AdminVenue[];
-  /** 후속 확인 기록. 사유는 기간에서 계산하므로 저장하지 않는다. 없으면 만든 지 3일 뒤가 첫 확인 */
+  /** 콜라보 내용 미발표 */
+  contentTba?: boolean;
+  /** 후속 확인 기록. 사유는 기간·contentTba에서 계산하므로 저장하지 않는다. 없으면 만든 지 3일 뒤가 첫 확인 */
   followUp?: { nextCheckAt: string | null; lastCheckedAt: string | null; unchanged: number; escalatedAt: string | null; proposal: FollowUpProposal | null };
   createdAt: string;
   updatedAt: string;
@@ -279,6 +281,7 @@ export const collabs: DbCollab[] = [
     sources: [placeholderSource('weplay-attack-on-titan')],
     origin: migration,
     unmapped: [],
+    contentTba: true,
     // 후속 확인 화면용: 재확인에서 찾은 변경 제안(자리표시자 내용, 실제 정보 아님)
     followUp: {
       nextCheckAt: null,
@@ -291,6 +294,7 @@ export const collabs: DbCollab[] = [
           ko: { title: 'WePlay × 진격의 거인', summary: '[발표된 내용 요약 자리표시자]' },
           en: { title: 'WePlay × Attack on Titan', summary: '[Placeholder summary of the announcement]' },
         },
+        contentTba: false,
         sources: [{ url: 'https://example.com/weplay-attack-on-titan/announcement', title: '[자리표시자 출처]', publisher: null }],
         note: '목 데이터: 확인되지 않은 자리표시자',
         rev: 1,
