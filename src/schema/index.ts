@@ -462,7 +462,8 @@ export const matchResponseSchema = z.object({
 });
 export type MatchResponse = z.infer<typeof matchResponseSchema>;
 
-export const TRANSITIONS = ['submit', 'publish', 'archive'] as const;
+/** reopen: 검수 요청됨·보관 → 초안 */
+export const TRANSITIONS = ['submit', 'publish', 'archive', 'reopen'] as const;
 export type Transition = (typeof TRANSITIONS)[number];
 
 export const apiErrorSchema = z.object({

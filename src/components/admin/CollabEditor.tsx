@@ -267,7 +267,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
       if (!res.ok) return setError(res.error);
       setError(null);
       setRev(res.data.rev);
-      setNotice({ submit: '검수 요청했습니다', publish: '발행했습니다', archive: '보관했습니다' }[action]);
+      setNotice({ submit: '검수 요청했습니다', publish: '발행했습니다', archive: '보관했습니다', reopen: '초안으로 되돌렸습니다' }[action]);
       // 상태가 바뀌어 목록에서 빠져도 방금 처리한 항목을 계속 보여준다
       const sp = new URLSearchParams(window.location.search);
       sp.set('id', collab.id);
@@ -332,6 +332,11 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             {status === 'draft' && collab && (
               <Button variant="soft" onClick={() => onTransition('submit')} disabled={pending}>
                 검수 요청
+              </Button>
+            )}
+            {collab && (status === 'in_review' || status === 'archived') && (
+              <Button variant="soft" color="gray" onClick={() => onTransition('reopen')} disabled={pending}>
+                {status === 'archived' ? '초안으로 복구' : '초안으로 되돌리기'}
               </Button>
             )}
             {collab && (status === 'draft' || status === 'in_review') && (

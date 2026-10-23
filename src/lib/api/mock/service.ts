@@ -677,6 +677,7 @@ export const mockAdminApi: AdminApi = {
       submit: ['draft'],
       publish: ['draft', 'in_review'],
       archive: ['draft', 'in_review', 'published'],
+      reopen: ['in_review', 'archived'],
     };
     if (!allowed[action].includes(c.status)) throw new ApiError(409, 'invalid_transition', `${c.status} → ${action} 불가`);
     if (action === 'publish') {
@@ -685,7 +686,7 @@ export const mockAdminApi: AdminApi = {
       c.status = 'published';
       c.publishedAt = now();
     } else {
-      c.status = action === 'submit' ? 'in_review' : 'archived';
+      c.status = action === 'submit' ? 'in_review' : action === 'reopen' ? 'draft' : 'archived';
     }
     c.rev++;
     c.updatedAt = now();
