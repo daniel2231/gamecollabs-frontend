@@ -30,7 +30,8 @@ export function AdminNav({ counts, followUps, submissions }: { counts: Counts; f
       <Text as="div" size="1" color="gray" className="ct-admin-nav-label">
         콜라보
       </Text>
-      {STATUS_LINKS.map((l) => (
+      {/* 검수 요청 단계는 쓰지 않는다. 남아 있는 항목이 있을 때만 탭을 보여 초안으로 되돌릴 수 있게 한다 */}
+      {STATUS_LINKS.filter((l) => l.status !== 'in_review' || counts.in_review > 0 || current === 'in_review').map((l) => (
         <Link key={l.status} href={l.status === 'review' ? '/admin' : `/admin?status=${l.status}`} aria-current={current === l.status ? 'page' : undefined}>
           <LinkPending scope="list" />
           {l.label}

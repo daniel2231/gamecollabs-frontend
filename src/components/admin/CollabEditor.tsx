@@ -329,11 +329,6 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             <Button variant="surface" color="gray" onClick={onSave} loading={pending} disabled={!dirty && Boolean(collab)}>
               {collab ? '임시 저장' : '초안 만들기'}
             </Button>
-            {status === 'draft' && collab && (
-              <Button variant="soft" onClick={() => onTransition('submit')} disabled={pending}>
-                검수 요청
-              </Button>
-            )}
             {collab && (status === 'in_review' || status === 'archived') && (
               <Button variant="soft" color="gray" onClick={() => onTransition('reopen')} disabled={pending}>
                 {status === 'archived' ? '초안으로 복구' : '초안으로 되돌리기'}
