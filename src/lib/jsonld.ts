@@ -126,6 +126,9 @@ export function companyJsonLd(c: CompanyDetail, { url }: { url: string }): Thing
   };
 }
 
+/** 구글 검색 결과의 사이트 이름 후보. 띄어 쓴 이름과 한국어 이름으로 찾는 사람도 있다 */
+const SITE_ALTERNATE_NAMES = ['Game Collabs', '게임콜라보'];
+
 export function websiteJsonLd({ name, description, url, locale }: { name: string; description: string; url: string; locale: string }): Thing {
-  return { '@context': CONTEXT, '@type': 'WebSite', name, description, url, inLanguage: locale };
+  return { '@context': CONTEXT, '@type': 'WebSite', name, alternateName: SITE_ALTERNATE_NAMES, description, url, inLanguage: locale };
 }

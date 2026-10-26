@@ -62,6 +62,7 @@ export async function generateMetadata({ params, searchParams }: PageProps<'/[lo
   const title = `${t('title')} · ${siteName}`;
   return {
     title: { absolute: title },
+    description: tSite('description'),
     // 정렬·더 보기 주소와 색인하지 않는 필터 페이지의 canonical은 필터 없는 목록
     alternates: alternatesFor(locale, LIST_PATH),
     openGraph: openGraphFor({

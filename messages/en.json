@@ -3,7 +3,7 @@
     "collabCount": "{count, plural, one {# collab} other {# collabs}}",
     "loading": "Loading…",
     "name": "GameCollabs",
-    "description": "A manually reviewed record of game × IP collaborations, built from public sources. Find which IPs worked with which games, and how.",
+    "description": "Track game collaborations and crossover events: which anime, films, characters and brands teamed up with which games, when, and how. Hand-reviewed from public sources.",
     "nav": {
       "main": "Main menu",
       "collabs": "Collabs"
@@ -34,7 +34,7 @@
     "tba": "End date TBA"
   },
   "Home": {
-    "title": "Game × IP Collabs",
+    "title": "Game Collaborations & Crossover Tracker",
     "tally": "Collab count",
     "total": "Collabs tracked",
     "seeAll": "See all",
@@ -58,7 +58,7 @@
     }
   },
   "List": {
-    "title": "All collabs",
+    "title": "All game collabs",
     "landing": {
       "phase": {
         "ongoing": "Ongoing game × IP collabs",
