@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { Link } from '@/i18n/navigation';
 import { LIST_PATH } from '@/lib/filters';
+import { STATS_PATH } from '@/lib/stats';
 import { LanguageMenu } from './LanguageMenu';
 import { LogoMark } from './LogoMark';
 import { SearchBox } from './SearchBox';
@@ -22,9 +23,12 @@ export async function SiteHeader() {
             </Suspense>
           </div>
           <div className="ct-header-end">
-            <nav aria-label={t('nav.main')}>
+            <nav aria-label={t('nav.main')} className="ct-header-links">
               <Link href={LIST_PATH} className="ct-header-nav">
                 {t('nav.collabs')}
+              </Link>
+              <Link href={STATS_PATH} className="ct-header-nav">
+                {t('nav.stats')}
               </Link>
             </nav>
             <Suspense fallback={null}>

@@ -5,6 +5,7 @@
 import { createHash } from 'node:crypto';
 import { followUpReasonOf, nextCheckAt } from '@/lib/followup';
 import { computePhase } from '@/lib/phase';
+import { STATS_COMPANY_ROLES, type StatsCompanyRole } from '@/schema';
 import type {
   AdminCollab,
   AdminCover,
@@ -341,11 +342,61 @@ export const mockPublicApi: PublicApi = {
     return db.terms.filter((t) => !t.deprecated);
   },
 
-  async getStats() {
+  // 백엔드 규칙 그대로: year는 그해 시작한 것만, years는 year와 상관없이 전체, 파트너 분류는 콜라보당 한 번
+  async getStats({ locale = 'ko', year } = {}) {
     await delay();
+    const all = published();
+    const list = year ? all.filter((c) => c.period.start?.startsWith(`${year}-`)) : all;
     const byPhase = { upcoming: 0, ongoing: 0, ended: 0, unknown: 0 };
-    for (const c of published()) byPhase[computePhase(c.period)]++;
-    return { published: published().length, byPhase };
+    for (const c of list) byPhase[computePhase(c.period)]++;
+    const tally = (keys: string[]) => {
+      const counts = new Map<string, number>();
+      for (const k of keys) counts.set(k, (counts.get(k) ?? 0) + 1);
+      return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    };
+    const terms = (keys: string[]) => tally(keys).map(([key, count]) => ({ ...termRef(key, locale), count }));
+    const top = <T extends { slug: string; name: { ko: string; en: string } }>(ids: string[], byId: (id: string) => T | undefined) =>
+      tally(ids)
+        .slice(0, 10)
+        .flatMap(([id, count]) => {
+          const e = byId(id);
+          return e ? [{ entity: e, count }] : [];
+        });
+    const partyIds = (role: 'host' | 'partner') => list.flatMap((c) => [...new Set(c.parties.filter((p) => p.role === role).map((p) => p.propertyId))]);
+    const properties = (role: 'host' | 'partner') =>
+      top(partyIds(role), propertyById).map(({ entity, count }) => ({
+        slug: entity.slug,
+        name: localize(entity.name, locale).value,
+        kind: termRef(entity.kind, locale),
+        count,
+      }));
+    const companyRanking = (role: StatsCompanyRole) =>
+      top(
+        list.flatMap((c) => [...new Set(c.companies.filter((x) => x.role === role).map((x) => x.companyId))]),
+        companyById,
+      ).map(({ entity, count }) => ({ slug: entity.slug, name: localize(entity.name, locale).value, count }));
+    return {
+      published: list.length,
+      byPhase,
+      year: year ?? null,
+      undated: list.filter((c) => !c.period.start).length,
+      monthly: tally(list.flatMap((c) => (c.period.start ? [c.period.start.slice(0, 7)] : [])))
+        .map(([month, count]) => ({ month, count }))
+        .sort((a, b) => a.month.localeCompare(b.month)),
+      years: tally(all.flatMap((c) => (c.period.start ? [c.period.start.slice(0, 4)] : [])))
+        .map(([y, count]) => ({ year: Number(y), count }))
+        .sort((a, b) => a.year - b.year),
+      category: terms(list.flatMap((c) => (c.category ? [c.category] : []))),
+      partnerCategory: terms(
+        list.flatMap((c) => [...new Set(c.parties.filter((p) => p.role === 'partner').flatMap((p) => propertyById(p.propertyId)?.kind ?? []))]),
+      ),
+      region: terms(list.flatMap((c) => c.regions)),
+      platform: terms(list.flatMap((c) => c.platforms)),
+      collabType: terms(list.flatMap((c) => c.collabTypes)),
+      topHosts: properties('host'),
+      topPartners: properties('partner'),
+      topCompanies: Object.fromEntries(STATS_COMPANY_ROLES.map((r) => [r, companyRanking(r)])),
+    };
   },
 
 

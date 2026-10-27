@@ -2143,3 +2143,475 @@ body {
     scroll-behavior: auto;
   }
 }
+
+/* ── 통계 ─────────────────────────────────────────────────── */
+
+.ct-header-links {
+  display: flex;
+  gap: 20px;
+}
+
+.ct-stats-lead {
+  max-width: 680px;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ct-muted);
+}
+
+.ct-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+/* 집계 기준은 본문(.ct-stats) 밖, 맨 아래에 붙는다 */
+.ct-stats + .ct-stats-section,
+.ct-stats-empty + .ct-stats-section {
+  margin-top: 56px;
+}
+
+.ct-stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ct-stats-note {
+  font-size: 13px;
+  color: var(--ct-muted);
+}
+
+.ct-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 40px;
+}
+
+.ct-stats-h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ct-stats-empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ct-muted);
+}
+
+/* 요약 숫자: 1px 간격 그리드, 첫 칸이 대표 숫자 */
+.ct-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  background: var(--ct-line);
+  border-block: 1px solid var(--gray-12);
+}
+
+.ct-kpis > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 18px 18px;
+  background: var(--color-background);
+}
+
+.ct-kpis > div:first-child {
+  padding-left: 0;
+}
+
+.ct-kpis dt {
+  font-size: 13px;
+  color: var(--ct-muted);
+}
+
+.ct-kpis dd {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.ct-kpi-value {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.ct-kpis > div:first-child .ct-kpi-value {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.ct-kpis > div[data-accent] .ct-kpi-value {
+  color: var(--ct-signal);
+}
+
+.ct-kpi-hint {
+  font-size: 13px;
+  color: var(--ct-muted);
+}
+
+/* 좁으면 대표 숫자 한 줄 + 나머지 2열 */
+@media (max-width: 900px) {
+  .ct-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ct-kpis > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .ct-kpis > div:nth-child(even) {
+    padding-left: 0;
+  }
+}
+
+/* 세로 막대 차트: 시리즈 하나. 지난 달은 글자색, 이번 달은 강조색, 예정은 옅은 회색 */
+.ct-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  overflow-x: clip;
+}
+
+.ct-chart [data-state='past'] {
+  --ct-col: var(--gray-12);
+}
+
+.ct-chart [data-state='current'] {
+  --ct-col: var(--ct-signal);
+}
+
+.ct-chart [data-state='future'] {
+  --ct-col: var(--gray-8);
+}
+
+.ct-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ct-muted);
+}
+
+.ct-chart-legend li::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--ct-col);
+  vertical-align: -1px;
+}
+
+.ct-cols {
+  position: relative;
+  height: 240px;
+  margin-top: 36px;
+}
+
+/* 눈금: 왼쪽 숫자 + 오른쪽 끝까지 실선 하나 */
+.ct-cols-axis {
+  position: absolute;
+  inset: 0 0 28px 0;
+  pointer-events: none;
+}
+
+.ct-cols-axis > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateY(50%);
+}
+
+.ct-cols-axis > span::before {
+  content: attr(data-v);
+  width: 28px;
+  font-family: var(--code-font-family);
+  font-size: 11px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--gray-10);
+}
+
+.ct-cols-axis > span::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ct-line-soft);
+}
+
+.ct-cols-axis > span[data-v='0']::after {
+  background: var(--ct-line);
+}
+
+.ct-cols-plot {
+  position: absolute;
+  inset: 0 0 0 36px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-cols-plot > li {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  min-width: 0;
+}
+
+/* 막대 칸 전체가 포인터·초점 대상(막대보다 넓다) */
+.ct-col {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: inherit;
+  text-decoration: none;
+  outline-offset: -2px;
+}
+
+.ct-col:hover,
+.ct-col:focus-visible {
+  background: var(--gray-a3);
+}
+
+/* 이번 달은 건수가 0이어도 보이도록 바닥에 강조색 선을 긋는다 */
+.ct-cols-plot > li[data-state='current'] .ct-col {
+  box-shadow: inset 0 -2px 0 var(--ct-signal);
+}
+
+.ct-col-bar {
+  position: relative;
+  width: min(24px, 70%);
+  border-radius: 4px 4px 0 0;
+  background: var(--ct-col);
+}
+
+.ct-col-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 2;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--ct-line);
+  background: var(--gray-3);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.ct-col-tip strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-12);
+}
+
+.ct-col-tip span {
+  font-size: 12px;
+  color: var(--gray-11);
+}
+
+.ct-col:hover .ct-col-tip,
+.ct-col:focus-visible .ct-col-tip {
+  display: flex;
+}
+
+/* 양 끝 막대의 툴팁은 차트 밖으로 나가지 않게 안쪽으로 붙인다 */
+.ct-cols-plot > li:nth-child(-n + 2) .ct-col-tip {
+  left: 0;
+  transform: none;
+}
+
+.ct-cols-plot > li:nth-last-child(-n + 2) .ct-col-tip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.ct-col-label {
+  padding-top: 8px;
+  font-family: var(--code-font-family);
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--gray-10);
+}
+
+@media (max-width: 640px) {
+  .ct-col-label {
+    font-size: 10px;
+  }
+}
+
+.ct-chart figcaption {
+  font-size: 13px;
+  color: var(--ct-muted);
+}
+
+.ct-chart-table summary {
+  width: fit-content;
+  font-size: 13px;
+  color: var(--ct-muted);
+  cursor: pointer;
+}
+
+.ct-chart-table summary:hover {
+  color: var(--gray-12);
+}
+
+.ct-chart-table table {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 12px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ct-chart-table th,
+.ct-chart-table td {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ct-line-soft);
+  font-weight: 400;
+  text-align: left;
+}
+
+.ct-chart-table td {
+  text-align: right;
+}
+
+.ct-chart-table thead th {
+  font-size: 12px;
+  color: var(--ct-muted);
+}
+
+.ct-chart-table thead th:last-child {
+  text-align: right;
+}
+
+/* 분류별 가로 막대: 이름 | 건수 비율, 아래 막대 */
+.ct-barlist,
+.ct-ranklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-barlist a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 6px 12px;
+  padding: 9px 0;
+  color: var(--gray-12);
+  text-decoration: none;
+}
+
+.ct-barlist li + li a,
+.ct-ranklist li + li a {
+  border-top: 1px solid var(--ct-line-soft);
+}
+
+.ct-barlist-label {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.ct-barlist-value {
+  font-size: 13px;
+}
+
+.ct-barlist-value span {
+  display: inline-block;
+  min-width: 4ch;
+  margin-left: 8px;
+  text-align: right;
+  color: var(--gray-10);
+}
+
+.ct-barlist-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  background: var(--gray-a3);
+}
+
+.ct-barlist-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 0 2px 2px 0;
+  background: var(--gray-12);
+}
+
+.ct-barlist a:hover .ct-barlist-label,
+.ct-ranklist a:hover .ct-ranklist-name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ct-barlist a:hover .ct-barlist-bar > span {
+  background: var(--gray-11);
+}
+
+/* 순위: 순번 | 이름(분류) | 건수 */
+.ct-ranklist a {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  color: var(--gray-12);
+  text-decoration: none;
+}
+
+.ct-ranklist-rank {
+  font-size: 12px;
+  color: var(--gray-10);
+}
+
+.ct-ranklist-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.ct-ranklist-name span {
+  font-size: 12px;
+  color: var(--ct-muted);
+}
+
+.ct-ranklist-count {
+  font-size: 13px;
+  color: var(--gray-11);
+}
+
+.ct-stats-method {
+  max-width: 760px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ct-muted);
+}

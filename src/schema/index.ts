@@ -215,12 +215,39 @@ export type FeaturedProperty = z.infer<typeof featuredPropertySchema>;
 
 export const taxonomyResponseSchema = z.object({ terms: z.array(taxonomyTermSchema) });
 
-/** GET /v1/stats (P1, 홈 요약에 일부 사용) */
+/** 통계 순위에 오르는 회사 역할(역할 미지정은 뺀다) */
+export const STATS_COMPANY_ROLES = ['publisher', 'developer', 'licensor', 'brand_partner', 'organizer'] as const;
+export type StatsCompanyRole = (typeof STATS_COMPANY_ROLES)[number];
+
+const termCount = termRefSchema.extend({ count: z.number().int() });
+const rankedEntity = z.object({ slug: z.string(), name: z.string(), count: z.number().int() });
+
+/**
+ * GET /v1/stats: 홈 현황과 통계 페이지. year가 있으면 그해 시작한 콜라보만 센다(years는 예외로 전체 연도).
+ * 새 필드는 이전 백엔드가 주지 않아도 화면이 깨지지 않도록 기본값을 둔다.
+ */
 export const statsSchema = z.object({
   published: z.number().int(),
   byPhase: z.record(z.enum(PHASES), z.number().int()),
+  year: z.number().int().nullable().default(null),
+  /** 시작일이 없는 콜라보 수(월별·연도별에서 빠진다) */
+  undated: z.number().int().default(0),
+  /** 시작 월(YYYY-MM)별 건수, 오름차순. 건수 0인 달은 없다 */
+  monthly: z.array(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/), count: z.number().int() })).default([]),
+  /** 시작 연도별 건수, 오름차순 */
+  years: z.array(z.object({ year: z.number().int(), count: z.number().int() })).default([]),
+  category: z.array(termCount).default([]),
+  partnerCategory: z.array(termCount).default([]),
+  region: z.array(termCount).default([]),
+  platform: z.array(termCount).default([]),
+  collabType: z.array(termCount).default([]),
+  topHosts: z.array(rankedEntity.extend({ kind: termRefSchema.nullable() })).default([]),
+  topPartners: z.array(rankedEntity.extend({ kind: termRefSchema.nullable() })).default([]),
+  topCompanies: z.partialRecord(z.enum(STATS_COMPANY_ROLES), z.array(rankedEntity)).default({}),
 });
 export type Stats = z.infer<typeof statsSchema>;
+export type RankedEntity = z.infer<typeof rankedEntity>;
+export type TermCount = z.infer<typeof termCount>;
 
 // ── 목록 쿼리 ─────────────────────────────────────────────────
 

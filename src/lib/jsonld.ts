@@ -132,3 +132,40 @@ const SITE_ALTERNATE_NAMES = ['Game Collabs', '게임콜라보'];
 export function websiteJsonLd({ name, description, url, locale }: { name: string; description: string; url: string; locale: string }): Thing {
   return { '@context': CONTEXT, '@type': 'WebSite', name, alternateName: SITE_ALTERNATE_NAMES, description, url, inLanguage: locale };
 }
+
+/**
+ * 통계 페이지: 화면의 집계를 Dataset으로 알린다(구글 데이터 세트 검색). 내려받기 파일은 없어 distribution은 넣지 않는다.
+ * temporalCoverage는 시작한 콜라보가 있는 첫해~마지막 해(연도 리포트면 그해)
+ */
+export function statsDatasetJsonLd({
+  name,
+  description,
+  url,
+  locale,
+  publisher,
+  years,
+  measured,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  locale: string;
+  publisher: { name: string; url: string };
+  years: number[];
+  measured: string[];
+}): Thing {
+  const first = Math.min(...years);
+  const last = Math.max(...years);
+  return {
+    '@context': CONTEXT,
+    '@type': 'Dataset',
+    name,
+    description,
+    url,
+    inLanguage: locale,
+    isAccessibleForFree: true,
+    creator: { '@type': 'Organization', name: publisher.name, url: publisher.url },
+    ...(years.length ? { temporalCoverage: first === last ? String(first) : `${first}/${last}` } : {}),
+    variableMeasured: measured,
+  };
+}

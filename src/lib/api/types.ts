@@ -35,7 +35,8 @@ export interface PublicApi {
   getProperty(slug: string, locale: Locale): Promise<PropertyDetail | null>;
   getCompany(slug: string, locale: Locale): Promise<CompanyDetail | null>;
   getTaxonomies(): Promise<TaxonomyTerm[]>;
-  getStats(): Promise<Stats>;
+  /** GET /v1/stats. 분류 라벨은 locale(기본 ko)로, year가 있으면 그해 시작한 콜라보만 */
+  getStats(query?: StatsQuery): Promise<Stats>;
   /** 홈 'IP로 찾아보기': GET /v1/properties?featured=true. 백엔드가 아직 지원하지 않으면 빈 목록 */
   listFeaturedProperties(locale: Locale): Promise<FeaturedProperty[]>;
   /** 프론트엔드가 추가로 요청하는 엔드포인트: GET /v1/sitemap */
@@ -46,6 +47,8 @@ export interface PublicApi {
    */
   submitReport(input: SubmissionInput, clientIp: string | null): Promise<void>;
 }
+
+export type StatsQuery = { locale?: Locale; year?: number };
 
 export type SitemapData = {
   collabs: { slug: string; updatedAt: string }[];

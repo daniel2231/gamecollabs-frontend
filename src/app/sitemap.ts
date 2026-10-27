@@ -5,13 +5,14 @@ import { LIST_PATH, parseCollabQuery } from '@/lib/filters';
 import { LANDING_PHASES, landingPath, type Landing } from '@/lib/landing';
 import { languageAlternates } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { FACET_PARAMS, type FacetParam } from '@/schema';
+import { STATS_PATH } from '@/lib/stats';
+import { FACET_PARAMS, type FacetParam, type Stats } from '@/schema';
 
 export const revalidate = 3600;
 
 /** 결과가 있는 필터 랜딩만 넣는다. 빈 랜딩은 noindex라 sitemap에 있으면 Search Console 오류가 된다 */
-async function landings(): Promise<Landing[]> {
-  const [stats, terms] = await Promise.all([api.getStats(), api.getTaxonomies()]);
+async function landings(stats: Stats): Promise<Landing[]> {
+  const terms = await api.getTaxonomies();
   const phases: Landing[] = LANDING_PHASES.filter((p) => stats.byPhase[p] > 0).map((key) => ({ param: 'phase', key }));
   const candidates = terms.filter((t) => !t.deprecated && (FACET_PARAMS as readonly string[]).includes(t.taxonomy));
   const counted = await Promise.all(
@@ -25,7 +26,8 @@ async function landings(): Promise<Landing[]> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const [data, landingList] = await Promise.all([api.getSitemap(), landings()]);
+  const stats = await api.getStats();
+  const [data, landingList] = await Promise.all([api.getSitemap(), landings(stats)]);
   // 언어마다 따로 항목을 둔다. 각 항목은 자신을 포함한 같은 hreflang 묶음을 갖는다
   const entries = (path: string, lastModified?: string): MetadataRoute.Sitemap => {
     const languages = languageAlternates(path, base);
@@ -34,6 +36,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...entries(''),
     ...entries(LIST_PATH),
+    ...entries(STATS_PATH),
+    // 연도 리포트는 그해 시작한 콜라보가 있을 때만 있다(없으면 404)
+    ...stats.years.filter((y) => y.count > 0).flatMap((y) => entries(`${STATS_PATH}/${y.year}`)),
     ...landingList.flatMap((l) => entries(landingPath(l))),
     ...data.collabs.flatMap((c) => entries(`/collabs/${c.slug}`, c.updatedAt)),
     ...data.properties.flatMap((p) => entries(`/properties/${p.slug}`, p.updatedAt)),

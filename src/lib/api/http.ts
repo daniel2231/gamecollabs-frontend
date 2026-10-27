@@ -142,8 +142,11 @@ export const httpPublicApi: PublicApi = {
   },
   getTaxonomies: async () =>
     z.array(taxonomyTermSchema).parse(A.flattenTaxonomy(await data<A.BeTaxonomyTree>('/v1/taxonomies', { tags: ['taxonomies'] }))),
-  getStats: async () =>
-    statsSchema.parse(A.toStats(await data<Parameters<typeof A.toStats>[0]>('/v1/stats', { tags: ['collabs'] }))),
+  getStats: async ({ locale = 'ko', year } = {}) => {
+    const sp = new URLSearchParams({ locale });
+    if (year) sp.set('year', String(year));
+    return statsSchema.parse(A.toStats(await data<A.BeStats>(`/v1/stats?${sp}`, { tags: ['collabs'] })));
+  },
   listFeaturedProperties: async (locale) => {
     // 백엔드가 아직 이 필터를 모르면(404 또는 다른 응답 형태) 섹션을 숨긴다. 홈 전체가 깨지지 않게 한다
     try {

@@ -6,7 +6,8 @@
     "description": "Track game collaborations and crossover events: which anime, films, characters and brands teamed up with which games, when, and how. Hand-reviewed from public sources.",
     "nav": {
       "main": "Main menu",
-      "collabs": "Collabs"
+      "collabs": "Collabs",
+      "stats": "Statistics"
     },
     "search": {
       "label": "Search collabs",
@@ -256,6 +257,83 @@
       "bot_check": "The bot check failed. Please try again.",
       "not_found": "We couldn’t find this collab. Please reload the page.",
       "unknown": "We couldn’t send your report. Please try again shortly."
+    }
+  },
+  "Stats": {
+    "title": "Game collab statistics",
+    "yearTitle": "Game collabs in {year}",
+    "lead": "{count, plural, one {# game × IP collab} other {# game × IP collabs}} in the tracker, counted by period, category and the games and IPs involved.",
+    "yearLead": "{count, plural, one {# game × IP collab} other {# game × IP collabs}} that started in {year}, counted by month, category and the games and IPs involved.",
+    "metaDescription": "Statistics on {count, plural, one {# game × IP collab} other {# game × IP collabs}}: monthly and yearly trends, partner categories such as anime, webtoons and brands, and the games, IPs and companies with the most collabs.",
+    "yearMetaDescription": "{count, plural, one {# game collab} other {# game collabs}} that started in {year}: monthly trend, partner categories, and the games, IPs and companies with the most collabs.",
+    "ogSubtitle": "{count, plural, one {# collab} other {# collabs}} · {range}",
+    "breadcrumb": "Statistics",
+    "years": {
+      "label": "Year",
+      "all": "All"
+    },
+    "kpi": {
+      "label": "Summary",
+      "total": "Collabs tracked",
+      "yearTotal": "Started in {year}",
+      "peak": "Busiest month",
+      "vsPrevious": "{diff} vs {year}",
+      "vsPreviousRatio": "{diff} ({ratio}) vs {year}",
+      "noPrevious": "No collabs in {year}"
+    },
+    "section": {
+      "yearly": "Collabs by year",
+      "monthly": "Collabs by month",
+      "monthlyRecent": "Last 24 months",
+      "distribution": "Categories",
+      "ranking": "Rankings",
+      "topHosts": "Games with the most collabs",
+      "topPartners": "IPs with the most collabs",
+      "method": "How we count"
+    },
+    "chart": {
+      "byStart": "By start month",
+      "byStartYear": "By start year",
+      "count": "{count, plural, one {# collab} other {# collabs}}",
+      "point": "{label}: {count, plural, one {# collab} other {# collabs}}",
+      "planned": "Planned",
+      "current": "This month",
+      "table": "Show as table",
+      "colPeriod": "Period",
+      "colCount": "Collabs",
+      "undated": "{count, plural, one {# collab has} other {# collabs have}} no announced start date yet and {count, plural, one {is} other {are}} left out of the monthly and yearly counts.",
+      "share": "{percent}% of {count, plural, one {# collab} other {# collabs}}",
+      "openYear": "Statistics for {year}"
+    },
+    "rank": {
+      "empty": "No collabs to count yet.",
+      "role": {
+        "publisher": "Publishers with the most collabs",
+        "developer": "Developers with the most collabs",
+        "licensor": "IP holders with the most collabs",
+        "brand_partner": "Brands with the most collabs",
+        "organizer": "Organizers with the most collabs"
+      }
+    },
+    "method": {
+      "published": "Only collabs we have reviewed and published are counted. Drafts, collabs under review and archived ones are left out.",
+      "start": "Monthly and yearly trends use the collab's start date. A year's statistics count only collabs that started that year.",
+      "multi": "A collab can fall under several categories, regions or platforms, so shares can add up to more than 100%. Several partners of the same category count once for that category.",
+      "coverage": "These figures describe the collabs in this tracker, not the whole industry.",
+      "report": "Report a missing collab",
+      "yearLinks": "Category links list every collab running that year, so the list can show more than the count here."
+    },
+    "empty": "No collabs to count yet.",
+    "dataset": {
+      "name": "Game × IP collab data",
+      "yearName": "Game × IP collab data, {year}",
+      "measured": [
+        "Number of collabs",
+        "Start month",
+        "Partner IP category",
+        "Region",
+        "Platform"
+      ]
     }
   }
 }

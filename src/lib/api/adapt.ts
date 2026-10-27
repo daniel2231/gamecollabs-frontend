@@ -451,8 +451,11 @@ export function flattenTaxonomy(tree: BeTaxonomyTree): TaxonomyTerm[] {
   return out;
 }
 
-export function toStats(s: { total: number; byPhase: Stats['byPhase'] }): Stats {
-  return { published: s.total, byPhase: s.byPhase };
+/** Express 통계: 전체 수는 total로 온다. 나머지는 이름이 같다(이전 백엔드에는 없을 수 있다) */
+export type BeStats = { total: number } & Omit<Partial<Stats>, 'published'> & Pick<Stats, 'byPhase'>;
+
+export function toStats({ total, ...rest }: BeStats): Stats {
+  return { ...rest, published: total } as Stats;
 }
 
 type BeSitemapEntity = { slug: string; updatedAt?: string | null };

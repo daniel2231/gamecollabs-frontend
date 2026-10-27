@@ -17,6 +17,8 @@ describe('urlsForTags', () => {
       'https://x.test/en',
       'https://x.test/ko/collabs',
       'https://x.test/en/collabs',
+      'https://x.test/ko/stats',
+      'https://x.test/en/stats',
       'https://x.test/ko/collabs/a-x-b',
       'https://x.test/en/collabs/a-x-b',
       'https://x.test/ko/properties/a',

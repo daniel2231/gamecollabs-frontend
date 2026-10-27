@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CollabDetail, CompanyDetail, PropertyDetail } from '@/schema';
-import { breadcrumbJsonLd, collabJsonLd, companyJsonLd, propertyJsonLd, serializeJsonLd } from './jsonld';
+import { breadcrumbJsonLd, collabJsonLd, companyJsonLd, propertyJsonLd, serializeJsonLd, statsDatasetJsonLd } from './jsonld';
 
 const name = (value: string, original: string | null = null) => ({ value, fallback: false, original });
 
@@ -150,5 +150,20 @@ describe('breadcrumbJsonLd / serializeJsonLd', () => {
 
   it('script 태그를 닫을 수 없게 <를 이스케이프한다', () => {
     expect(serializeJsonLd({ name: '</script><b>' })).toBe('{"name":"\\u003c/script>\\u003cb>"}');
+  });
+});
+
+describe('statsDatasetJsonLd', () => {
+  const base = { name: 'Game × IP collab data', description: 'd', url: 'https://x.test/en/stats', locale: 'en', publisher: { name: 'GameCollabs', url: 'https://x.test' }, measured: ['Number of collabs'] };
+
+  it('covers the first to the last year', () => {
+    expect(statsDatasetJsonLd({ ...base, years: [2026, 2024, 2025] })).toMatchObject({
+      '@type': 'Dataset',
+      temporalCoverage: '2024/2026',
+      creator: { '@type': 'Organization', name: 'GameCollabs' },
+      variableMeasured: ['Number of collabs'],
+    });
+    expect(statsDatasetJsonLd({ ...base, years: [2025] }).temporalCoverage).toBe('2025');
+    expect(statsDatasetJsonLd({ ...base, years: [] })).not.toHaveProperty('temporalCoverage');
   });
 });
