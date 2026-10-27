@@ -7,11 +7,11 @@ import { siteUrl } from '@/lib/site';
 
 /**
  * Express가 발행·수정 후 호출: { "tags": ["collabs", "collab:<slug>", "property:<slug>"] }.
- * 작품의 홈 노출(순서·대표 이미지)을 바꾸면 "featured"를 보낸다
+ * 작품의 홈 노출(순서·대표 이미지)을 바꾸면 "featured", 공개 변경 내역을 바꾸면 "changelog"를 보낸다
  */
 const bodySchema = z.object({
   tags: z
-    .array(z.string().regex(/^(collabs|taxonomies|featured|(collab|property|company):[a-z0-9-]+)$/))
+    .array(z.string().regex(/^(collabs|taxonomies|featured|changelog|(collab|property|company):[a-z0-9-]+)$/))
     .min(1)
     .max(50),
 });

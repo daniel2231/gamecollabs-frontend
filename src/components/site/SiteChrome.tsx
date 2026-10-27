@@ -29,11 +29,15 @@ export async function SiteFooter() {
             <RadixLink asChild size="2" color="gray">
               <Link href="/report">{t('report')}</Link>
             </RadixLink>
+            <RadixLink asChild size="2" color="gray">
+              <Link href="/changelog">{t('changelog')}</Link>
+            </RadixLink>
             <RadixLink size="2" color="gray" href={`/${locale}/rss.xml`} className="ct-mono">
               RSS
             </RadixLink>
           </Flex>
         </Flex>
+        <p className="ct-footer-notice">{t('disclaimer')}</p>
       </div>
     </footer>
   );

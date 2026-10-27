@@ -18,6 +18,7 @@ const STATUS_LINKS = [
 const DATA_LINKS = [
   { href: '/admin/entities', label: '작품·회사' },
   { href: '/admin/taxonomy', label: '분류 어휘' },
+  { href: '/admin/changelog', label: '변경 내역' },
 ] as const;
 
 /** followUps: 처리할 재확인 제안 + 확인하지 않은 자동 반영 수, submissions: 처리하지 않은 제보 수(백엔드가 기능을 모르거나 실패하면 null) */

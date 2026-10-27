@@ -7,6 +7,7 @@ import { followUpReasonOf, nextCheckAt } from '@/lib/followup';
 import { computePhase } from '@/lib/phase';
 import { STATS_COMPANY_ROLES, type StatsCompanyRole } from '@/schema';
 import type {
+  AdminChangelogEntry,
   AdminCollab,
   AdminCover,
   AdminEntity,
@@ -33,7 +34,14 @@ import type { DbCollab, DbCompany, DbProperty } from './data';
 
 /** 제보: 대상 콜라보는 id로만 두고 조회할 때 붙인다. ipHash는 백엔드처럼 주소 대신 해시 */
 type DbSubmission = Omit<Submission, 'collab'> & { collabId: string | null; ipHash: string };
-type Store = { terms: TaxonomyTerm[]; properties: DbProperty[]; companies: DbCompany[]; collabs: DbCollab[]; submissions: DbSubmission[] };
+type Store = {
+  terms: TaxonomyTerm[];
+  properties: DbProperty[];
+  companies: DbCompany[];
+  collabs: DbCollab[];
+  submissions: DbSubmission[];
+  changelog: AdminChangelogEntry[];
+};
 // 개발 서버 핫 리로드에도 수정 내용이 유지되도록 전역에 둔다
 const g = globalThis as { __collabTrackerMock?: Store };
 const db: Store = (g.__collabTrackerMock ??= structuredClone({
@@ -42,9 +50,11 @@ const db: Store = (g.__collabTrackerMock ??= structuredClone({
   companies: seed.companies,
   collabs: seed.collabs,
   submissions: [],
+  changelog: seed.changelog,
 }));
-// 제보가 생기기 전에 띄운 개발 서버의 전역 저장소에는 submissions가 없다
+// 제보·변경 내역이 생기기 전에 띄운 개발 서버의 전역 저장소에는 이 목록이 없다
 db.submissions ??= [];
+db.changelog ??= structuredClone(seed.changelog);
 
 // ── 공통 도우미 ───────────────────────────────────────────────
 
@@ -444,7 +454,34 @@ export const mockPublicApi: PublicApi = {
       createdAt: now(),
     });
   },
+
+  async listChangelog(locale) {
+    await delay();
+    return changelogNewestFirst()
+      .filter((e) => e.published)
+      .map((e) => ({ id: e.id, version: e.version, date: e.date, body: e.body[locale] }));
+  },
 };
+
+/** 백엔드와 같은 순서: 날짜 내림차순, 같은 날이면 나중에 만든 것 먼저(목은 배열 뒤쪽이 나중) */
+function changelogNewestFirst(): AdminChangelogEntry[] {
+  return db.changelog
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => b.e.date.localeCompare(a.e.date) || b.i - a.i)
+    .map(({ e }) => e);
+}
+
+function changelogEntry(id: string): AdminChangelogEntry {
+  const e = db.changelog.find((x) => x.id === id);
+  if (!e) throw new ApiError(404, 'not_found', 'changelog entry not found');
+  return e;
+}
+
+function assertVersionFree(version: string, exceptId?: string) {
+  if (db.changelog.some((x) => x.version === version && x.id !== exceptId)) {
+    throw new ApiError(409, 'duplicate_key', 'version already exists', { version: 'already exists' });
+  }
+}
 
 function toSubmission({ collabId, ipHash: _ipHash, ...s }: DbSubmission): Submission {
   const c = collabId ? db.collabs.find((x) => x.id === collabId) : undefined;
@@ -924,6 +961,33 @@ export const mockAdminApi: AdminApi = {
     if (!s) throw new ApiError(404, 'not_found', 'submission not found');
     s.status = status;
     return toSubmission(s);
+  },
+
+  async listChangelog() {
+    await delay();
+    return changelogNewestFirst();
+  },
+
+  async createChangelog(input) {
+    await delay();
+    assertVersionFree(input.version);
+    const entry: AdminChangelogEntry = { ...structuredClone(input), id: `chg_${Date.now().toString(36)}${db.changelog.length}`, updatedAt: now() };
+    db.changelog.push(entry);
+    return entry;
+  },
+
+  async updateChangelog(id, input) {
+    await delay();
+    const entry = changelogEntry(id);
+    assertVersionFree(input.version, id);
+    Object.assign(entry, structuredClone(input), { updatedAt: now() });
+    return entry;
+  },
+
+  async deleteChangelog(id) {
+    await delay();
+    changelogEntry(id);
+    db.changelog = db.changelog.filter((x) => x.id !== id);
   },
 
   // 저장소 대신 data: 주소로 메모리에 둔다(서버를 재시작하면 사라진다). 크기는 브라우저가 잰 값을 믿는다

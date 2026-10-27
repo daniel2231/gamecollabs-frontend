@@ -20,7 +20,9 @@
     },
     "mockBanner": "Development mode: showing mock data. Set API_BASE_URL to use the real API.",
     "skip": "Skip to content",
-    "report": "Submit a collab"
+    "report": "Submit a collab",
+    "changelog": "Changelog",
+    "disclaimer": "This website is not affiliated with or endorsed by any of the companies or games featured on it. All images and intellectual property belong to their respective copyright holders."
   },
   "Phase": {
     "all": "All",
@@ -333,5 +335,10 @@
         "Platform"
       ]
     }
+  },
+  "Changelog": {
+    "title": "Changelog",
+    "description": "New features and changes to GameCollabs, by version.",
+    "empty": "No changelog entries yet."
   }
 }

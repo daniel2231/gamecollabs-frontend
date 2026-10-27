@@ -149,3 +149,30 @@ describe('목 API: PRD 규칙', () => {
     await svc.mockPublicApi.submitReport({ kind: 'tip', url: 'https://example.com/x', locale: 'ko' }, '9.9.9.9');
   });
 });
+
+describe('목 API: 변경 내역', () => {
+  let svc: Awaited<ReturnType<typeof load>>;
+  beforeEach(async () => {
+    svc = await load();
+  });
+
+  it('공개 항목만 최신순으로, 요청 언어 본문만 내려준다', async () => {
+    await svc.mockAdminApi.createChangelog({ version: '0.3.0', date: '2026-10-20', body: { ko: '같은 날 나중', en: 'Same day, later' }, published: true });
+    const en = await svc.mockPublicApi.listChangelog('en');
+    expect(en.map((e) => e.version)).toEqual(['0.3.0', '0.1.0']);
+    expect(en[0]?.body).toBe('Same day, later');
+    const all = await svc.mockAdminApi.listChangelog();
+    // 같은 날짜(0.2.0, 0.3.0)는 나중에 만든 것 먼저
+    expect(all.map((e) => e.version)).toEqual(['0.3.0', '0.2.0', '0.1.0']);
+  });
+
+  it('같은 버전은 거절하고, 수정·삭제한다', async () => {
+    const input = { version: '0.1.0', date: '2026-10-21', body: { ko: '중복', en: 'Duplicate' }, published: true };
+    await expect(svc.mockAdminApi.createChangelog(input)).rejects.toMatchObject({ status: 409, code: 'duplicate_key' });
+    const updated = await svc.mockAdminApi.updateChangelog('chg_mock2', { version: '0.2.0', date: '2026-10-20', body: { ko: '고침', en: 'Fixed' }, published: true });
+    expect(updated).toMatchObject({ published: true, body: { en: 'Fixed' } });
+    await svc.mockAdminApi.deleteChangelog('chg_mock1');
+    expect((await svc.mockPublicApi.listChangelog('ko')).map((e) => e.version)).toEqual(['0.2.0']);
+    await expect(svc.mockAdminApi.deleteChangelog('chg_mock1')).rejects.toMatchObject({ status: 404 });
+  });
+});
