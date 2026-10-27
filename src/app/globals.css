@@ -2606,6 +2606,16 @@ body {
   color: var(--gray-11);
 }
 
+/* 목록 아래 '더 보기' 글자 버튼 */
+.ct-list-more {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .ct-stats-method {
   max-width: 760px;
   margin: 0;

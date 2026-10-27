@@ -13,6 +13,8 @@ export const COLLECTION_START = '2026-04';
 export const RECENT_MONTHS = 24;
 /** 순위마다 보여 줄 개수 */
 export const RANK_SIZE = 5;
+/** 분류별 분포에서 처음 보여 줄 개수(나머지는 '더 보기') */
+export const BAR_LIST_SIZE = 5;
 /** 예정 콜라보가 있으면 이번 달 뒤로 최대 이만큼 더 보여준다 */
 export const FUTURE_MONTHS = 6;
 

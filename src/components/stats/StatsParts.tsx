@@ -1,7 +1,8 @@
 import { useTranslations } from 'next-intl';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
-import { RANK_SIZE, STATS_PATH, niceTicks, percentOf, type MonthState } from '@/lib/stats';
+import { MoreList } from './MoreList';
+import { BAR_LIST_SIZE, RANK_SIZE, STATS_PATH, niceTicks, percentOf, type MonthState } from '@/lib/stats';
 import type { RankedEntity, TermRef } from '@/schema';
 
 /** 통계 페이지의 한 묶음: 위 굵은 선, 제목과 보조 설명 */
@@ -131,9 +132,10 @@ export function ColumnChart({ label, columns, caption }: { label: string; column
   );
 }
 
-/** 분류별 가로 막대: 이름 · 건수 · 전체 대비 비율. 이름은 그 분류의 목록으로 이어진다 */
+/** 분류별 가로 막대: 이름 · 건수 · 전체 대비 비율. 이름은 그 분류의 목록으로 이어진다. 앞 BAR_LIST_SIZE개만 보이고 나머지는 '더 보기' */
 export function BarList({ title, items, total, href }: { title: string; items: (TermRef & { count: number })[]; total: number; href: (key: string) => string }) {
   const t = useTranslations('Stats');
+  const tList = useTranslations('List');
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
     <section className="ct-block">
@@ -141,8 +143,12 @@ export function BarList({ title, items, total, href }: { title: string; items: (
       {items.length === 0 ? (
         <p className="ct-stats-empty">{t('rank.empty')}</p>
       ) : (
-        <ul className="ct-barlist">
-          {items.map((it) => (
+        <MoreList
+          className="ct-barlist"
+          visible={BAR_LIST_SIZE}
+          moreLabel={tList('showMore', { count: items.length - BAR_LIST_SIZE })}
+          lessLabel={tList('showLess')}
+          items={items.map((it) => (
             <li key={it.key}>
               <Link href={href(it.key)} title={t('chart.share', { count: total, percent: percentOf(it.count, total) })}>
                 <span className="ct-barlist-label">{it.label}</span>
@@ -156,7 +162,7 @@ export function BarList({ title, items, total, href }: { title: string; items: (
               </Link>
             </li>
           ))}
-        </ul>
+        />
       )}
     </section>
   );
