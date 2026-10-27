@@ -807,7 +807,6 @@ export const mockAdminApi: AdminApi = {
 
   async listFollowUps(view, limit = 50) {
     await delay();
-    const t = new Date().toISOString();
     const items = db.collabs
       .filter((c) => c.status !== 'archived')
       .map(toFollowUpItem)
@@ -818,7 +817,7 @@ export const mockAdminApi: AdminApi = {
             ? f.applied
             : view === 'escalated'
               ? f.reason && f.escalated
-              : f.reason && !f.proposal && f.nextCheckAt && f.nextCheckAt <= t,
+              : f.reason,
       );
     if (view === 'applied') return items.sort((a, b) => b.applied!.at.localeCompare(a.applied!.at)).slice(0, limit);
     const key = (f: FollowUpItem) => (view === 'proposals' ? f.proposal!.at : view === 'escalated' ? (f.lastCheckedAt ?? '') : (f.nextCheckAt ?? ''));

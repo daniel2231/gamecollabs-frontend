@@ -117,7 +117,7 @@ export interface AdminApi {
   uploadMedia(file: File, size: { width: number; height: number }): Promise<UploadedMedia>;
   /** 커버의 원본 주소(originalUrl)를 저장소로 복사: POST /v1/admin/collabs/:id/cover/mirror (rev는 바뀌지 않는다) */
   mirrorCover(id: string): Promise<{ result: 'mirrored' | 'skipped' | 'failed'; collab: AdminCollab }>;
-  /** 후속 확인 큐: GET /v1/admin/followups?view= (제안·자동 반영·알림·확인 예정, 최대 50건) */
+  /** 후속 확인 큐: GET /v1/admin/followups?view= (제안·자동 반영·알림·확인 예정, 최대 100건) */
   listFollowUps(view: FollowUpView, limit?: number): Promise<FollowUpItem[]>;
   /**
    * 재확인 제안 처리: POST /v1/admin/collabs/:id/followup.
