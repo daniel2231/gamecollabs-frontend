@@ -338,8 +338,11 @@ export type CollabInput = z.infer<typeof collabInputSchema>;
  */
 export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing', 'content_tba'] as const;
 export type FollowUpReason = (typeof FOLLOW_UP_REASONS)[number];
-export const FOLLOW_UP_VIEWS = ['proposals', 'escalated', 'due'] as const;
+export const FOLLOW_UP_VIEWS = ['proposals', 'applied', 'escalated', 'due'] as const;
 export type FollowUpView = (typeof FOLLOW_UP_VIEWS)[number];
+/** apply·dismiss: 재확인 제안 처리, acknowledge: 초안에 바로 반영된 변경을 확인함 */
+export const FOLLOW_UP_ACTIONS = ['apply', 'dismiss', 'acknowledge'] as const;
+export type FollowUpAction = (typeof FOLLOW_UP_ACTIONS)[number];
 
 /** 재확인에서 찾은 변경. 검수 중·발행된 콜라보는 바로 고치지 않고 관리자가 반영하거나 버린다 */
 export const followUpProposalSchema = z.object({
@@ -359,6 +362,17 @@ export const followUpProposalSchema = z.object({
 });
 export type FollowUpProposal = z.infer<typeof followUpProposalSchema>;
 
+const followUpTextSchema = z.object({ ko: z.object({ title: z.string(), summary: z.string() }), en: z.object({ title: z.string(), summary: z.string() }) });
+
+/**
+ * 수집기가 초안에 바로 반영했지만 관리자가 아직 확인하지 않은 변경. 확인할 때까지 남는다.
+ * 여러 번 반영되면 하나로 합쳐진다(before는 처음 반영 전 값, 변경은 마지막 값, rev는 반영 후).
+ */
+export const followUpAppliedSchema = followUpProposalSchema.extend({
+  before: z.object({ period: periodSchema, text: followUpTextSchema, contentTba: z.boolean() }),
+});
+export type FollowUpApplied = z.infer<typeof followUpAppliedSchema>;
+
 export const followUpStateSchema = z.object({
   reason: z.enum(FOLLOW_UP_REASONS).nullable(),
   nextCheckAt: z.iso.datetime().nullable(),
@@ -368,6 +382,8 @@ export const followUpStateSchema = z.object({
   /** 여러 번 확인해도 소식이 없어 사람이 결정해야 함 */
   escalated: z.boolean(),
   proposal: followUpProposalSchema.nullable(),
+  /** 초안에 바로 반영된 변경 중 관리자가 아직 확인하지 않은 것 */
+  applied: followUpAppliedSchema.nullable(),
 });
 export type FollowUpState = z.infer<typeof followUpStateSchema>;
 
@@ -379,7 +395,7 @@ export const followUpItemSchema = followUpStateSchema.extend({
   rev: z.number().int(),
   title: z.string(),
   /** 지금 저장된 제목·요약(제안과 비교용) */
-  text: z.object({ ko: z.object({ title: z.string(), summary: z.string() }), en: z.object({ title: z.string(), summary: z.string() }) }),
+  text: followUpTextSchema,
   period: periodSchema,
   /** 내용 미정. 사유가 날짜여도 켜져 있으면 내용도 같이 확인한다 */
   contentTba: z.boolean(),
@@ -427,6 +443,8 @@ export const adminQueueItemSchema = z.object({
   duplicateCandidate: z.boolean(),
   /** 우리 저장소에 올렸거나 원본 주소가 있는 커버가 있는지. null이면 백엔드가 알려주지 않음 */
   hasCover: z.boolean().nullable(),
+  /** 수집기가 바꾼 뒤 관리자가 아직 확인하지 않음 */
+  followUpApplied: z.boolean(),
   updatedAt: z.iso.datetime(),
 });
 export type AdminQueueItem = z.infer<typeof adminQueueItemSchema>;

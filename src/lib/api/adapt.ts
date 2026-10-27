@@ -17,6 +17,7 @@ import type {
   Cover,
   EntityKind,
   FeaturedProperty,
+  FollowUpApplied,
   FollowUpItem,
   FollowUpProposal,
   FollowUpState,
@@ -186,6 +187,15 @@ export type BeFollowUpProposal = {
   at: string;
 };
 
+/** 초안에 바로 반영된 변경. before는 처음 반영 전 값 */
+export type BeFollowUpApplied = BeFollowUpProposal & {
+  before: {
+    period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+    i18n: { ko: { title: string | null; summary: string | null }; en: { title: string | null; summary: string | null } };
+    contentTba: boolean;
+  };
+};
+
 export type BeFollowUp = {
   reason: FollowUpState['reason'];
   nextCheckAt: string | null;
@@ -193,6 +203,8 @@ export type BeFollowUp = {
   unchanged?: number;
   escalatedAt?: string | null;
   proposal: BeFollowUpProposal | null;
+  /** 이 기능 이전 백엔드는 주지 않는다 */
+  applied?: BeFollowUpApplied | null;
 };
 
 /** GET /v1/admin/followups 항목 */
@@ -213,6 +225,8 @@ export type BeFollowUpRow = {
   uncheckedRuns: number;
   escalated: boolean;
   proposal: BeFollowUpProposal | null;
+  /** 이 기능 이전 백엔드는 주지 않는다 */
+  applied?: BeFollowUpApplied | null;
 };
 
 export type BeAdminCover = {
@@ -585,6 +599,14 @@ export function toFollowUpProposal(p: BeFollowUpProposal): FollowUpProposal {
   };
 }
 
+export function toFollowUpApplied(a: BeFollowUpApplied): FollowUpApplied {
+  const text = (t: { title: string | null; summary: string | null }) => ({ title: t.title ?? '', summary: t.summary ?? '' });
+  return {
+    ...toFollowUpProposal(a),
+    before: { period: period(a.before.period), text: { ko: text(a.before.i18n.ko), en: text(a.before.i18n.en) }, contentTba: a.before.contentTba },
+  };
+}
+
 export function toFollowUpState(f: BeFollowUp): FollowUpState {
   return {
     reason: f.reason,
@@ -593,6 +615,7 @@ export function toFollowUpState(f: BeFollowUp): FollowUpState {
     unchanged: f.unchanged ?? 0,
     escalated: Boolean(f.escalatedAt),
     proposal: f.proposal ? toFollowUpProposal(f.proposal) : null,
+    applied: f.applied ? toFollowUpApplied(f.applied) : null,
   };
 }
 
@@ -616,6 +639,7 @@ export function toFollowUpItem(r: BeFollowUpRow): FollowUpItem {
     unchanged: r.uncheckedRuns,
     escalated: r.escalated,
     proposal: r.proposal ? toFollowUpProposal(r.proposal) : null,
+    applied: r.applied ? toFollowUpApplied(r.applied) : null,
   };
 }
 
@@ -629,6 +653,7 @@ export function toQueueItem(c: BeAdminCollab): AdminQueueItem {
     sourceCount: c.sources.length,
     duplicateCandidate: (c.duplicateCount ?? 0) > 0,
     hasCover: c.cover === undefined ? null : Boolean(c.cover),
+    followUpApplied: Boolean(c.followUp?.applied),
     updatedAt: c.updatedAt,
   };
 }

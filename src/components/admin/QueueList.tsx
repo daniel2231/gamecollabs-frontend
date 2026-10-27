@@ -86,6 +86,11 @@ export function QueueList({ items, nextCursor, filter, query, selectedId, emptyM
                     중복 후보
                   </Badge>
                 )}
+                {q.followUpApplied && (
+                  <Badge size="1" variant="soft" color="blue">
+                    수집기 반영
+                  </Badge>
+                )}
                 {!filter.cover && q.hasCover === false && (
                   <Badge size="1" variant="outline" color="gray">
                     커버 없음

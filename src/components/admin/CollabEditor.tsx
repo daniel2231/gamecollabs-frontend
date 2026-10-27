@@ -5,6 +5,7 @@ import {
   Cross2Icon,
   ExclamationTriangleIcon,
   ExternalLinkIcon,
+  InfoCircledIcon,
   PlusIcon,
   TrashIcon,
 } from '@radix-ui/react-icons';
@@ -40,6 +41,7 @@ import {
   type AdminCollab,
   type CollabInput,
   type CompanyRole,
+  type FollowUpApplied,
   type Period,
   type Transition,
 } from '@/schema';
@@ -125,6 +127,11 @@ function initialState(collab: AdminCollab | null, entities: Record<string, Entit
 }
 
 type FormState = ReturnType<typeof initialState>;
+
+/** 수집기가 바꾼 항목 이름(편집기 안내용) */
+function appliedFields(a: FollowUpApplied): string[] {
+  return [a.period && '기간', a.i18n && '제목·요약', a.contentTba !== null && '내용 미발표 표시'].filter((f): f is string => Boolean(f));
+}
 
 export function CollabEditor({ collab, trees, entities, locale }: Props) {
   const router = useRouter();
@@ -388,6 +395,23 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
               ))}
             </Callout.Text>
             <CompareDialog current={collab} otherId={collab.duplicates[0]!.id} />
+          </Flex>
+        </Callout.Root>
+      )}
+
+      {collab?.followUp?.applied && (
+        <Callout.Root color="blue" role="status">
+          <Callout.Icon>
+            <InfoCircledIcon />
+          </Callout.Icon>
+          <Flex wrap="wrap" align="center" gap="3" style={{ gridColumn: '2' }}>
+            <Callout.Text style={{ flex: '1 1 300px' }}>
+              수집기가 {collab.followUp.applied.at.slice(0, 10)}에 <strong>{appliedFields(collab.followUp.applied).join('·')}</strong>을(를) 바꿨습니다. 아직
+              확인하지 않았습니다.
+            </Callout.Text>
+            <Button asChild size="1" variant="soft">
+              <Link href="/admin/followups?view=applied">바뀐 내용 보기</Link>
+            </Button>
           </Flex>
         </Callout.Root>
       )}

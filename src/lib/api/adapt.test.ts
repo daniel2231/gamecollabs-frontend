@@ -349,7 +349,32 @@ describe('후속 확인 변환', () => {
       unchanged: 0,
       escalated: true,
       proposal: null,
+      applied: null,
     });
+  });
+
+  it('자동 반영: 반영 전 값은 화면 형태로, 제목·요약이 없으면 빈 문자열', () => {
+    const applied: A.BeFollowUpApplied = {
+      ...proposal,
+      changes: { i18n: proposal.changes.i18n, contentTba: false },
+      before: {
+        period: { start: '2026-11', end: null, precision: 'month', endKind: 'tba' },
+        i18n: { ko: { title: '가 × 나', summary: null }, en: { title: null, summary: null } },
+        contentTba: true,
+      },
+    };
+    const state = A.toFollowUpState({ reason: null, nextCheckAt: null, lastCheckedAt: null, proposal: null, applied });
+    expect(state.applied).toMatchObject({
+      before: {
+        period: { start: '2026-11-01', end: null, precision: 'month', endKind: 'tba' },
+        text: { ko: { title: '가 × 나', summary: '' }, en: { title: '', summary: '' } },
+        contentTba: true,
+      },
+      period: null,
+      contentTba: false,
+      rev: 3,
+    });
+    expect(followUpItemSchema.shape.applied.parse(state.applied)).toEqual(state.applied);
   });
 });
 

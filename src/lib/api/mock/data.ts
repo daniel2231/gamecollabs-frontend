@@ -4,7 +4,7 @@
  * 실제 이름은 PRD에 나온 콜라보(태고의 달인 × 자가리코, 진격의 거인 × Blood Strike / WePlay)만 사용했다.
  * 확인되지 않은 날짜·분류·출처는 비워 두거나 example.com 자리표시자로 두었다. 실제 데이터로 쓰지 말 것.
  */
-import type { AdminCover, AdminVenue, CollabStatus, CompanyRole, FollowUpProposal, Origin, Period, Source, TaxonomyTerm } from '@/schema';
+import type { AdminCover, AdminVenue, CollabStatus, CompanyRole, FollowUpApplied, FollowUpProposal, Origin, Period, Source, TaxonomyTerm } from '@/schema';
 
 type TermSeed = [key: string, ko: string, en: string, legacy?: string[]];
 
@@ -114,7 +114,15 @@ export type DbCollab = {
   /** 콜라보 내용 미발표 */
   contentTba?: boolean;
   /** 후속 확인 기록. 사유는 기간·contentTba에서 계산하므로 저장하지 않는다. 없으면 만든 지 3일 뒤가 첫 확인 */
-  followUp?: { nextCheckAt: string | null; lastCheckedAt: string | null; unchanged: number; escalatedAt: string | null; proposal: FollowUpProposal | null };
+  followUp?: {
+    nextCheckAt: string | null;
+    lastCheckedAt: string | null;
+    unchanged: number;
+    escalatedAt: string | null;
+    proposal: FollowUpProposal | null;
+    /** 수집기가 초안에 바로 반영했고 아직 확인하지 않은 변경 */
+    applied?: FollowUpApplied | null;
+  };
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
@@ -313,8 +321,8 @@ export const collabs: DbCollab[] = [
     slug: 'sample-draft-attack-on-titan',
     status: 'draft',
     i18n: {
-      ko: { title: '[게임명] × 진격의 거인', summary: '', note: '' },
-      en: { title: '', summary: '', note: '' },
+      ko: { title: '[게임명] × 진격의 거인', summary: '[수집기가 채운 요약 자리표시자]', note: '' },
+      en: { title: '', summary: '[Placeholder summary filled in by the collector]', note: '' },
     },
     parties: [{ propertyId: 'p_aot', role: 'partner' }],
     companies: [],
@@ -326,6 +334,32 @@ export const collabs: DbCollab[] = [
     sources: [placeholderSource('weplay-attack-on-titan')],
     origin: { type: 'gpt', runId: 'run_sample', model: null, confidence: null },
     unmapped: [{ field: 'platforms', raw: '[원본 표기]' }],
+    // 후속 확인 화면용: 수집기가 초안에 바로 반영했고 아직 확인하지 않은 변경(자리표시자 내용, 실제 정보 아님)
+    followUp: {
+      nextCheckAt: '2026-10-09T00:00:00.000Z',
+      lastCheckedAt: '2026-10-06T00:00:00.000Z',
+      unchanged: 0,
+      escalatedAt: null,
+      proposal: null,
+      applied: {
+        before: {
+          period: unknownPeriod,
+          text: { ko: { title: '[게임명] × 진격의 거인', summary: '' }, en: { title: '', summary: '' } },
+          contentTba: false,
+        },
+        period: null,
+        i18n: {
+          ko: { title: '[게임명] × 진격의 거인', summary: '[수집기가 채운 요약 자리표시자]' },
+          en: { title: '', summary: '[Placeholder summary filled in by the collector]' },
+        },
+        contentTba: null,
+        sources: [{ url: 'https://example.com/weplay-attack-on-titan/details', title: '[자리표시자 출처]', publisher: null }],
+        note: '목 데이터: 확인되지 않은 자리표시자',
+        rev: 3,
+        by: 'token:mcp',
+        at: '2026-10-06T00:00:00.000Z',
+      },
+    },
     rev: 3,
     createdAt: '2026-10-06T00:00:00.000Z',
     updatedAt: '2026-10-06T00:00:00.000Z',
