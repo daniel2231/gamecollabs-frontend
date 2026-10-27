@@ -20,7 +20,7 @@ const DATA_LINKS = [
   { href: '/admin/taxonomy', label: '분류 어휘' },
 ] as const;
 
-/** followUps: 처리할 재확인 제안 수, submissions: 처리하지 않은 제보 수(백엔드가 기능을 모르거나 실패하면 null) */
+/** followUps: 처리할 재확인 제안 + 확인하지 않은 자동 반영 수, submissions: 처리하지 않은 제보 수(백엔드가 기능을 모르거나 실패하면 null) */
 export function AdminNav({ counts, followUps, submissions }: { counts: Counts; followUps: number | null; submissions: number | null }) {
   const pathname = usePathname();
   const params = useSearchParams();

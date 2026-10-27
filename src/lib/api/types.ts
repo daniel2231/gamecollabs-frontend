@@ -11,6 +11,7 @@ import type {
   CompanyDetail,
   EntityKind,
   FeaturedProperty,
+  FollowUpAction,
   FollowUpItem,
   FollowUpView,
   Locale,
@@ -116,13 +117,14 @@ export interface AdminApi {
   uploadMedia(file: File, size: { width: number; height: number }): Promise<UploadedMedia>;
   /** 커버의 원본 주소(originalUrl)를 저장소로 복사: POST /v1/admin/collabs/:id/cover/mirror (rev는 바뀌지 않는다) */
   mirrorCover(id: string): Promise<{ result: 'mirrored' | 'skipped' | 'failed'; collab: AdminCollab }>;
-  /** 후속 확인 큐: GET /v1/admin/followups?view= (제안·알림·확인 예정, 최대 50건) */
+  /** 후속 확인 큐: GET /v1/admin/followups?view= (제안·자동 반영·알림·확인 예정, 최대 50건) */
   listFollowUps(view: FollowUpView, limit?: number): Promise<FollowUpItem[]>;
   /**
    * 재확인 제안 처리: POST /v1/admin/collabs/:id/followup.
-   * apply는 일반 수정과 같아서 현재 rev가 필요하다(If-Match). dismiss는 rev를 쓰지 않는다.
+   * apply는 일반 수정과 같아서 현재 rev가 필요하다(If-Match). dismiss·acknowledge는 rev를 쓰지 않는다.
+   * acknowledge는 수집기가 초안에 바로 반영한 변경을 확인 처리한다(rev는 바뀌지 않는다).
    */
-  resolveFollowUp(id: string, action: 'apply' | 'dismiss', rev?: number): Promise<AdminCollab>;
+  resolveFollowUp(id: string, action: FollowUpAction, rev?: number): Promise<AdminCollab>;
   /** 제보 큐: GET /v1/admin/submissions?status=&kind= (최신순, 최대 100건) */
   listSubmissions(filter: SubmissionFilter): Promise<SubmissionList>;
   /** 제보 처리: PATCH /v1/admin/submissions/:id */

@@ -473,6 +473,7 @@ function followUpOf(c: DbCollab): FollowUpState {
     unchanged: f?.unchanged ?? 0,
     escalated: Boolean(f?.escalatedAt),
     proposal: f?.proposal ?? null,
+    applied: f?.applied ?? null,
   };
 }
 
@@ -599,6 +600,7 @@ export const mockAdminApi: AdminApi = {
         sourceCount: c.sources.length,
         duplicateCandidate: findDuplicates(c).length > 0,
         hasCover: Boolean(c.cover),
+        followUpApplied: Boolean(c.followUp?.applied),
         updatedAt: c.updatedAt,
       }));
     return { items, counts, nextCursor };
@@ -812,10 +814,13 @@ export const mockAdminApi: AdminApi = {
       .filter((f) =>
         view === 'proposals'
           ? f.proposal
-          : view === 'escalated'
-            ? f.reason && f.escalated
-            : f.reason && !f.proposal && f.nextCheckAt && f.nextCheckAt <= t,
+          : view === 'applied'
+            ? f.applied
+            : view === 'escalated'
+              ? f.reason && f.escalated
+              : f.reason && !f.proposal && f.nextCheckAt && f.nextCheckAt <= t,
       );
+    if (view === 'applied') return items.sort((a, b) => b.applied!.at.localeCompare(a.applied!.at)).slice(0, limit);
     const key = (f: FollowUpItem) => (view === 'proposals' ? f.proposal!.at : view === 'escalated' ? (f.lastCheckedAt ?? '') : (f.nextCheckAt ?? ''));
     return items.sort((a, b) => key(a).localeCompare(key(b))).slice(0, limit);
   },
@@ -824,6 +829,11 @@ export const mockAdminApi: AdminApi = {
   async resolveFollowUp(id, action, rev) {
     await delay();
     const c = requireCollab(id);
+    if (action === 'acknowledge') {
+      if (!c.followUp?.applied) throw new ApiError(404, 'not_found', '확인할 자동 반영 변경이 없습니다');
+      c.followUp = { ...c.followUp, applied: null };
+      return toAdmin(c);
+    }
     const proposal = c.followUp?.proposal;
     if (!proposal) throw new ApiError(404, 'not_found', '처리할 재확인 제안이 없습니다');
     if (action === 'apply') {
@@ -840,7 +850,7 @@ export const mockAdminApi: AdminApi = {
       }
       c.rev++;
       c.updatedAt = now();
-      c.followUp = { nextCheckAt: nextCheckAt(0), lastCheckedAt: now(), unchanged: 0, escalatedAt: null, proposal: null };
+      c.followUp = { ...c.followUp, nextCheckAt: nextCheckAt(0), lastCheckedAt: now(), unchanged: 0, escalatedAt: null, proposal: null };
     } else {
       c.followUp = { ...c.followUp!, proposal: null, nextCheckAt: nextCheckAt(c.followUp!.unchanged) };
     }

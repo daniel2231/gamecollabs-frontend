@@ -10,6 +10,7 @@ import {
   COLLAB_STATUSES,
   collabInputSchema,
   entityKindSchema,
+  FOLLOW_UP_ACTIONS,
   ORIGIN_TYPES,
   SUBMISSION_STATUSES,
   taxonomySchema,
@@ -18,6 +19,7 @@ import {
   type AdminEntity,
   type CollabInput,
   type EntityKind,
+  type FollowUpAction,
   type MatchResponse,
   type Submission,
   type SubmissionStatus,
@@ -77,12 +79,12 @@ export async function mirrorCollabCover(id: string): Promise<ActionResult<{ resu
   return run((api) => api.mirrorCover(z.string().min(1).max(64).parse(id)));
 }
 
-/** 재확인 제안 반영(현재 rev 필요) 또는 버리기 */
-export async function resolveFollowUp(id: string, action: 'apply' | 'dismiss', rev?: number): Promise<ActionResult<AdminCollab>> {
+/** 재확인 제안 반영(현재 rev 필요)·버리기, 또는 초안에 바로 반영된 변경 확인 */
+export async function resolveFollowUp(id: string, action: FollowUpAction, rev?: number): Promise<ActionResult<AdminCollab>> {
   return run((api) =>
     api.resolveFollowUp(
       z.string().min(1).max(64).parse(id),
-      z.enum(['apply', 'dismiss']).parse(action),
+      z.enum(FOLLOW_UP_ACTIONS).parse(action),
       rev === undefined ? undefined : z.number().int().min(1).parse(rev),
     ),
   );

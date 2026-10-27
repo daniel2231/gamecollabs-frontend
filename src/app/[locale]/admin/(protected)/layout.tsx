@@ -14,10 +14,10 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
   const session = await getAdminSession();
   if (!session) redirect(`/${locale}/admin/login`);
   const admin = adminApi(session.token);
-  // 후속 확인 제안 수는 메뉴 표시용이라 실패해도(백엔드에 기능이 없을 때 등) 화면을 막지 않는다
+  // 후속 확인 수(제안 + 확인하지 않은 자동 반영)는 메뉴 표시용이라 실패해도(백엔드에 기능이 없을 때 등) 화면을 막지 않는다
   const [{ counts }, followUps, submissions] = await Promise.all([
     admin.listQueue({ status: 'review' }),
-    admin.listFollowUps('proposals').then((items) => items.length, () => null),
+    Promise.all([admin.listFollowUps('proposals'), admin.listFollowUps('applied').catch(() => [])]).then(([p, a]) => p.length + a.length, () => null),
     admin.listSubmissions({ status: 'new' }).then((r) => r.counts.tip + r.counts.correction, () => null),
   ]);
 
