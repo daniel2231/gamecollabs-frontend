@@ -4,7 +4,7 @@
  * 실제 이름은 PRD에 나온 콜라보(태고의 달인 × 자가리코, 진격의 거인 × Blood Strike / WePlay)만 사용했다.
  * 확인되지 않은 날짜·분류·출처는 비워 두거나 example.com 자리표시자로 두었다. 실제 데이터로 쓰지 말 것.
  */
-import type { AdminCover, AdminVenue, CollabStatus, CompanyRole, FollowUpApplied, FollowUpProposal, Origin, Period, Source, TaxonomyTerm } from '@/schema';
+import type { AdminChangelogEntry, AdminCover, AdminVenue, CollabStatus, CompanyRole, FollowUpApplied, FollowUpProposal, Origin, Period, Source, TaxonomyTerm } from '@/schema';
 
 type TermSeed = [key: string, ko: string, en: string, legacy?: string[]];
 
@@ -364,5 +364,28 @@ export const collabs: DbCollab[] = [
     createdAt: '2026-10-06T00:00:00.000Z',
     updatedAt: '2026-10-06T00:00:00.000Z',
     publishedAt: null,
+  },
+];
+
+/** 변경 내역 자리표시자(공개 1건, 비공개 1건). 실제 릴리스 노트가 아니다 */
+export const changelog: AdminChangelogEntry[] = [
+  {
+    id: 'chg_mock1',
+    version: '0.1.0',
+    date: '2026-10-01',
+    body: {
+      ko: '목 데이터: 자리표시자 변경 내역\n\n- **새 기능** 자리표시자\n- 개선 자리표시자 ([링크](https://example.com))',
+      en: 'Mock data: placeholder release notes\n\n- **New** placeholder\n- Improvement placeholder ([link](https://example.com))',
+    },
+    published: true,
+    updatedAt: '2026-10-01T00:00:00.000Z',
+  },
+  {
+    id: 'chg_mock2',
+    version: '0.2.0',
+    date: '2026-10-20',
+    body: { ko: '목 데이터: 공개 전 초안', en: 'Mock data: unpublished draft' },
+    published: false,
+    updatedAt: '2026-10-20T00:00:00.000Z',
   },
 ];

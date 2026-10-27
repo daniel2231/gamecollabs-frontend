@@ -1,8 +1,11 @@
 import type {
+  AdminChangelogEntry,
   AdminCollab,
   AdminCover,
   AdminEntity,
   AdminQueueItem,
+  ChangelogEntry,
+  ChangelogInput,
   CollabDetail,
   CollabInput,
   CollabListResponse,
@@ -46,6 +49,8 @@ export interface PublicApi {
    * (백엔드가 IP당 시간당 10건으로 제한). 실패는 ApiError(rate_limited, bot_check_failed, not_found, validation_failed)
    */
   submitReport(input: SubmissionInput, clientIp: string | null): Promise<void>;
+  /** 공개된 변경 내역(최신순): GET /v1/changelog. 백엔드에 아직 없으면 빈 목록 */
+  listChangelog(locale: Locale): Promise<ChangelogEntry[]>;
 }
 
 export type StatsQuery = { locale?: Locale; year?: number };
@@ -132,6 +137,14 @@ export interface AdminApi {
   listSubmissions(filter: SubmissionFilter): Promise<SubmissionList>;
   /** 제보 처리: PATCH /v1/admin/submissions/:id */
   updateSubmission(id: string, status: SubmissionStatus): Promise<Submission>;
+  /** 변경 내역 전체(비공개 포함, 최신순): GET /v1/admin/changelog. 관리자(admin)만 */
+  listChangelog(): Promise<AdminChangelogEntry[]>;
+  /** POST /v1/admin/changelog. 같은 버전이 있으면 ApiError(409, duplicate_key) */
+  createChangelog(input: ChangelogInput): Promise<AdminChangelogEntry>;
+  /** PATCH /v1/admin/changelog/:id */
+  updateChangelog(id: string, input: ChangelogInput): Promise<AdminChangelogEntry>;
+  /** DELETE /v1/admin/changelog/:id */
+  deleteChangelog(id: string): Promise<void>;
 }
 
 export class ApiError extends Error {

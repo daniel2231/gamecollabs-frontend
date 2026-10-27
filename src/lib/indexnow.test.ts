@@ -31,6 +31,10 @@ describe('urlsForTags', () => {
   it('홈 노출 작품이 바뀌면(featured) 홈만', () => {
     expect(urlsForTags(['featured'], 'https://x.test')).toEqual(['https://x.test/ko', 'https://x.test/en']);
   });
+
+  it('변경 내역이 바뀌면(changelog) 변경 내역 페이지만', () => {
+    expect(urlsForTags(['changelog'], 'https://x.test')).toEqual(['https://x.test/ko/changelog', 'https://x.test/en/changelog']);
+  });
 });
 
 describe('submitIndexNow', () => {

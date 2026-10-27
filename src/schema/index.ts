@@ -565,3 +565,42 @@ export const submissionSchema = z.object({
   createdAt: z.iso.datetime(),
 });
 export type Submission = z.infer<typeof submissionSchema>;
+
+// ── 변경 내역 ───────────────────────────────────────────────
+
+/** 백엔드와 같은 규칙: 영문·숫자로 시작, 이후 영문·숫자·`.`·`-`·`+` (예: 1.4.0, v2, 2026.10) */
+export const changelogVersionSchema = z
+  .string()
+  .trim()
+  .min(1, '필수')
+  .max(40, '40자 이하')
+  .regex(/^[0-9A-Za-z][0-9A-Za-z.+-]*$/, '영문·숫자·. - +만 사용');
+
+/** GET /v1/changelog 항목. body는 요청 언어의 마크다운 */
+export const changelogEntrySchema = z.object({
+  id: z.string(),
+  version: z.string(),
+  date: z.iso.date(),
+  body: z.string(),
+});
+export type ChangelogEntry = z.infer<typeof changelogEntrySchema>;
+
+const changelogBody = z.string().trim().min(1, '필수').max(10_000, '1만 자 이하');
+
+/** 관리자 작성·수정 본문 */
+export const changelogInputSchema = z.object({
+  version: changelogVersionSchema,
+  date: z.iso.date('YYYY-MM-DD'),
+  body: z.object({ ko: changelogBody, en: changelogBody }),
+  published: z.boolean(),
+});
+export type ChangelogInput = z.infer<typeof changelogInputSchema>;
+
+/** GET /v1/admin/changelog 항목(비공개 포함, 두 언어) */
+export const adminChangelogEntrySchema = changelogInputSchema.extend({
+  id: z.string(),
+  version: z.string(),
+  body: z.object({ ko: z.string(), en: z.string() }),
+  updatedAt: z.iso.datetime().nullable(),
+});
+export type AdminChangelogEntry = z.infer<typeof adminChangelogEntrySchema>;

@@ -7,6 +7,7 @@ import type { EntityInput, QueueFilter, QueueResponse, TermInput } from '@/lib/a
 import { getAdminSession } from '@/lib/auth/session';
 import {
   adminCoverSchema,
+  changelogInputSchema,
   COLLAB_STATUSES,
   collabInputSchema,
   entityKindSchema,
@@ -15,7 +16,9 @@ import {
   SUBMISSION_STATUSES,
   taxonomySchema,
   TRANSITIONS,
+  type AdminChangelogEntry,
   type AdminCollab,
+  type ChangelogInput,
   type AdminEntity,
   type CollabInput,
   type EntityKind,
@@ -142,4 +145,19 @@ const termInputSchema = z.object({
 
 export async function createTerm(input: TermInput): Promise<ActionResult<TaxonomyTerm>> {
   return run((api) => api.createTerm(termInputSchema.parse(input)));
+}
+
+/** 변경 내역 작성(id 없음)·수정 */
+export async function saveChangelog(id: string | null, input: ChangelogInput): Promise<ActionResult<AdminChangelogEntry>> {
+  return run(async (api) => {
+    const parsed = changelogInputSchema.parse(input);
+    return id ? api.updateChangelog(z.string().min(1).max(64).parse(id), parsed) : api.createChangelog(parsed);
+  });
+}
+
+export async function deleteChangelog(id: string): Promise<ActionResult<null>> {
+  return run(async (api) => {
+    await api.deleteChangelog(z.string().min(1).max(64).parse(id));
+    return null;
+  });
 }

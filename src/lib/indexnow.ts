@@ -1,4 +1,5 @@
 import { routing } from '@/i18n/routing';
+import { CHANGELOG_PATH } from './changelog';
 import { LIST_PATH } from './filters';
 import { STATS_PATH } from './stats';
 
@@ -15,7 +16,7 @@ export function indexNowKey(env: Record<string, string | undefined> = process.en
 
 const TAG_PATH: Record<string, string> = { collab: 'collabs', property: 'properties', company: 'companies' };
 
-/** revalidate 태그 → 바뀐 공개 페이지 URL(언어별). `collabs`는 홈·목록·통계가, `featured`는 홈이 바뀐 것으로 본다 */
+/** revalidate 태그 → 바뀐 공개 페이지 URL(언어별). `collabs`는 홈·목록·통계가, `featured`는 홈이, `changelog`는 변경 내역 페이지가 바뀐 것으로 본다 */
 export function urlsForTags(tags: string[], base: string): string[] {
   const paths = new Set<string>();
   for (const tag of tags) {
@@ -24,6 +25,7 @@ export function urlsForTags(tags: string[], base: string): string[] {
       paths.add(LIST_PATH);
       paths.add(STATS_PATH);
     }
+    if (tag === 'changelog') paths.add(CHANGELOG_PATH);
     const [kind, slug] = tag.split(':');
     if (slug && kind && TAG_PATH[kind]) paths.add(`/${TAG_PATH[kind]}/${slug}`);
   }

@@ -2624,3 +2624,173 @@ body {
   line-height: 1.7;
   color: var(--ct-muted);
 }
+
+/* 변경 내역: 왼쪽 버전·날짜, 오른쪽 본문. 항목 사이 구분선 */
+.ct-changelog {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-changelog-entry {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 12px 40px;
+  padding: 36px 0;
+  border-bottom: 1px solid var(--ct-line);
+  scroll-margin-top: 24px;
+}
+
+.ct-changelog-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-self: start;
+  position: sticky;
+  top: 24px;
+}
+
+.ct-changelog-meta h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ct-changelog-meta h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.ct-changelog-meta h2 a:hover {
+  color: var(--ct-signal);
+}
+
+.ct-changelog-meta time {
+  font-size: 13px;
+  color: var(--ct-muted);
+}
+
+.ct-changelog-empty {
+  margin: 36px 0 0;
+  font-size: 14px;
+  color: var(--ct-muted);
+}
+
+@media (max-width: 640px) {
+  .ct-changelog-entry {
+    grid-template-columns: 1fr;
+    padding: 28px 0;
+  }
+
+  .ct-changelog-meta {
+    position: static;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+  }
+}
+
+/* 관리자가 쓴 마크다운 본문 */
+.ct-markdown {
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.ct-markdown > :first-child {
+  margin-top: 0;
+}
+
+.ct-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.ct-markdown p,
+.ct-markdown ul,
+.ct-markdown ol,
+.ct-markdown blockquote,
+.ct-markdown pre {
+  margin: 0 0 14px;
+}
+
+.ct-markdown h3,
+.ct-markdown h4,
+.ct-markdown h5,
+.ct-markdown h6 {
+  margin: 24px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ct-markdown ul,
+.ct-markdown ol {
+  padding-left: 1.3em;
+}
+
+/* 페이지 목록(ol) 안에 있어도 첫 단계 기호로 */
+.ct-markdown ul {
+  list-style: disc;
+}
+
+.ct-markdown ol {
+  list-style: decimal;
+}
+
+.ct-markdown li + li {
+  margin-top: 4px;
+}
+
+.ct-markdown a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--ct-signal);
+  text-underline-offset: 3px;
+}
+
+.ct-markdown code {
+  font-family: var(--code-font-family);
+  font-size: 0.9em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--gray-a3);
+}
+
+.ct-markdown pre {
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 4px;
+  background: var(--gray-a3);
+}
+
+.ct-markdown pre code {
+  padding: 0;
+  background: none;
+}
+
+.ct-markdown blockquote {
+  padding-left: 14px;
+  border-left: 2px solid var(--ct-line);
+  color: var(--ct-muted);
+}
+
+.ct-markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ct-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--ct-line);
+  margin: 20px 0;
+}
+
+/* 푸터 고지 */
+.ct-footer-notice {
+  max-width: 720px;
+  padding-bottom: 24px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ct-muted);
+}

@@ -27,6 +27,7 @@ export const api: PublicApi = {
   listFeaturedProperties: (...a) => pick().listFeaturedProperties(...a),
   getSitemap: () => pick().getSitemap(),
   submitReport: (...a) => pick().submitReport(...a),
+  listChangelog: cache((...a: Parameters<PublicApi['listChangelog']>) => pick().listChangelog(...a)),
 };
 
 export function adminApi(token: string): AdminApi {

@@ -1,9 +1,11 @@
 import 'server-only';
 import { z } from 'zod';
 import {
+  adminChangelogEntrySchema,
   adminCollabSchema,
   adminEntitySchema,
   adminQueueItemSchema,
+  changelogEntrySchema,
   collabDetailSchema,
   collabListResponseSchema,
   companyDetailSchema,
@@ -26,7 +28,7 @@ import { ApiError, type AdminApi, type PublicApi } from './types';
 /**
  * Express /v1 HTTP 클라이언트. 브라우저에서는 절대 쓰지 않는다(server-only).
  * 응답(`{ data, meta }`)은 adapt.ts에서 화면 스키마로 바꾼 뒤 그 스키마로 다시 검증한다.
- * 캐시 태그: collabs, collab:<slug>, property:<slug>, company:<slug>, taxonomies, featured(홈 노출 작품)
+ * 캐시 태그: collabs, collab:<slug>, property:<slug>, company:<slug>, taxonomies, featured(홈 노출 작품), changelog
  * → Express가 발행·수정 시 /api/revalidate 웹훅으로 무효화한다.
  */
 
@@ -90,6 +92,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   proposal_pending: '이 콜라보에는 처리하지 않은 재확인 제안이 있습니다.',
   precondition_failed: '다른 사람이 먼저 수정했습니다. 새로고침 후 다시 시도하세요.',
   invalid_transition: '현재 상태에서는 할 수 없는 작업입니다.',
+  forbidden: '권한이 없습니다.',
 };
 
 type Envelope<T, M = Record<string, unknown>> = { data: T; meta?: M };
@@ -167,6 +170,11 @@ export const httpPublicApi: PublicApi = {
       body: input,
       ...(clientIp ? { headers: { 'X-Client-IP': clientIp } } : {}),
     });
+  },
+  listChangelog: async (locale) => {
+    // 백엔드에 아직 변경 내역이 없으면(404) 빈 페이지로 보여 준다
+    const body = await envelope<unknown[]>(`/v1/changelog?locale=${locale}`, { tags: ['changelog'], nullOn404: true });
+    return body ? z.array(changelogEntrySchema).parse(body.data) : [];
   },
 };
 
@@ -317,6 +325,23 @@ export function createHttpAdminApi(token: string): AdminApi {
         }
         throw e;
       }
+    },
+    listChangelog: async () => {
+      try {
+        return z.array(adminChangelogEntrySchema).parse(await data<unknown[]>('/v1/admin/changelog', o()));
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) {
+          throw new ApiError(501, 'changelog_unavailable', '백엔드에 변경 내역 API(GET /v1/admin/changelog)가 아직 없습니다. 백엔드 배포 후 다시 시도하세요.');
+        }
+        throw e;
+      }
+    },
+    createChangelog: async (input) =>
+      adminChangelogEntrySchema.parse(await data('/v1/admin/changelog', o({ method: 'POST', body: input }))),
+    updateChangelog: async (id, input) =>
+      adminChangelogEntrySchema.parse(await data(`/v1/admin/changelog/${encodeURIComponent(id)}`, o({ method: 'PATCH', body: input }))),
+    deleteChangelog: async (id) => {
+      await request(`/v1/admin/changelog/${encodeURIComponent(id)}`, o({ method: 'DELETE' }));
     },
     createTerm: async (input) =>
       taxonomyTermSchema.parse(A.fromTerm(await data<A.BeTerm>('/v1/admin/taxonomies', o({ method: 'POST', body: A.toTermBody(input) })))),
