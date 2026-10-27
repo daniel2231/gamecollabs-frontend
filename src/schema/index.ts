@@ -338,7 +338,8 @@ export type CollabInput = z.infer<typeof collabInputSchema>;
  */
 export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing', 'content_tba'] as const;
 export type FollowUpReason = (typeof FOLLOW_UP_REASONS)[number];
-export const FOLLOW_UP_VIEWS = ['proposals', 'applied', 'escalated', 'due'] as const;
+/** queued: 재확인 중인 전체(차례가 안 된 것 포함, 다음 확인일 순) */
+export const FOLLOW_UP_VIEWS = ['proposals', 'applied', 'escalated', 'queued'] as const;
 export type FollowUpView = (typeof FOLLOW_UP_VIEWS)[number];
 /** apply·dismiss: 재확인 제안 처리, acknowledge: 초안에 바로 반영된 변경을 확인함 */
 export const FOLLOW_UP_ACTIONS = ['apply', 'dismiss', 'acknowledge'] as const;

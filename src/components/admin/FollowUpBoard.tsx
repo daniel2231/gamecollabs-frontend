@@ -13,7 +13,7 @@ const VIEWS: { view: FollowUpView; label: string; empty: string }[] = [
   { view: 'proposals', label: '제안', empty: '처리할 재확인 제안이 없습니다.' },
   { view: 'applied', label: '자동 반영', empty: '확인하지 않은 자동 반영 변경이 없습니다.' },
   { view: 'escalated', label: '알림', empty: '결정이 필요한 콜라보가 없습니다.' },
-  { view: 'due', label: '확인 예정', empty: '지금 확인할 차례인 콜라보가 없습니다.' },
+  { view: 'queued', label: '확인 예정', empty: '재확인 중인 콜라보가 없습니다.' },
 ];
 
 const STATUS_LABEL = { draft: '초안', in_review: '검수 요청됨', published: '발행됨', archived: '보관' } as const;
@@ -27,7 +27,7 @@ type Props = { view: FollowUpView; items: FollowUpItem[]; unavailable?: string }
  * 제안: 수집기가 검수 중·발행된 콜라보에서 찾은 변경 → 반영 또는 버리기.
  * 자동 반영: 수집기가 초안에 바로 반영한 변경 → 바뀐 내용을 보고 확인 처리.
  * 알림: 여러 번 확인해도 소식이 없음 → 편집기에서 날짜를 넣거나 “상시”로 바꾸거나 보관.
- * 확인 예정: 수집기가 다음에 볼 목록(참고용).
+ * 확인 예정: 재확인 중인 전체를 다음 확인일 순으로(참고용). 차례가 된 것은 “지금 차례”로 표시한다.
  */
 export function FollowUpBoard({ view, items, unavailable }: Props) {
   const current = VIEWS.find((v) => v.view === view)!;
@@ -97,6 +97,19 @@ function FollowUpCard({ item, view }: { item: FollowUpItem; view: FollowUpView }
                   알림
                 </Badge>
               )}
+              {view === 'queued' &&
+                (item.proposal ? (
+                  <Badge size="1" variant="soft" color="gray">
+                    제안 처리 대기
+                  </Badge>
+                ) : (
+                  item.nextCheckAt &&
+                  Date.parse(item.nextCheckAt) <= Date.now() && (
+                    <Badge size="1" variant="soft" color="blue">
+                      지금 차례
+                    </Badge>
+                  )
+                ))}
             </Flex>
             <Text weight="bold">{item.title}</Text>
             <Text size="1" color="gray" className="ct-mono">
