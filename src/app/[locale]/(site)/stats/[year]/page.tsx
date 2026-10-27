@@ -59,7 +59,7 @@ export default async function StatsYearPage({ params }: Props) {
   const now = new Date();
   const months = yearMonths(stats.monthly, year, now);
   const peak = peakMonth(months);
-  const peakLabel = peak ? monthColumns([peak], locale, 'all')[0]!.label : '—';
+  const peakLabel = peak ? monthColumns([peak], locale)[0]!.label : '—';
   // 전년 기록이 아예 없으면(트래커가 다루기 전) 비교하지 않는다
   const previous = stats.years.find((y) => y.year === year - 1)?.count ?? null;
   const change = yearOverYear(stats.published, previous);
@@ -114,7 +114,7 @@ export default async function StatsYearPage({ params }: Props) {
         />
 
         <StatsSection id="monthly" title={t('section.monthly')} note={t('chart.byStart')}>
-          <ColumnChart label={`${title} · ${t('section.monthly')}`} columns={monthColumns(months, locale, 'all')} />
+          <ColumnChart label={`${title} · ${t('section.monthly')}`} columns={monthColumns(months, locale)} />
         </StatsSection>
 
         <StatsBreakdown stats={stats} year={year} />

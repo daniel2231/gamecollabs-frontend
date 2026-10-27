@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addMonths, fillMonths, monthColumns, monthRange, niceTicks, parseStatsYear, peakMonth, percentOf, recentMonths, yearMonths, yearOverYear } from './stats';
+import { COLLECTION_START, addMonths, collectionStartLabel, fillMonths, monthColumns, monthRange, niceTicks, parseStatsYear, peakMonth, percentOf, recentMonths, yearMonths, yearOverYear } from './stats';
 
 const now = new Date('2026-10-27T03:00:00Z');
 
@@ -20,20 +20,21 @@ describe('months', () => {
     ]);
   });
 
-  it('shows the last 24 months and planned months up to six ahead', () => {
-    const plain = recentMonths([{ month: '2026-09', count: 1 }], now);
-    expect(plain).toHaveLength(24);
-    expect(plain[0]!.month).toBe('2024-11');
-    expect(plain.at(-1)!.month).toBe('2026-10');
+  it('starts at the collection month, then keeps the last 24 months, plus planned months up to six ahead', () => {
+    const early = recentMonths([{ month: '2026-09', count: 1 }], now);
+    expect(early[0]!.month).toBe(COLLECTION_START);
+    expect(early.at(-1)!.month).toBe('2026-10');
+    expect(recentMonths([], new Date('2029-01-15T00:00:00Z'))).toHaveLength(24);
     const planned = recentMonths([{ month: '2027-01', count: 1 }, { month: '2028-01', count: 1 }], now);
     expect(planned.at(-1)).toEqual({ month: '2027-01', count: 1, state: 'future' });
   });
 
-  it('covers a whole year for year reports', () => {
-    const months = yearMonths([{ month: '2025-03', count: 4 }], 2025, now);
-    expect(months.map((m) => m.month)).toEqual(monthRange('2025-01', '2025-12'));
-    expect(peakMonth(months)).toEqual({ month: '2025-03', count: 4, state: 'past' });
-    expect(peakMonth(yearMonths([], 2025, now))).toBeNull();
+  it('covers a whole year for year reports, from the collection month in the first year', () => {
+    const months = yearMonths([{ month: '2027-03', count: 4 }], 2027, now);
+    expect(months.map((m) => m.month)).toEqual(monthRange('2027-01', '2027-12'));
+    expect(peakMonth(months)).toEqual({ month: '2027-03', count: 4, state: 'future' });
+    expect(peakMonth(yearMonths([], 2027, now))).toBeNull();
+    expect(yearMonths([], 2026, now)[0]!.month).toBe('2026-04');
   });
 });
 
@@ -65,9 +66,17 @@ describe('numbers', () => {
 });
 
 describe('monthColumns', () => {
-  it('labels quarters on long ranges and every month on a year', () => {
-    const buckets = fillMonths([], '2025-12', '2026-04', now);
-    expect(monthColumns(buckets, 'en', 'quarter').map((c) => c.axisLabel)).toEqual([undefined, '2026', undefined, undefined, 'Apr']);
-    expect(monthColumns(buckets, 'ko', 'all')[1]).toMatchObject({ key: '2026-01', label: '2026년 1월', axisLabel: '1월', count: 0, state: 'past' });
+  it('labels every month up to a year and quarters beyond, with the year on January', () => {
+    const short = fillMonths([], '2026-11', '2027-02', now);
+    expect(monthColumns(short, 'en').map((c) => c.axisLabel)).toEqual(['Nov', 'Dec', '2027', 'Feb']);
+    expect(monthColumns(fillMonths([], '2027-01', '2027-03', now), 'ko')[0]).toMatchObject({ key: '2027-01', label: '2027년 1월', axisLabel: '1월', count: 0, state: 'future' });
+    const long = monthColumns(fillMonths([], '2026-04', '2027-07', now), 'en').map((c) => c.axisLabel);
+    expect(long.slice(0, 4)).toEqual(['Apr', undefined, undefined, 'Jul']);
+    expect(long[9]).toBe('2027');
+  });
+
+  it('names the collection start month', () => {
+    expect(collectionStartLabel('ko')).toBe('2026년 4월');
+    expect(collectionStartLabel('en')).toBe('April 2026');
   });
 });

@@ -282,18 +282,16 @@
       "noPrevious": "{year}년 기록 없음"
     },
     "section": {
-      "yearly": "연도별 콜라보",
       "monthly": "월별 콜라보",
-      "monthlyRecent": "최근 24개월",
       "distribution": "분류",
       "ranking": "순위",
       "topHosts": "콜라보가 많은 게임",
       "topPartners": "자주 콜라보한 IP",
-      "method": "집계 기준"
+      "method": "집계 기준",
+      "monthlySince": "{month}부터"
     },
     "chart": {
       "byStart": "시작 월 기준",
-      "byStartYear": "시작 연도 기준",
       "count": "{count}건",
       "point": "{label}: {count}건",
       "planned": "예정",
@@ -302,8 +300,7 @@
       "colPeriod": "기간",
       "colCount": "콜라보",
       "undated": "시작일이 아직 발표되지 않은 {count}건은 월별·연도별 집계에서 빠졌습니다.",
-      "share": "콜라보 {count}건 중 {percent}%",
-      "openYear": "{year}년 통계 보기"
+      "share": "콜라보 {count}건 중 {percent}%"
     },
     "rank": {
       "empty": "아직 집계할 콜라보가 없습니다.",
@@ -316,8 +313,9 @@
       }
     },
     "method": {
-      "published": "직접 검수해 발행한 콜라보만 셉니다. 검수 중이거나 보관된 항목은 빠집니다.",
-      "start": "월별·연도별 추이는 콜라보 시작일 기준입니다. 연도 통계는 그해 시작한 콜라보만 셉니다.",
+      "collectionStart": "수집은 2026년 4월에 시작했습니다. 그 전에 시작한 콜라보는 일부만 들어 있습니다.",
+      "published": "직접 검수해 발행한 콜라보만 셉니다.",
+      "start": "월별 추이는 콜라보 시작일 기준입니다. 연도 통계는 그해 시작한 콜라보만 셉니다.",
       "multi": "한 콜라보가 여러 분류·권역·플랫폼에 해당할 수 있어 비율을 더하면 100%를 넘을 수 있습니다. 같은 분류의 파트너가 여럿이어도 그 분류에서는 한 번만 셉니다.",
       "coverage": "트래커에 등록된 콜라보를 집계한 수치로, 업계 전체를 대표하지 않습니다.",
       "report": "빠진 콜라보 제보하기",

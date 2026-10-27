@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { statsDatasetJsonLd } from '@/lib/jsonld';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { STATS_PATH as PATH, monthColumns, recentMonths } from '@/lib/stats';
+import { STATS_PATH as PATH, collectionStartLabel, monthColumns, recentMonths } from '@/lib/stats';
 
 export const revalidate = 3600;
 
@@ -41,6 +41,7 @@ export default async function StatsPage({ params }: PageProps<'/[locale]/stats'>
   const thisYear = now.getUTCFullYear();
   const base = siteUrl();
   const years = stats.years.filter((y) => y.count > 0);
+  const since = t('section.monthlySince', { month: collectionStartLabel(locale) });
 
   return (
     <>
@@ -79,26 +80,11 @@ export default async function StatsPage({ params }: PageProps<'/[locale]/stats'>
             ]}
           />
 
-          {years.length > 1 && (
-            <StatsSection id="yearly" title={t('section.yearly')} note={t('chart.byStartYear')}>
-              <ColumnChart
-                label={t('section.yearly')}
-                columns={years.map((y) => ({
-                  key: String(y.year),
-                  label: String(y.year),
-                  axisLabel: String(y.year),
-                  count: y.count,
-                  href: `${PATH}/${y.year}`,
-                }))}
-              />
-            </StatsSection>
-          )}
-
-          <StatsSection id="monthly" title={t('section.monthly')} note={t('section.monthlyRecent')}>
+          <StatsSection id="monthly" title={t('section.monthly')} note={since}>
             <ColumnChart
-              label={`${t('section.monthly')} · ${t('section.monthlyRecent')}`}
-              columns={monthColumns(recentMonths(stats.monthly, now), locale, 'quarter')}
-              caption={stats.undated > 0 ? t('chart.undated', { count: stats.undated }) : undefined}
+              label={`${t('section.monthly')} · ${since}`}
+              columns={monthColumns(recentMonths(stats.monthly, now), locale)}
+              caption={[t('method.collectionStart'), stats.undated > 0 ? t('chart.undated', { count: stats.undated }) : null].filter(Boolean).join(' ')}
             />
           </StatsSection>
 

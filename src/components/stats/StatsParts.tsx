@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
-import { STATS_PATH, niceTicks, percentOf, type MonthState } from '@/lib/stats';
+import { RANK_SIZE, STATS_PATH, niceTicks, percentOf, type MonthState } from '@/lib/stats';
 import type { RankedEntity, TermRef } from '@/schema';
 
 /** 통계 페이지의 한 묶음: 위 굵은 선, 제목과 보조 설명 */
@@ -44,7 +44,6 @@ export type Column = {
   axisLabel?: string;
   count: number;
   state?: MonthState;
-  href?: string;
 };
 
 /**
@@ -93,16 +92,10 @@ export function ColumnChart({ label, columns, caption }: { label: string; column
             );
             return (
               <li key={c.key} data-state={c.state ?? 'past'}>
-                {c.href ? (
-                  <Link href={c.href} className="ct-col" aria-label={pointLabel(c)}>
-                    {body}
-                  </Link>
-                ) : (
-                  // 링크가 없는 막대도 키보드로 값을 읽을 수 있게 초점을 받는다
-                  <span className="ct-col" tabIndex={0} role="img" aria-label={pointLabel(c)}>
-                    {body}
-                  </span>
-                )}
+                {/* 키보드로도 값을 읽을 수 있게 막대 칸이 초점을 받는다 */}
+                <span className="ct-col" tabIndex={0} role="img" aria-label={pointLabel(c)}>
+                  {body}
+                </span>
                 <span className="ct-col-label" aria-hidden="true">
                   {c.axisLabel ?? ''}
                 </span>
@@ -169,7 +162,7 @@ export function BarList({ title, items, total, href }: { title: string; items: (
   );
 }
 
-/** 순위 목록: 순번 · 이름(분류) · 건수. 이름은 작품·회사 페이지로 이어진다 */
+/** 순위 목록(위에서 RANK_SIZE개): 순번 · 이름(분류) · 건수. 이름은 작품·회사 페이지로 이어진다 */
 export function RankList({ title, items, hrefPrefix }: { title: string; items: (RankedEntity & { kind?: TermRef | null })[]; hrefPrefix: '/properties' | '/companies' }) {
   const t = useTranslations('Stats');
   return (
@@ -179,7 +172,7 @@ export function RankList({ title, items, hrefPrefix }: { title: string; items: (
         <p className="ct-stats-empty">{t('rank.empty')}</p>
       ) : (
         <ol className="ct-ranklist">
-          {items.map((it, i) => (
+          {items.slice(0, RANK_SIZE).map((it, i) => (
             <li key={it.slug}>
               <Link href={`${hrefPrefix}/${it.slug}`}>
                 <span className="ct-ranklist-rank ct-mono">{String(i + 1).padStart(2, '0')}</span>
@@ -228,6 +221,7 @@ export function MethodNote({ undated, yearScoped }: { undated: number; yearScope
   return (
     <StatsSection id="method" title={t('section.method')}>
       <ul className="ct-stats-method">
+        <li>{t('method.collectionStart')}</li>
         <li>{t('method.published')}</li>
         <li>{t('method.start')}</li>
         {undated > 0 && <li>{t('chart.undated', { count: undated })}</li>}

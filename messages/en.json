@@ -282,18 +282,16 @@
       "noPrevious": "No collabs in {year}"
     },
     "section": {
-      "yearly": "Collabs by year",
       "monthly": "Collabs by month",
-      "monthlyRecent": "Last 24 months",
       "distribution": "Categories",
       "ranking": "Rankings",
       "topHosts": "Games with the most collabs",
       "topPartners": "IPs with the most collabs",
-      "method": "How we count"
+      "method": "How we count",
+      "monthlySince": "Since {month}"
     },
     "chart": {
       "byStart": "By start month",
-      "byStartYear": "By start year",
       "count": "{count, plural, one {# collab} other {# collabs}}",
       "point": "{label}: {count, plural, one {# collab} other {# collabs}}",
       "planned": "Planned",
@@ -302,8 +300,7 @@
       "colPeriod": "Period",
       "colCount": "Collabs",
       "undated": "{count, plural, one {# collab has} other {# collabs have}} no announced start date yet and {count, plural, one {is} other {are}} left out of the monthly and yearly counts.",
-      "share": "{percent}% of {count, plural, one {# collab} other {# collabs}}",
-      "openYear": "Statistics for {year}"
+      "share": "{percent}% of {count, plural, one {# collab} other {# collabs}}"
     },
     "rank": {
       "empty": "No collabs to count yet.",
@@ -316,8 +313,9 @@
       }
     },
     "method": {
-      "published": "Only collabs we have reviewed and published are counted. Drafts, collabs under review and archived ones are left out.",
-      "start": "Monthly and yearly trends use the collab's start date. A year's statistics count only collabs that started that year.",
+      "collectionStart": "We started collecting in April 2026. Collabs that started before then are only partly covered.",
+      "published": "Only collabs we have reviewed and published are counted.",
+      "start": "The monthly trend uses each collab's start date. A year's statistics count only collabs that started that year.",
       "multi": "A collab can fall under several categories, regions or platforms, so shares can add up to more than 100%. Several partners of the same category count once for that category.",
       "coverage": "These figures describe the collabs in this tracker, not the whole industry.",
       "report": "Report a missing collab",

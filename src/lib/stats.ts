@@ -7,8 +7,12 @@ import type { Stats } from '@/schema';
 /** 통계 홈 경로(언어 접두어 뒤). 연도 리포트는 `/stats/2026` */
 export const STATS_PATH = '/stats';
 
-/** 통계 홈의 월별 차트 폭: 이번 달까지 최근 24개월 */
+/** 수집을 시작한 달. 그 전 달은 수집하지 않았으므로 월별 차트에 넣지 않는다 */
+export const COLLECTION_START = '2026-04';
+/** 통계 홈의 월별 차트 폭: 이번 달까지 최근 24개월(수집 시작 달보다 앞으로는 가지 않는다) */
 export const RECENT_MONTHS = 24;
+/** 순위마다 보여 줄 개수 */
+export const RANK_SIZE = 5;
 /** 예정 콜라보가 있으면 이번 달 뒤로 최대 이만큼 더 보여준다 */
 export const FUTURE_MONTHS = 6;
 
@@ -43,7 +47,7 @@ export function fillMonths(monthly: Stats['monthly'], from: string, to: string, 
   }));
 }
 
-/** 통계 홈: 이번 달까지 최근 24개월, 예정 콜라보가 있으면 그 달까지(최대 6개월 뒤) */
+/** 통계 홈: 수집 시작 달(최근 24개월보다 늦으면 그 달)부터 이번 달까지, 예정 콜라보가 있으면 그 달까지(최대 6개월 뒤) */
 export function recentMonths(monthly: Stats['monthly'], now: Date): MonthBucket[] {
   const current = monthOf(now);
   const limit = addMonths(current, FUTURE_MONTHS);
@@ -51,12 +55,14 @@ export function recentMonths(monthly: Stats['monthly'], now: Date): MonthBucket[
     .map((m) => m.month)
     .filter((m) => m > current && m <= limit)
     .at(-1);
-  return fillMonths(monthly, addMonths(current, 1 - RECENT_MONTHS), lastPlanned ?? current, now);
+  return fillMonths(monthly, laterMonth(addMonths(current, 1 - RECENT_MONTHS), COLLECTION_START), lastPlanned ?? current, now);
 }
 
-/** 연도 리포트: 그해 1~12월 */
+const laterMonth = (a: string, b: string) => (a > b ? a : b);
+
+/** 연도 리포트: 그해 1~12월(수집을 시작한 해는 시작 달부터) */
 export function yearMonths(monthly: Stats['monthly'], year: number, now: Date): MonthBucket[] {
-  return fillMonths(monthly, `${year}-01`, `${year}-12`, now);
+  return fillMonths(monthly, laterMonth(`${year}-01`, COLLECTION_START), `${year}-12`, now);
 }
 
 /** 0부터 시작하는 깔끔한 눈금(1·2·5 단위), 칸은 4개 안팎. 맨 위 눈금이 축의 최댓값이다 */
@@ -96,16 +102,23 @@ export function peakMonth(buckets: MonthBucket[]): MonthBucket | null {
 
 /**
  * 월 막대의 표기. 툴팁·표는 '2026년 10월'처럼 전체, 축은 글자가 겹치지 않게 고른 달만 짧게 쓴다.
- * - quarter(24개월): 1월은 연도, 4·7·10월은 짧은 달 이름
- * - all(12개월): 모든 달을 짧은 달 이름으로
+ * 13개월 이상이면 1월은 연도, 4·7·10월은 짧은 달 이름만 쓰고, 그보다 짧으면 모든 달을 쓴다.
+ * 해가 바뀌는 1월(첫 칸이 아닐 때)은 달 이름 대신 연도를 쓴다.
  */
-export function monthColumns(buckets: MonthBucket[], locale: string, axis: 'quarter' | 'all') {
+export function monthColumns(buckets: MonthBucket[], locale: string) {
   const long = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
   const short = new Intl.DateTimeFormat(locale, { month: 'short', timeZone: 'UTC' });
-  return buckets.map((b) => {
+  const every = buckets.length <= 12;
+  return buckets.map((b, i) => {
     const [y, m] = b.month.split('-').map(Number);
     const date = new Date(Date.UTC(y!, m! - 1, 1));
-    const axisLabel = axis === 'all' ? short.format(date) : m === 1 ? String(y) : (m! - 1) % 3 === 0 ? short.format(date) : undefined;
+    const axisLabel = m === 1 && i > 0 ? String(y) : every || (m! - 1) % 3 === 0 ? short.format(date) : undefined;
     return { key: b.month, label: long.format(date), axisLabel, count: b.count, state: b.state };
   });
+}
+
+/** 수집 시작 달을 그 언어로(예: 2026년 4월, April 2026) */
+export function collectionStartLabel(locale: string): string {
+  const [y, m] = COLLECTION_START.split('-').map(Number);
+  return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y!, m! - 1, 1)));
 }
