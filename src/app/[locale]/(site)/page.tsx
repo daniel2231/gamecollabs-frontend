@@ -1,6 +1,7 @@
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { VisuallyHidden } from '@radix-ui/themes';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { CollabCard } from '@/components/collab/CollabCard';
@@ -11,7 +12,7 @@ import { CoverImage } from '@/components/site/CoverImage';
 import { JsonLd } from '@/components/site/JsonLd';
 import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
-import type { Locale } from '@/i18n/routing';
+import { isLocale, type Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
 import { formatDate } from '@/lib/format';
@@ -48,7 +49,10 @@ export async function generateMetadata({ params }: PageProps<'/[locale]'>): Prom
 
 export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const { locale: rawLocale } = await params;
-  const locale = rawLocale as Locale;
+  // 레이아웃의 notFound()와 페이지는 함께 그려지므로, /.env·/wp-login.php 같은 스캐너 요청이
+  // locale=.env로 API를 부르지 않도록 여기서도 먼저 거른다
+  if (!isLocale(rawLocale)) notFound();
+  const locale: Locale = rawLocale;
   setRequestLocale(locale);
 
   const list = (q: Partial<CollabQuery>) => api.listCollabs({ ...parseCollabQuery({}), ...q }, locale);
