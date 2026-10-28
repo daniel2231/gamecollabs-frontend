@@ -1,11 +1,11 @@
 import '../globals.css';
-import { GoogleAnalytics } from '@next/third-parties/google';
 import { Theme } from '@radix-ui/themes';
 import type { Metadata, Viewport } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Analytics } from '@/components/site/Analytics';
 import { routing } from '@/i18n/routing';
 import { siteVerification } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
@@ -52,7 +52,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
           </Theme>
         </NextIntlClientProvider>
       </body>
-      <GoogleAnalytics gaId="G-KE94MJRC3Z" />
+      <Analytics />
     </html>
   );
 }

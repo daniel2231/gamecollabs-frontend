@@ -5,8 +5,9 @@ import { useTranslations } from 'next-intl';
 import { useOptimistic, useTransition } from 'react';
 import { PendingMark } from '@/components/site/Pending';
 import { useRouter } from '@/i18n/navigation';
-import { listHref } from '@/lib/filters';
-import { SORTS, type CollabQuery, type Sort } from '@/schema';
+import { listHref } from '@/lib/list-url';
+import { SORTS, type Sort } from '@/schema/constants';
+import type { CollabQuery } from '@/schema';
 
 export function SortSelect({ query }: { query: CollabQuery }) {
   const t = useTranslations('List.sort');

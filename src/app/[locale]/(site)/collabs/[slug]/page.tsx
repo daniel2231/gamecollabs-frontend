@@ -6,6 +6,7 @@ import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { ReportDialog } from '@/components/report/ReportDialog';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
+import { CoverImage } from '@/components/site/CoverImage';
 import { JsonLd } from '@/components/site/JsonLd';
 import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
@@ -109,11 +110,13 @@ export default async function CollabDetailPage({ params }: Props) {
 
               {collab.cover && (
                 <figure style={{ margin: 0 }}>
-                  <img
+                  <CoverImage
                     src={collab.cover.url}
                     alt={collab.cover.alt}
-                    width={collab.cover.width ?? undefined}
-                    height={collab.cover.height ?? undefined}
+                    width={collab.cover.width}
+                    height={collab.cover.height}
+                    sizes="(max-width: 960px) 100vw, 800px"
+                    eager
                     style={{ width: '100%', height: 'auto', border: '1px solid var(--ct-line)' }}
                   />
                   {collab.cover.credit && (

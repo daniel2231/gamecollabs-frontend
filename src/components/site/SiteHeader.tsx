@@ -1,11 +1,11 @@
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 import { Link } from '@/i18n/navigation';
-import { LIST_PATH } from '@/lib/filters';
+import { LIST_PATH } from '@/lib/list-url';
 import { STATS_PATH } from '@/lib/stats';
-import { LanguageMenu } from './LanguageMenu';
+import { LanguageMenu, LanguageMenuFallback } from './LanguageMenu';
 import { LogoMark } from './LogoMark';
-import { SearchBox } from './SearchBox';
+import { SearchBox, SearchBoxFallback } from './SearchBox';
 
 export async function SiteHeader() {
   const t = await getTranslations('Site');
@@ -18,7 +18,7 @@ export async function SiteHeader() {
             {t('name')}
           </Link>
           <div className="ct-header-search">
-            <Suspense fallback={null}>
+            <Suspense fallback={<SearchBoxFallback />}>
               <SearchBox />
             </Suspense>
           </div>
@@ -31,7 +31,7 @@ export async function SiteHeader() {
                 {t('nav.stats')}
               </Link>
             </nav>
-            <Suspense fallback={null}>
+            <Suspense fallback={<LanguageMenuFallback />}>
               <LanguageMenu />
             </Suspense>
           </div>

@@ -5,7 +5,8 @@ import { Badge, Button, Callout, Card, Dialog, Flex, Heading, Select, Table, Tex
 import { useState, useTransition } from 'react';
 import { createTerm } from '@/app/[locale]/admin/actions';
 import { useRouter } from '@/i18n/navigation';
-import { TAXONOMIES, type Taxonomy, type TaxonomyTerm } from '@/schema';
+import { TAXONOMIES } from '@/schema/constants';
+import type { Taxonomy, TaxonomyTerm } from '@/schema';
 
 const TAXONOMY_LABEL: Record<Taxonomy, string> = {
   category: '카테고리',

@@ -1,4 +1,4 @@
-import { Box, Flex, Skeleton } from '@radix-ui/themes';
+import { Flex, Skeleton } from '@radix-ui/themes';
 import { LoadingStatus } from './Pending';
 
 /**
@@ -39,35 +39,6 @@ function Grid({ count }: { count: number }) {
   );
 }
 
-/** 홈: 현황 줄, 대표 캐러셀 | 번호 목록, 아래 IP 그리드 */
-export function HomeSkeleton() {
-  return (
-    <div aria-busy="true">
-      <LoadingStatus />
-      <div className="ct-home">
-        <Block height={48} />
-        <div className="ct-lead">
-          <Flex direction="column" gap="3">
-            <Block height={400} />
-            <Line width={140} height={14} />
-            <Line width="70%" height={40} />
-          </Flex>
-          <Flex direction="column" gap="4">
-            <Line width={140} height={24} />
-            {Array.from({ length: 6 }, (_, i) => (
-              <Flex key={i} direction="column" gap="2">
-                <Line width="80%" height={18} />
-                <Line width="50%" height={13} />
-              </Flex>
-            ))}
-          </Flex>
-        </div>
-        <Grid count={4} />
-      </div>
-    </div>
-  );
-}
-
 /** 콜라보 목록: 제목·탭·필터·카드 그리드 */
 export function ListSkeleton() {
   return (
@@ -96,76 +67,6 @@ export function ListSkeleton() {
           </Flex>
           <Grid count={6} />
         </section>
-      </div>
-    </div>
-  );
-}
-
-/** 콜라보 상세: 가운데 한 열 */
-export function ArticleSkeleton() {
-  return (
-    <div className="ct-article" aria-busy="true">
-      <LoadingStatus />
-      <Flex direction="column" gap="7">
-        <Flex direction="column" gap="3">
-          <Line width={180} height={14} />
-          <Line width={140} height={20} />
-          <Line width="70%" height={40} />
-          <Flex gap="2">
-            <Line width={96} height={32} />
-            <Line width={96} height={32} />
-          </Flex>
-        </Flex>
-        <Block height={76} />
-        {[3, 5].map((rows, i) => (
-          <Flex key={i} direction="column" gap="3">
-            <Line width={90} height={24} />
-            {rows === 3 ? (
-              <>
-                <Line width="100%" />
-                <Line width="95%" />
-                <Line width="60%" />
-              </>
-            ) : (
-              <Block height={rows * 48} />
-            )}
-          </Flex>
-        ))}
-      </Flex>
-    </div>
-  );
-}
-
-/** 작품·회사 상세: 머리(이름+통계) 아래 타임라인과 사이드 */
-export function EntitySkeleton() {
-  return (
-    <div aria-busy="true">
-      <LoadingStatus />
-      <Flex wrap="wrap" gap="6" align="end" justify="between" pb="6" mb="6" style={{ borderBottom: '1px solid var(--ct-line)' }}>
-        <Flex direction="column" gap="3">
-          <Line width={140} height={14} />
-          <Line width={320} height={52} />
-          <Line width={160} height={18} />
-        </Flex>
-        <Box style={{ flex: '0 1 520px' }}>
-          <Block height={84} />
-        </Box>
-      </Flex>
-      <div className="ct-split">
-        <section className="ct-main">
-          <Flex direction="column" gap="3">
-            <Line width={120} height={28} />
-            {Array.from({ length: 4 }, (_, i) => (
-              <Block key={i} height={72} />
-            ))}
-          </Flex>
-        </section>
-        <aside className="ct-side">
-          <Flex direction="column" gap="4">
-            <Block height={180} />
-            <Block height={140} />
-          </Flex>
-        </aside>
       </div>
     </div>
   );
