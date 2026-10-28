@@ -3,6 +3,9 @@
  * API 응답(공개)과 관리자 입력 스키마를 함께 정의한다.
  */
 import { z } from 'zod';
+import { PHASES, SORTS, TAXONOMIES } from './constants';
+
+export * from './constants';
 
 export const LOCALES = ['ko', 'en'] as const;
 export const localeSchema = z.enum(LOCALES);
@@ -10,7 +13,6 @@ export type Locale = z.infer<typeof localeSchema>;
 
 // ── 분류(taxonomy) ─────────────────────────────────────────────
 
-export const TAXONOMIES = ['category', 'partner_category', 'region', 'platform', 'collab_type'] as const;
 export const taxonomySchema = z.enum(TAXONOMIES);
 export type Taxonomy = z.infer<typeof taxonomySchema>;
 
@@ -35,8 +37,6 @@ export type TermRef = z.infer<typeof termRefSchema>;
 
 export const PRECISIONS = ['day', 'month', 'unknown'] as const;
 export const END_KINDS = ['fixed', 'permanent', 'tba'] as const;
-export const PHASES = ['upcoming', 'ongoing', 'ended', 'unknown'] as const;
-export type Phase = (typeof PHASES)[number];
 
 /** 날짜는 ISO 문자열(UTC 자정)로 주고받는다. */
 export const periodSchema = z.object({
@@ -251,10 +251,6 @@ export type TermCount = z.infer<typeof termCount>;
 
 // ── 목록 쿼리 ─────────────────────────────────────────────────
 
-export const SORTS = ['start_desc', 'start_asc', 'recent'] as const;
-export type Sort = (typeof SORTS)[number];
-export const FACET_PARAMS = ['category', 'partner_category', 'region', 'platform', 'collab_type'] as const;
-export type FacetParam = (typeof FACET_PARAMS)[number];
 
 export const collabQuerySchema = z.object({
   q: z.string().trim().max(100).optional(),

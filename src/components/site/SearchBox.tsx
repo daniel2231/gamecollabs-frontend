@@ -4,14 +4,13 @@ import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { Kbd, Spinner, TextField, VisuallyHidden } from '@radix-ui/themes';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState, useTransition, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useTransition, type FormEvent, type RefObject } from 'react';
 import { PendingMark } from './Pending';
 import { usePathname, useRouter } from '@/i18n/navigation';
-import { LIST_PATH } from '@/lib/filters';
+import { LIST_PATH } from '@/lib/list-url';
 
 /** 헤더 검색. 결과는 목록(/collabs)에 보여준다. 목록 화면에서는 현재 필터를 유지한 채 q만 바꾼다. '/' 키로 포커스 */
 export function SearchBox() {
-  const t = useTranslations('Site.search');
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -46,6 +45,39 @@ export function SearchBox() {
   }
 
   return (
+    <SearchField
+      inputRef={inputRef}
+      value={value}
+      pending={pending}
+      onChange={setValue}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
+/**
+ * 하이드레이션 전에 보이는 같은 모양의 검색 상자. SearchBox는 useSearchParams 때문에 정적 페이지에서
+ * 브라우저에서만 그려지므로, 자리를 비워 두면 JS가 늦게 올 때 아래 내용이 밀린다(CLS)
+ */
+export function SearchBoxFallback() {
+  return <SearchField />;
+}
+
+function SearchField({
+  inputRef,
+  value,
+  pending = false,
+  onChange,
+  onSubmit,
+}: {
+  inputRef?: RefObject<HTMLInputElement | null>;
+  value?: string;
+  pending?: boolean;
+  onChange?: (value: string) => void;
+  onSubmit?: (e: FormEvent) => void;
+}) {
+  const t = useTranslations('Site.search');
+  return (
     <form role="search" onSubmit={onSubmit} style={{ flex: '1 1 260px', minWidth: 0 }}>
       <PendingMark pending={pending} />
       <VisuallyHidden>
@@ -58,7 +90,8 @@ export function SearchBox() {
         size="3"
         placeholder={t('placeholder')}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        readOnly={!onChange}
+        onChange={onChange && ((e) => onChange(e.target.value))}
         maxLength={100}
         enterKeyHint="search"
       >

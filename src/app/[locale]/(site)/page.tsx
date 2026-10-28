@@ -7,6 +7,7 @@ import { CollabCard } from '@/components/collab/CollabCard';
 import { LeadCarousel } from '@/components/collab/LeadCarousel';
 import { PeriodText } from '@/components/collab/PeriodText';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
+import { CoverImage } from '@/components/site/CoverImage';
 import { JsonLd } from '@/components/site/JsonLd';
 import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
@@ -185,7 +186,7 @@ function IpTile({ property: p, collabs }: { property: FeaturedProperty; collabs:
     <Link href={`/properties/${p.slug}`} className="ct-ip">
       <div className="ct-ip-cover">
         {cover ? (
-          <img src={cover.url} alt="" loading="lazy" width={cover.width ?? undefined} height={cover.height ?? undefined} />
+          <CoverImage src={cover.url} width={cover.width} height={cover.height} sizes="(max-width: 600px) 50vw, 240px" />
         ) : (
           <div className="ct-ip-mono" aria-hidden="true">
             {p.name.value}

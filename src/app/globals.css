@@ -1,4 +1,19 @@
-@import '@radix-ui/themes/styles.css';
+/*
+ * Radix Themes: styles.css는 30가지 색 팔레트를 모두 담아 첫 화면을 막는 CSS가 크다.
+ * 기본 토큰·컴포넌트·유틸리티에 실제로 쓰는 팔레트만 더한다. 새 color 값을 쓰면 여기에도 추가한다
+ */
+@import '@radix-ui/themes/tokens/base.css';
+@import '@radix-ui/themes/tokens/colors/gray.css';
+@import '@radix-ui/themes/tokens/colors/sand.css';
+@import '@radix-ui/themes/tokens/colors/amber.css';
+@import '@radix-ui/themes/tokens/colors/blue.css';
+@import '@radix-ui/themes/tokens/colors/grass.css';
+@import '@radix-ui/themes/tokens/colors/green.css';
+@import '@radix-ui/themes/tokens/colors/indigo.css';
+@import '@radix-ui/themes/tokens/colors/orange.css';
+@import '@radix-ui/themes/tokens/colors/red.css';
+@import '@radix-ui/themes/components.css';
+@import '@radix-ui/themes/utilities.css';
 /* Pretendard: 유니코드 범위별로 쪼갠 셀프 호스팅 subset — 화면에 쓰인 글자 조각만 받는다 */
 @import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 
