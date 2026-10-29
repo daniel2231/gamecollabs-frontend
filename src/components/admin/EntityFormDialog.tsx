@@ -1,8 +1,9 @@
 'use client';
 
-import { Button, Callout, Dialog, Flex, Select, Switch, Text, TextField } from '@radix-ui/themes';
+import { Button, Callout, Dialog, Flex, Link as RadixLink, Select, Text, TextField } from '@radix-ui/themes';
 import { useEffect, useState, useTransition } from 'react';
 import { saveEntity } from '@/app/[locale]/admin/actions';
+import { Link } from '@/i18n/navigation';
 import type { AdminEntity, EntityKind } from '@/schema';
 import { CoverField } from './CoverField';
 
@@ -17,7 +18,7 @@ type Props = {
   seedName?: string;
   kindOptions: KindOption[];
   /**
-   * 백엔드가 작품의 홈 노출(순서·대표 이미지)을 지원하는지. 모르면 수정 대상이 그 값을 가졌는지로 판단한다.
+   * 백엔드가 작품의 홈 노출(대표 이미지, 노출 순서 안내)을 지원하는지. 모르면 수정 대상이 그 값을 가졌는지로 판단한다.
    * 지원하지 않으면 입력란 대신 안내를 보여 저장해도 반영되지 않는 값을 받지 않는다
    */
   featuredSupported?: boolean;
@@ -48,12 +49,6 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
 
   function submit() {
     start(async () => {
-      const featuredOrder =
-        !supportsFeatured || (initial?.featuredOrder === undefined && !form.featuredTouched)
-          ? undefined
-          : form.featured
-            ? Number(form.featuredOrder)
-            : null;
       const image = supportsFeatured ? form.image : undefined;
       const res = await saveEntity(kind, initial?.id ?? null, {
         slug: form.slug.trim(),
@@ -61,16 +56,15 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
         aliases: form.aliases.split(',').map((a) => a.trim()).filter(Boolean),
         category: kind === 'property' ? form.category || null : null,
         country: kind === 'company' ? form.country.trim().toUpperCase() || null : null,
-        // 백엔드가 홈 노출 값을 알려주지 않았고 손대지도 않았으면 보내지 않는다(기존 값 유지)
-        featuredOrder,
+        // 홈 노출 순서는 '홈 노출' 화면에서 정한다. 보내지 않아 기존 값을 유지한다
         image,
       });
       if (!res.ok) return setError(res.error);
       onSaved(res.data);
-      // 보낸 순서·이미지가 응답에 없으면 백엔드가 그 필드를 버린 것이다. 나머지는 저장됐으므로 알리고 창을 열어 둔다
-      // (null로 끈 경우는 백엔드가 빈 필드를 생략할 수 있어 확인하지 않는다)
-      if ((typeof featuredOrder === 'number' && res.data.featuredOrder == null) || (image && res.data.image == null)) {
-        return setError({ message: '이름·별칭 등은 저장했지만, 홈 노출과 대표 이미지는 백엔드가 아직 지원하지 않아 반영되지 않았습니다.' });
+      // 보낸 이미지가 응답에 없으면 백엔드가 그 필드를 버린 것이다. 나머지는 저장됐으므로 알리고 창을 열어 둔다
+      // (null로 지운 경우는 백엔드가 빈 필드를 생략할 수 있어 확인하지 않는다)
+      if (image && res.data.image == null) {
+        return setError({ message: '이름·별칭 등은 저장했지만, 대표 이미지는 백엔드가 아직 지원하지 않아 반영되지 않았습니다.' });
       }
       onOpenChange(false);
     });
@@ -153,34 +147,22 @@ export function EntityFormDialog({ kind, open, onOpenChange, initial, seedName, 
             )}
             {supportsFeatured && (
               <>
-                <Flex direction="column" gap="2" pt="3" style={{ borderTop: '1px solid var(--gray-a5)' }}>
-                  <Text as="label" size="2" weight="medium">
-                    <Flex gap="2" align="center">
-                      <Switch
-                        checked={form.featured}
-                        onCheckedChange={(featured) =>
-                          setForm((f) => ({ ...f, featured, featuredTouched: true, featuredOrder: f.featuredOrder || '1' }))
-                        }
-                      />
-                      홈 ‘IP로 찾아보기’에 노출
-                    </Flex>
+                <Flex direction="column" gap="1" pt="3" style={{ borderTop: '1px solid var(--gray-a5)' }}>
+                  <Text size="2" weight="medium">
+                    홈 ‘IP로 찾아보기’ 노출
                   </Text>
-                  {form.featured && (
-                    <Field label="노출 순서 (작은 수가 앞)" error={fieldError('featuredOrder')}>
-                      <TextField.Root
-                        className="ct-mono"
-                        type="number"
-                        min={1}
-                        max={999}
-                        value={form.featuredOrder}
-                        onChange={(e) => setForm({ ...form, featuredOrder: e.target.value, featuredTouched: true })}
-                        style={{ maxWidth: 120 }}
-                      />
-                    </Field>
+                  {initial ? (
+                    <Text size="2" color="gray">
+                      {initial.featuredOrder != null ? `노출 중 · 순서 ${initial.featuredOrder}` : '노출하지 않음'} ·{' '}
+                      <RadixLink asChild>
+                        <Link href="/admin/featured">홈 노출 화면에서 추가·순서 변경</Link>
+                      </RadixLink>
+                    </Text>
+                  ) : (
+                    <Text size="2" color="gray">
+                      저장한 뒤 ‘홈 노출’ 화면에서 추가할 수 있습니다.
+                    </Text>
                   )}
-                  <Text size="1" color="gray">
-                    콜라보가 한 건도 없는 작품은 노출로 켜 두어도 홈에 나오지 않습니다.
-                  </Text>
                 </Flex>
                 <Flex direction="column" gap="2">
                   <span className="ct-label">대표 이미지 (선택)</span>
@@ -240,9 +222,6 @@ function toForm(e: AdminEntity | null | undefined, seedName?: string) {
     aliases: e?.aliases.join(', ') ?? '',
     category: e?.category ?? '',
     country: e?.country ?? '',
-    featured: e?.featuredOrder != null,
-    featuredOrder: e?.featuredOrder != null ? String(e.featuredOrder) : '',
-    featuredTouched: false,
     /** undefined: 백엔드가 알려주지 않음(그대로 두면 기존 값 유지) */
     image: e ? e.image : null,
   };

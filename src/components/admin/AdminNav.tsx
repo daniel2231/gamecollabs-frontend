@@ -17,6 +17,7 @@ const STATUS_LINKS = [
 
 const DATA_LINKS = [
   { href: '/admin/entities', label: '작품·회사' },
+  { href: '/admin/featured', label: '홈 노출' },
   { href: '/admin/taxonomy', label: '분류 어휘' },
   { href: '/admin/changelog', label: '변경 내역' },
 ] as const;

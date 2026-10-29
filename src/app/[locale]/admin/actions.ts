@@ -131,6 +131,19 @@ export async function saveEntity(kind: EntityKind, id: string | null, input: Ent
   });
 }
 
+/** 홈 'IP로 찾아보기' 노출 작품을 보이는 순서대로 한 번에 저장한다 */
+export async function saveFeaturedOrder(ids: string[]): Promise<ActionResult<AdminEntity[]>> {
+  return run((api) =>
+    api.setFeaturedOrder(
+      z
+        .array(z.string().min(1).max(64))
+        .max(999)
+        .refine((a) => new Set(a).size === a.length, '같은 작품이 두 번 들어 있습니다')
+        .parse(ids),
+    ),
+  );
+}
+
 export async function mergeEntities(kind: EntityKind, sourceId: string, targetId: string): Promise<ActionResult<AdminEntity>> {
   return run((api) => api.mergeEntities(entityKindSchema.parse(kind), sourceId, targetId));
 }

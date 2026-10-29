@@ -117,6 +117,8 @@ export interface AdminApi {
   createEntity(kind: EntityKind, input: EntityInput): Promise<AdminEntity>;
   updateEntity(kind: EntityKind, id: string, input: EntityInput): Promise<AdminEntity>;
   mergeEntities(kind: EntityKind, sourceId: string, targetId: string): Promise<AdminEntity>;
+  /** 홈 'IP로 찾아보기' 줄 전체를 이 순서로 저장(1, 2, …). 빠진 작품은 노출에서 뺀다. 저장된 줄을 순서대로 돌려준다 */
+  setFeaturedOrder(ids: string[]): Promise<AdminEntity[]>;
   createTerm(input: TermInput): Promise<TaxonomyTerm>;
   /**
    * 커버 이미지 업로드: POST /v1/admin/media (multipart, 필드 file).

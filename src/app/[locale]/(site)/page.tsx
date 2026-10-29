@@ -10,6 +10,7 @@ import { PeriodText } from '@/components/collab/PeriodText';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
 import { CoverImage } from '@/components/site/CoverImage';
 import { JsonLd } from '@/components/site/JsonLd';
+import { FEATURED_SIZE } from '@/lib/featured';
 import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import { isLocale, type Locale } from '@/i18n/routing';
@@ -29,8 +30,6 @@ const LEAD_SIZE = 5;
 const INDEX_SIZE = 6;
 /** 일정표 한 칸의 최대 개수 */
 const SCHEDULE_SIZE = 5;
-/** IP로 찾아보기 최대 개수 */
-const FEATURED_SIZE = 12;
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const locale = (await params).locale as Locale;

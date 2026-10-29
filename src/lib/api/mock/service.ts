@@ -806,6 +806,15 @@ export const mockAdminApi: AdminApi = {
     return true;
   },
 
+  async setFeaturedOrder(ids) {
+    await delay();
+    const missing = ids.filter((id) => !db.properties.some((p) => p.id === id));
+    if (missing.length) throw new ApiError(400, 'invalid_property', `property not found: ${missing.join(', ')}`);
+    const position = new Map(ids.map((id, i) => [id, i + 1]));
+    for (const p of db.properties) p.featuredOrder = position.get(p.id) ?? null;
+    return ids.map((id) => toAdminEntity('property', db.properties.find((p) => p.id === id)!));
+  },
+
   async createEntity(kind, input) {
     await delay();
     assertEntityInput(kind, input);

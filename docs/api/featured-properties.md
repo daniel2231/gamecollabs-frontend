@@ -69,6 +69,7 @@
   - `featuredOrder`는 1~999 정수.
   - `image`는 `storageKey`(`POST /v1/admin/media`로 올린 키)와 `originalUrl` 가운데 하나가 있어야 한다. 콜라보 커버 검증을 그대로 쓴다.
   - 오류는 기존처럼 `fields.featuredOrder`, `fields.image`로 준다.
+- **노출 줄 한 번에 저장**(`PUT /v1/admin/properties/featured`): 본문 `{ "ids": ["<id>", ...] }`. 관리자 ‘홈 노출’ 화면이 끌어서 정한 순서를 그대로 보낸다. `ids[i]`의 `featuredOrder`를 `i + 1`로 매기고, 목록에 없는 작품은 `null`로 바꾼다(한 트랜잭션). 중복 id는 422, 없는 id는 400 `invalid_property`. 응답은 목록 항목과 같은 형태로 순서대로 준다. 실제로 바뀐 것이 있을 때만 `featured` 태그를 보낸다.
 - **병합**(`POST /v1/admin/properties/:id/merge`): 대상의 값을 유지한다. 대상에 없고 원본에만 있으면 원본 값을 옮긴다.
 - 이미지 업로드는 기존 `POST /v1/admin/media`를 그대로 쓴다. 저장소 경로는 `properties/<slug>/...`를 권장한다.
 

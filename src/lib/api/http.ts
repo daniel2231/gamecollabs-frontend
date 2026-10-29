@@ -271,6 +271,10 @@ export function createHttpAdminApi(token: string): AdminApi {
       entity(kind, await data(`/v1/admin/${entityPath(kind)}`, o({ method: 'POST', body: A.toEntityBody(kind, input) }))),
     updateEntity: async (kind, id, input) =>
       entity(kind, await data(`/v1/admin/${entityPath(kind)}/${id}`, o({ method: 'PATCH', body: A.toEntityBody(kind, input) }))),
+    setFeaturedOrder: async (ids) => {
+      const list = await data<A.BeEntitySummary[]>('/v1/admin/properties/featured?locale=ko', o({ method: 'PUT', body: { ids } }));
+      return z.array(adminEntitySchema).parse(list.map((e) => A.fromEntitySummary('property', e, mediaBase())));
+    },
     // Express: :id가 남고 from이 흡수된다
     mergeEntities: async (kind, sourceId, targetId) =>
       entity(kind, await data(`/v1/admin/${entityPath(kind)}/${targetId}/merge`, o({ method: 'POST', body: { from: sourceId } }))),
