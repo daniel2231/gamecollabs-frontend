@@ -36,6 +36,6 @@ describe('후속 확인 사유 (백엔드와 같은 규칙)', () => {
 
   it('관리자 기간 표기', () => {
     expect(adminPeriodLabel(p({ start: '2026-11-01', precision: 'month', endKind: 'tba' }))).toBe('2026.11 – 종료일 미발표');
-    expect(adminPeriodLabel(p({ precision: 'unknown', endKind: 'tba' }))).toBe('기간 미상');
+    expect(adminPeriodLabel(p({ precision: 'unknown', endKind: 'tba' }))).toBe('시기 미상');
   });
 });

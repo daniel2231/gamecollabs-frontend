@@ -111,7 +111,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
   const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
   const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
   const href = (q: Partial<CollabQuery>) => listHref({ ...query, ...q });
-  // 상태 미상 탭은 그런 콜라보가 있거나 지금 그 탭을 보고 있을 때만
+  // 시기 미상 탭은 그런 콜라보가 있거나 지금 그 탭을 보고 있을 때만
   const tabs: readonly (Phase | undefined)[] =
     (stats.byPhase.unknown ?? 0) > 0 || query.phase === 'unknown' ? [...PHASE_TABS, 'unknown'] : PHASE_TABS;
 

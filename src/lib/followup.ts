@@ -62,5 +62,5 @@ export function followUpReasonOf(status: CollabStatus, period: Period, now: Date
 
 /** 관리자 화면(한국어 고정)의 기간 표기 */
 export function adminPeriodLabel(period: Period): string {
-  return formatPeriod(period, { unknown: '기간 미상', permanent: '상시', tba: '종료일 미발표' });
+  return formatPeriod(period, { unknown: '시기 미상', permanent: '상시', tba: '종료일 미발표' });
 }

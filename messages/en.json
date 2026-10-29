@@ -29,10 +29,10 @@
     "upcoming": "Upcoming",
     "ongoing": "Ongoing",
     "ended": "Ended",
-    "unknown": "Status unknown"
+    "unknown": "Date unknown"
   },
   "Period": {
-    "unknown": "Dates unknown",
+    "unknown": "Date unknown",
     "permanent": "Permanent",
     "tba": "End date TBA"
   },

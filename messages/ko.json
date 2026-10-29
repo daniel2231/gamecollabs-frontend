@@ -29,10 +29,10 @@
     "upcoming": "예정",
     "ongoing": "진행 중",
     "ended": "종료",
-    "unknown": "상태 미상"
+    "unknown": "시기 미상"
   },
   "Period": {
-    "unknown": "기간 미상",
+    "unknown": "시기 미상",
     "permanent": "상시",
     "tba": "종료일 미발표"
   },

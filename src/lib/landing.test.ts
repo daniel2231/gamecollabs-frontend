@@ -13,7 +13,7 @@ describe('landingOf', () => {
     expect(landingOf(q({ phase: 'ongoing' }))).toEqual({ param: 'phase', key: 'ongoing' });
   });
 
-  it('상태 미상은 랜딩이 아니다', () => {
+  it('시기 미상은 랜딩이 아니다', () => {
     expect(landingOf(q({ phase: 'unknown' }))).toBeNull();
   });
 
