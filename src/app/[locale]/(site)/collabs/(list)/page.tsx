@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CollabCard } from '@/components/collab/CollabCard';
 import { FilterPanel } from '@/components/collab/FilterPanel';
+import { FilterToggle, FilterUiProvider } from '@/components/collab/FilterUi';
 import { SortSelect } from '@/components/collab/SortSelect';
 import { AutoLoadMore } from '@/components/site/AutoLoadMore';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
@@ -115,6 +116,8 @@ export default async function CollabListPage({ params, searchParams }: PageProps
     (stats.byPhase.unknown ?? 0) > 0 || query.phase === 'unknown' ? [...PHASE_TABS, 'unknown'] : PHASE_TABS;
 
   const hasFacetFilters = hasFilterPanelValues(query);
+  // 좁은 화면의 필터 버튼에 붙는 수: 고른 분류 항목 수 + 기간(걸려 있으면 1)
+  const filterCount = FACET_PARAMS.reduce((n, f) => n + query[f].length, 0) + (query.from || query.to ? 1 : 0);
   const chips: { label: string; href: string }[] = [
     ...(query.q ? [{ label: t('searchChip', { q: query.q }), href: href({ q: undefined, limit: 20 }) }] : []),
     ...FACET_PARAMS.flatMap((f) =>
@@ -166,127 +169,130 @@ export default async function CollabListPage({ params, searchParams }: PageProps
         </ul>
       </nav>
 
-      <div className="ct-split">
-        <FilterPanel query={query} facets={facets} />
+      <FilterUiProvider>
+        <div className="ct-split">
+          <FilterPanel query={query} facets={facets} />
 
-        <section aria-label={t('results')} className="ct-main">
-          <Flex direction="column" gap="4">
-            <Flex wrap="wrap" align="center" gap="2">
-              {chips.map((chip) => (
-                <Badge key={chip.href} asChild size="2" variant="outline" color="gray" highContrast className="ct-chip">
-                  <Link href={chip.href} scroll={false} aria-label={t('removeFilter', { label: chip.label })}>
-                    <LinkPending />
-                    {chip.label}
-                    <Cross2Icon aria-hidden="true" />
-                  </Link>
-                </Badge>
-              ))}
-              <span style={{ flex: 1 }} />
-              <Text size="2" color="gray" aria-live="polite">
-                {t.rich('resultCount', {
-                  count: list.total,
-                  strong: (chunks) => (
-                    <Text weight="bold" highContrast className="ct-mono">
-                      {chunks}
+          <section aria-label={t('results')} className="ct-main">
+            <Flex direction="column" gap="4">
+              <Flex wrap="wrap" align="center" gap="2">
+                <FilterToggle count={filterCount} />
+                {chips.map((chip) => (
+                  <Badge key={chip.href} asChild size="2" variant="outline" color="gray" highContrast className="ct-chip">
+                    <Link href={chip.href} scroll={false} aria-label={t('removeFilter', { label: chip.label })}>
+                      <LinkPending />
+                      {chip.label}
+                      <Cross2Icon aria-hidden="true" />
+                    </Link>
+                  </Badge>
+                ))}
+                <span style={{ flex: 1 }} />
+                <Text size="2" color="gray" aria-live="polite">
+                  {t.rich('resultCount', {
+                    count: list.total,
+                    strong: (chunks) => (
+                      <Text weight="bold" highContrast className="ct-mono">
+                        {chunks}
+                      </Text>
+                    ),
+                  })}
+                </Text>
+                <SortSelect query={query} />
+                <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} variant="ghost" compact />
+              </Flex>
+
+              {/* 필터·탭·정렬을 바꾸는 동안 결과 위에서 흐르는 진행선(globals.css의 .ct-progress) */}
+              <div className="ct-progress" aria-hidden="true" />
+              {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
+              <Flex direction="column" gap="4" className="ct-pending-target">
+                {list.items.length === 0 ? (
+                  <Flex direction="column" align="center" gap="2" py="9" px="4" className="ct-panel" style={{ textAlign: 'center' }}>
+                    <Text weight="medium">{t('empty')}</Text>
+                    <Text size="2" color="gray">
+                      {chips.length > 0 ? t('emptyHint') : t('emptyPhaseHint')}
                     </Text>
-                  ),
-                })}
-              </Text>
-              <SortSelect query={query} />
-              <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} variant="ghost" />
-            </Flex>
-
-            {/* 필터·탭·정렬을 바꾸는 동안 결과 위에서 흐르는 진행선(globals.css의 .ct-progress) */}
-            <div className="ct-progress" aria-hidden="true" />
-            {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
-            <Flex direction="column" gap="4" className="ct-pending-target">
-              {list.items.length === 0 ? (
-                <Flex direction="column" align="center" gap="2" py="9" px="4" className="ct-panel" style={{ textAlign: 'center' }}>
-                  <Text weight="medium">{t('empty')}</Text>
-                  <Text size="2" color="gray">
-                    {chips.length > 0 ? t('emptyHint') : t('emptyPhaseHint')}
-                  </Text>
-                  {/* 막다른 화면이 되지 않게: 조건을 푸는 버튼과, 그래도 없으면 제보로 */}
-                  <Flex wrap="wrap" justify="center" gap="2" mt="3">
-                    {query.q && (
-                      <Button asChild variant="surface" color="gray">
-                        <Link href={href({ q: undefined, limit: 20 })} scroll={false}>
-                          <LinkPending spinner dim={false} />
-                          {t('clearSearch')}
-                        </Link>
-                      </Button>
-                    )}
-                    {hasFacetFilters && (
-                      <Button asChild variant="surface" color="gray">
-                        <Link href={href({ ...EMPTY_FILTERS, limit: 20 })} scroll={false}>
-                          <LinkPending spinner dim={false} />
-                          {t('clearFilters')}
-                        </Link>
-                      </Button>
-                    )}
-                    {chips.length === 0 && query.phase && (
-                      <Button asChild variant="surface" color="gray">
-                        <Link href={href({ phase: undefined, limit: 20 })} scroll={false}>
-                          <LinkPending spinner dim={false} />
-                          {t('showAllPhases')}
-                        </Link>
-                      </Button>
-                    )}
+                    {/* 막다른 화면이 되지 않게: 조건을 푸는 버튼과, 그래도 없으면 제보로 */}
+                    <Flex wrap="wrap" justify="center" gap="2" mt="3">
+                      {query.q && (
+                        <Button asChild variant="surface" color="gray">
+                          <Link href={href({ q: undefined, limit: 20 })} scroll={false}>
+                            <LinkPending spinner dim={false} />
+                            {t('clearSearch')}
+                          </Link>
+                        </Button>
+                      )}
+                      {hasFacetFilters && (
+                        <Button asChild variant="surface" color="gray">
+                          <Link href={href({ ...EMPTY_FILTERS, limit: 20 })} scroll={false}>
+                            <LinkPending spinner dim={false} />
+                            {t('clearFilters')}
+                          </Link>
+                        </Button>
+                      )}
+                      {chips.length === 0 && query.phase && (
+                        <Button asChild variant="surface" color="gray">
+                          <Link href={href({ phase: undefined, limit: 20 })} scroll={false}>
+                            <LinkPending spinner dim={false} />
+                            {t('showAllPhases')}
+                          </Link>
+                        </Button>
+                      )}
+                    </Flex>
+                    <Text size="2" color="gray" mt="3">
+                      {t.rich('emptyReport', {
+                        link: (chunks) => (
+                          <RadixLink asChild highContrast underline="always">
+                            <Link href="/report">{chunks}</Link>
+                          </RadixLink>
+                        ),
+                      })}
+                    </Text>
                   </Flex>
-                  <Text size="2" color="gray" mt="3">
-                    {t.rich('emptyReport', {
-                      link: (chunks) => (
-                        <RadixLink asChild highContrast underline="always">
-                          <Link href="/report">{chunks}</Link>
-                        </RadixLink>
-                      ),
-                    })}
-                  </Text>
-                </Flex>
-              ) : query.sort === 'recent' ? (
-                <ul className="ct-grid">
-                  {list.items.map((item) => (
-                    <li key={item.slug}>
-                      <CollabCard collab={item} />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
-                groups.map((group) => (
-                  <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
-                    <Heading as="h2" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
-                      {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
-                      <span className="ct-month-count">{t('monthCount', { count: group.total })}</span>
-                    </Heading>
-                    <ul className="ct-grid">
-                      {group.items.map((item) => (
-                        <li key={item.slug}>
-                          <CollabCard collab={item} />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))
+                ) : query.sort === 'recent' ? (
+                  <ul className="ct-grid">
+                    {list.items.map((item) => (
+                      <li key={item.slug}>
+                        <CollabCard collab={item} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
+                  groups.map((group) => (
+                    <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
+                      <Heading as="h2" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
+                        {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
+                        <span className="ct-month-count">{t('monthCount', { count: group.total })}</span>
+                      </Heading>
+                      <ul className="ct-grid">
+                        {group.items.map((item) => (
+                          <li key={item.slug}>
+                            <CollabCard collab={item} />
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ))
+                )}
+              </Flex>
+
+              {/* 목록 끝에 닿으면 저절로 다음 20개를 불러온다(버튼은 대기 표시·JS 없는 경우용) */}
+              {list.nextCursor && query.limit < 100 && (
+                <AutoLoadMore href={href({ limit: Math.min(query.limit + 20, 100) })}>
+                  <Flex justify="center">
+                    <Button asChild variant="surface" color="gray" size="3">
+                      <Link href={href({ limit: Math.min(query.limit + 20, 100) })} scroll={false} replace>
+                        <LinkPending spinner dim={false} />
+                        {t('loadMore')}
+                      </Link>
+                    </Button>
+                  </Flex>
+                </AutoLoadMore>
               )}
             </Flex>
-
-            {/* 목록 끝에 닿으면 저절로 다음 20개를 불러온다(버튼은 대기 표시·JS 없는 경우용) */}
-            {list.nextCursor && query.limit < 100 && (
-              <AutoLoadMore href={href({ limit: Math.min(query.limit + 20, 100) })}>
-                <Flex justify="center">
-                  <Button asChild variant="surface" color="gray" size="3">
-                    <Link href={href({ limit: Math.min(query.limit + 20, 100) })} scroll={false} replace>
-                      <LinkPending spinner dim={false} />
-                      {t('loadMore')}
-                    </Link>
-                  </Button>
-                </Flex>
-              </AutoLoadMore>
-            )}
-          </Flex>
-        </section>
-      </div>
+          </section>
+        </div>
+      </FilterUiProvider>
     </>
   );
 }

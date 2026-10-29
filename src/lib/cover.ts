@@ -5,6 +5,20 @@ export function coverFit(cover: { width?: number | null; height?: number | null 
   return ratio > 0.8 && ratio < 1.25 ? 'cover' : 'contain';
 }
 
+/** 커버 없는 카드 바탕색 가짓수(globals.css의 [data-tone='0'~'5']) */
+export const COVER_TONES = 6;
+
+/**
+ * 커버가 없을 때 바탕에 깔 색 번호. 파트너 분류 키로 정해서 같은 분류는 늘 같은 색이 된다.
+ * 키가 없으면 null(기본 회색)
+ */
+export function coverTone(key: string | null | undefined): number | null {
+  if (!key) return null;
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return h % COVER_TONES;
+}
+
 /** 업로드 전에 줄이는 크기: 긴 변 기준 */
 export const COVER_MAX_EDGE = 1600;
 

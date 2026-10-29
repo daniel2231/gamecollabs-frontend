@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { coverFit, fitWithin, imageUrlFromTransfer } from './cover';
+import { COVER_TONES, coverFit, coverTone, fitWithin, imageUrlFromTransfer } from './cover';
+
+describe('coverTone', () => {
+  it('같은 분류 키는 늘 같은 색, 범위 안의 번호', () => {
+    const tone = coverTone('partner_category.anime_manga');
+    expect(tone).toBe(coverTone('partner_category.anime_manga'));
+    expect(tone).toBeGreaterThanOrEqual(0);
+    expect(tone).toBeLessThan(COVER_TONES);
+  });
+
+  it('키가 없으면 기본색', () => {
+    expect(coverTone(undefined)).toBeNull();
+    expect(coverTone('')).toBeNull();
+  });
+});
 
 describe('coverFit', () => {
   it('16:9에 가까우면 꽉 채우고, 크기를 모르면 꽉 채운다', () => {

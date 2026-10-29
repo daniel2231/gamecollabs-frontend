@@ -98,7 +98,7 @@ function SearchField({
         <TextField.Slot>
           <MagnifyingGlassIcon height="16" width="16" />
         </TextField.Slot>
-        <TextField.Slot>{pending ? <Spinner size="2" /> : <Kbd size="1">/</Kbd>}</TextField.Slot>
+        <TextField.Slot>{pending ? <Spinner size="2" /> : <Kbd size="1" className="ct-search-kbd">/</Kbd>}</TextField.Slot>
       </TextField.Root>
     </form>
   );

@@ -2,7 +2,7 @@ import { Flex, Text } from '@radix-ui/themes';
 import { Link } from '@/i18n/navigation';
 import { CoverImage } from '@/components/site/CoverImage';
 import { SignalX } from '@/components/site/SignalX';
-import { coverFit } from '@/lib/cover';
+import { coverFit, coverTone } from '@/lib/cover';
 import type { CollabSummary } from '@/schema';
 import { PeriodText } from './PeriodText';
 import { PhaseBadge } from './PhaseBadge';
@@ -49,7 +49,7 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
             data-fit={fit}
           />
         ) : (
-          <div className="ct-card-mono" aria-hidden="true">
+          <div className="ct-card-mono" data-tone={coverTone(partner?.kind.key) ?? undefined} aria-hidden="true">
             <span>{host?.name.value.charAt(0) ?? '?'}</span>
             <span className="ct-card-x">×</span>
             <span>{partner?.name.value.charAt(0) ?? '?'}</span>

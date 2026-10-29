@@ -15,6 +15,7 @@ import { Link } from '@/i18n/navigation';
 import { isLocale, type Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
+import { coverTone } from '@/lib/cover';
 import { formatDate } from '@/lib/format';
 import { websiteJsonLd } from '@/lib/jsonld';
 import { LANDING_PHASES } from '@/lib/landing';
@@ -194,7 +195,7 @@ function IpTile({ property: p, collabs }: { property: FeaturedProperty; collabs:
         {cover ? (
           <CoverImage src={cover.url} width={cover.width} height={cover.height} sizes="(max-width: 600px) 50vw, 240px" />
         ) : (
-          <div className="ct-ip-mono" aria-hidden="true">
+          <div className="ct-ip-mono" data-tone={coverTone(p.kind.key) ?? undefined} aria-hidden="true">
             {p.name.value}
           </div>
         )}

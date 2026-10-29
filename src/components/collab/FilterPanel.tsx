@@ -1,6 +1,6 @@
 'use client';
 
-import { MixerHorizontalIcon } from '@radix-ui/react-icons';
+import { Cross2Icon } from '@radix-ui/react-icons';
 import { Button, Checkbox, Flex, Link as RadixLink, Select, Text } from '@radix-ui/themes';
 import { useLocale, useTranslations } from 'next-intl';
 import { useId, useOptimistic, useState, useTransition } from 'react';
@@ -9,6 +9,7 @@ import { useRouter } from '@/i18n/navigation';
 import { EMPTY_FILTERS, hasFilterPanelValues, listHref, toggleFacet } from '@/lib/list-url';
 import { flatten, type TermNode } from '@/lib/taxonomy';
 import type { CollabQuery, FacetParam } from '@/schema';
+import { useFilterUi } from './FilterUi';
 
 const VISIBLE = 5;
 
@@ -23,8 +24,7 @@ export function FilterPanel({ query, facets }: Props) {
   const [pending, startTransition] = useTransition();
   // 서버 응답을 기다리지 않고 체크 상태를 바로 바꾼다. 이동이 끝나면 서버 값으로 돌아온다
   const [optimistic, setOptimistic] = useOptimistic(query);
-  const [open, setOpen] = useState(false);
-  const bodyId = useId();
+  const { open, setOpen, bodyId } = useFilterUi();
 
   function navigate(next: CollabQuery) {
     startTransition(() => {
@@ -34,7 +34,8 @@ export function FilterPanel({ query, facets }: Props) {
   }
 
   return (
-    <aside aria-label={t('filters')} className="ct-side ct-filter" aria-busy={pending} style={{ flexBasis: 248 }}>
+    // 좁은 화면에서는 닫혀 있으면 패널 전체를 숨기고, 여는 버튼(FilterToggle)은 결과 줄에 둔다
+    <aside aria-label={t('filters')} className="ct-side ct-filter" data-open={open} aria-busy={pending} style={{ flexBasis: 248 }}>
       <PendingMark pending={pending} />
       <Flex align="center" justify="between" pb="2">
         <Text weight="bold">{t('filters')}</Text>
@@ -44,22 +45,14 @@ export function FilterPanel({ query, facets }: Props) {
               {t('reset')}
             </Button>
           )}
-          <Button
-            className="ct-filter-toggle"
-            size="1"
-            variant="soft"
-            color="gray"
-            aria-expanded={open}
-            aria-controls={bodyId}
-            onClick={() => setOpen((v) => !v)}
-          >
-            <MixerHorizontalIcon />
-            {t('openFilters')}
+          <Button className="ct-filter-close" size="1" variant="soft" color="gray" aria-controls={bodyId} onClick={() => setOpen(false)}>
+            <Cross2Icon />
+            {t('closeFilters')}
           </Button>
         </Flex>
       </Flex>
 
-      <div id={bodyId} className="ct-filter-body" data-open={open}>
+      <div id={bodyId} className="ct-filter-body">
         {facets.map(({ param, tree }) =>
           tree.length === 0 ? null : (
             <FacetGroup

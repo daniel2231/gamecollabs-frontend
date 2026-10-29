@@ -1,4 +1,4 @@
-import { Badge, Flex, Heading, Link as RadixLink, Table, Text } from '@radix-ui/themes';
+import { Badge, Flex, Heading, Link as RadixLink, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -74,6 +74,16 @@ export default async function CollabDetailPage({ params }: Props) {
       : collab.period.endKind === 'tba' || !collab.period.end
         ? tPeriod('tba')
         : formatDate(collab.period.end, collab.period.precision);
+  // 값이 없는 분류는 '—' 줄을 늘어놓지 않고 뺀다
+  const facts = (
+    [
+      { label: t('labels.category'), param: 'category', terms: collab.category ? [collab.category] : [] },
+      { label: t('labels.partner'), param: 'partner_category', terms: partner ? [partner.kind] : [] },
+      { label: t('labels.region'), param: 'region', terms: collab.regions },
+      { label: t('labels.platform'), param: 'platform', terms: collab.platforms },
+      { label: t('labels.type'), param: 'collab_type', terms: collab.collabTypes },
+    ] satisfies { label: string; param: FacetParam; terms: TermRef[] }[]
+  ).filter((f) => f.terms.length > 0);
   const navLabel = (await getTranslations('Site.nav'))('collabs');
   const base = siteUrl();
   const url = `${base}/${locale}/collabs/${slug}`;
@@ -209,15 +219,15 @@ export default async function CollabDetailPage({ params }: Props) {
                 </Section>
               )}
 
-              <Section title={t('classification')}>
-                <dl className="ct-facts">
-                  <Fact label={t('labels.category')} param="category" terms={collab.category ? [collab.category] : []} none={t('none')} />
-                  <Fact label={t('labels.partner')} param="partner_category" terms={partner ? [partner.kind] : []} none={t('none')} />
-                  <Fact label={t('labels.region')} param="region" terms={collab.regions} none={t('none')} />
-                  <Fact label={t('labels.platform')} param="platform" terms={collab.platforms} none={t('none')} />
-                  <Fact label={t('labels.type')} param="collab_type" terms={collab.collabTypes} none={t('none')} />
-                </dl>
-              </Section>
+              {facts.length > 0 && (
+                <Section title={t('classification')}>
+                  <dl className="ct-facts">
+                    {facts.map((f) => (
+                      <Fact key={f.param} {...f} />
+                    ))}
+                  </dl>
+                </Section>
+              )}
 
               {collab.parties.length > 0 && (
                 <Section title={t('parties')}>
@@ -310,7 +320,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /** 분류 한 줄: 왼쪽 라벨, 오른쪽 값(여러 개면 배지로 나열). 값은 그 분류의 목록(랜딩 페이지)으로 연결한다 */
-function Fact({ label, param, terms, none }: { label: string; param: FacetParam; terms: TermRef[]; none: string }) {
+function Fact({ label, param, terms }: { label: string; param: FacetParam; terms: TermRef[] }) {
   return (
     <div>
       <dt>
@@ -319,66 +329,55 @@ function Fact({ label, param, terms, none }: { label: string; param: FacetParam;
         </Text>
       </dt>
       <dd>
-        {terms.length === 0 ? (
-          <Text size="2" color="gray">
-            {none}
-          </Text>
-        ) : (
-          <Flex wrap="wrap" gap="1">
-            {terms.map((term) => (
-              <Badge key={term.key} asChild variant="soft" color="gray" size="2" highContrast>
-                <Link href={landingPath({ param, key: term.key })}>{term.label}</Link>
-              </Badge>
-            ))}
-          </Flex>
-        )}
+        <Flex wrap="wrap" gap="1">
+          {terms.map((term) => (
+            <Badge key={term.key} asChild variant="soft" color="gray" size="2" highContrast>
+              <Link href={landingPath({ param, key: term.key })}>{term.label}</Link>
+            </Badge>
+          ))}
+        </Flex>
       </dd>
     </div>
   );
 }
 
+/**
+ * 출처 목록: 줄마다 왼쪽 제목·발행처, 오른쪽 유형·확인일. 표 대신 줄로 두어
+ * 좁은 화면에서는 오른쪽 묶음이 제목 아래로 내려간다
+ */
 async function Sources({ collab }: { collab: CollabDetail }) {
   const t = await getTranslations('Detail');
   return (
-    <Table.Root variant="surface" size="2">
-      <Table.Header>
-        <Table.Row>
-          <Table.ColumnHeaderCell>{t('sourceColumns.type')}</Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell>{t('sourceColumns.title')}</Table.ColumnHeaderCell>
-          <Table.ColumnHeaderCell>{t('sourceColumns.accessed')}</Table.ColumnHeaderCell>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {collab.sources.map((s) => (
-          <Table.Row key={s.url}>
-            <Table.Cell>
-              <Badge variant="soft" color="gray" highContrast={s.type === 'official'}>
-                {t(`sourceType.${s.type}`)}
-              </Badge>
-            </Table.Cell>
-            <Table.Cell>
-              <RadixLink href={s.url} target="_blank" rel="noopener noreferrer" weight="medium" highContrast underline="always">
-                {s.title}
-              </RadixLink>
-              <Text as="div" size="2" color="gray">
-                {s.publisher}
-                {s.isPrimary && ` · ${t('primary')}`}
-                {s.archiveUrl && (
-                  <>
-                    {' · '}
-                    <RadixLink href={s.archiveUrl} target="_blank" rel="noopener noreferrer" color="gray">
-                      {t('archived')}
-                    </RadixLink>
-                  </>
-                )}
-              </Text>
-            </Table.Cell>
-            <Table.Cell className="ct-mono" style={{ whiteSpace: 'nowrap' }}>
-              {s.accessedAt}
-            </Table.Cell>
-          </Table.Row>
-        ))}
-      </Table.Body>
-    </Table.Root>
+    <ul className="ct-rows ct-sources">
+      {collab.sources.map((s) => (
+        <li key={s.url}>
+          <div className="ct-source-main">
+            <RadixLink href={s.url} target="_blank" rel="noopener noreferrer" weight="medium" highContrast underline="always">
+              {s.title}
+            </RadixLink>
+            <Text as="div" size="2" color="gray">
+              {s.publisher}
+              {s.isPrimary && ` · ${t('primary')}`}
+              {s.archiveUrl && (
+                <>
+                  {' · '}
+                  <RadixLink href={s.archiveUrl} target="_blank" rel="noopener noreferrer" color="gray">
+                    {t('archived')}
+                  </RadixLink>
+                </>
+              )}
+            </Text>
+          </div>
+          <div className="ct-source-meta">
+            <Badge variant="soft" color="gray" highContrast={s.type === 'official'}>
+              {t(`sourceType.${s.type}`)}
+            </Badge>
+            <Text size="1" color="gray">
+              {t('sourceColumns.accessed')} <time className="ct-mono" dateTime={s.accessedAt}>{s.accessedAt}</time>
+            </Text>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

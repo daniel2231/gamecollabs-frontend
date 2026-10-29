@@ -114,7 +114,7 @@
     "emptyReport": "Can’t find the collab you’re looking for? <link>Report a collab</link>",
     "removeFilter": "Remove filter {label}",
     "searchChip": "Search: {q}",
-    "openFilters": "Open filters",
+    "closeFilters": "Close",
     "year": "Year",
     "month": "Month",
     "anyYear": "Any year",
@@ -143,8 +143,6 @@
     "companies": "Companies involved",
     "sources": "Sources",
     "sourceColumns": {
-      "type": "Type",
-      "title": "Title · Publisher",
       "accessed": "Checked"
     },
     "sourceType": {
@@ -163,7 +161,6 @@
       "platform": "Platform",
       "type": "Type"
     },
-    "none": "—",
     "copyLink": "Copy link",
     "copied": "Copied",
     "copyFailed": "Couldn't copy — use the address bar",

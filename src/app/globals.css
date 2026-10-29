@@ -1075,6 +1075,13 @@ body {
   min-width: 0;
 }
 
+/* 헤더 검색의 '/' 단축키 안내는 키보드가 있을 법한 기기에서만 */
+@media (hover: none), (pointer: coarse) {
+  .ct-search-kbd {
+    display: none;
+  }
+}
+
 /* ── 콜라보 카드 그리드 ────────────────────────────────────── */
 .ct-grid {
   list-style: none;
@@ -1211,6 +1218,25 @@ body {
   background-position: -1px -1px;
 }
 
+/* 커버 없는 카드·IP 타일: 파트너 분류마다 다른 옅은 바탕(lib/cover.ts의 coverTone).
+   격자는 그대로 두고 아래에서 색이 번지게 깐다 */
+[data-tone='0'] { --ct-tone: oklch(0.62 0.14 25); }
+[data-tone='1'] { --ct-tone: oklch(0.66 0.12 85); }
+[data-tone='2'] { --ct-tone: oklch(0.62 0.12 150); }
+[data-tone='3'] { --ct-tone: oklch(0.62 0.11 215); }
+[data-tone='4'] { --ct-tone: oklch(0.6 0.14 280); }
+[data-tone='5'] { --ct-tone: oklch(0.62 0.14 340); }
+
+.ct-card-mono[data-tone],
+.ct-ip-mono[data-tone] {
+  background-color: color-mix(in oklch, var(--ct-tone) 10%, transparent);
+  background-image:
+    linear-gradient(var(--gray-a2) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gray-a2) 1px, transparent 1px),
+    radial-gradient(120% 90% at 50% 110%, color-mix(in oklch, var(--ct-tone) 32%, transparent), transparent 70%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
+}
+
 .ct-card-x {
   font-size: 28px;
   font-weight: 300;
@@ -1342,14 +1368,28 @@ body {
   padding-left: 18px;
 }
 
+/* 좁으면 시작·종료 두 칸, 상태는 아래 한 줄. 세 칸을 세로로 쌓으면 첫 화면을 다 차지한다 */
 @media (max-width: 520px) {
   .ct-stat-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  /* 세로로 쌓이면 왼쪽 여백 없이 첫 칸과 줄을 맞춘다 */
+  .ct-stat-grid > div {
+    padding: 12px 12px 12px 0;
+  }
+
   .ct-stat-grid > div + div {
+    padding-left: 12px;
+  }
+
+  .ct-stat-grid > div:nth-child(3) {
+    grid-column: 1 / -1;
     padding-left: 0;
+  }
+
+  .ct-stat-grid .rt-r-size-5 {
+    font-size: var(--font-size-4);
+    line-height: var(--line-height-4);
   }
 }
 
@@ -1367,6 +1407,42 @@ body {
 .ct-article {
   max-width: 880px;
   margin: 0 auto;
+}
+
+/* 상세 출처: 왼쪽 제목·발행처, 오른쪽 유형·확인일. 좁으면 오른쪽 묶음이 아래로 */
+.ct-sources {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-sources > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 24px;
+  padding: 12px 0;
+}
+
+.ct-sources > li + li {
+  border-top: 1px solid var(--ct-line-soft);
+}
+
+.ct-source-main {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.ct-source-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
 }
 
 /* 상세 분류: 라벨 | 값 두 칸, 줄마다 구분선 */
@@ -1902,22 +1978,49 @@ body {
   background: var(--accent-a4);
 }
 
-/* 필터 패널: 좁은 화면에서는 접는다 */
-.ct-filter-toggle {
+/* 필터 패널: 넓으면 왼쪽에 붙어 따라 내려오고(길면 패널 안에서 스크롤),
+   좁으면 접어 두고 결과 줄의 필터 버튼으로 연다 */
+.ct-filter-toggle,
+.ct-filter-close {
   display: none !important;
 }
 
-@media (max-width: 860px) {
-  .ct-filter-toggle {
-    display: inline-flex !important;
+@media (min-width: 861px) {
+  .ct-split > .ct-filter {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-a6) transparent;
+    /* 스크롤바가 체크박스에 붙지 않게 */
+    padding-right: 8px;
   }
+}
 
-  .ct-filter-body[data-open='false'] {
-    display: none;
+@media (max-width: 860px) {
+  .ct-filter-toggle,
+  .ct-filter-close {
+    display: inline-flex !important;
   }
 
   .ct-split > .ct-filter {
     flex-basis: 100% !important;
+  }
+
+  .ct-split > .ct-filter[data-open='false'] {
+    display: none;
+  }
+
+  /* 평소엔 아이콘만. 복사됨·실패 문구는 보인다 */
+  .ct-copy-compact[data-state='idle'] .ct-copy-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 

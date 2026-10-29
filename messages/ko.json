@@ -114,7 +114,7 @@
     "emptyReport": "찾는 콜라보가 없나요? <link>콜라보 제보하기</link>",
     "removeFilter": "{label} 필터 제거",
     "searchChip": "검색: {q}",
-    "openFilters": "필터 열기",
+    "closeFilters": "닫기",
     "year": "연도",
     "month": "월",
     "anyYear": "전체 연도",
@@ -143,8 +143,6 @@
     "companies": "참여 회사",
     "sources": "출처",
     "sourceColumns": {
-      "type": "유형",
-      "title": "제목 · 발행처",
       "accessed": "확인일"
     },
     "sourceType": {
@@ -163,7 +161,6 @@
       "platform": "플랫폼",
       "type": "유형"
     },
-    "none": "—",
     "copyLink": "링크 복사",
     "copied": "복사됨",
     "copyFailed": "복사 실패 — 주소창에서 복사하세요",
