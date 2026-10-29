@@ -26,12 +26,10 @@
   --ct-line: var(--gray-a5);
   --ct-line-soft: var(--gray-a4);
   --ct-muted: var(--gray-11);
-  --ct-ph-border: var(--gray-a8);
   /* 헤더와 콜라보 카드가 함께 쓰는 검은 바탕 */
   --ct-black: #0a0a09;
   /* 유일한 강조색: '지금 진행 중'·× 표시·현재 탭·포커스에만 쓴다 */
   --ct-signal: #ff5b2e;
-  --ct-ink: #ede9e1;
   /* Radix 기본값(default)은 버튼·메뉴 항목에 화살표 커서를 쓴다. 누를 수 있는 것은 모두 손가락으로 */
   --cursor-button: pointer;
   --cursor-checkbox: pointer;
@@ -632,62 +630,6 @@ body {
   }
 }
 
-/* 분류 색인: 왼쪽 분류 이름, 오른쪽 항목 링크와 건수 */
-.ct-facet-index {
-  margin: 0;
-}
-
-.ct-facet-index > div {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr);
-  gap: 8px 24px;
-  padding-block: 14px;
-}
-
-.ct-facet-index > div + div {
-  border-top: 1px solid var(--ct-line);
-}
-
-.ct-facet-index dt {
-  font-size: 14px;
-  color: var(--gray-10);
-}
-
-.ct-facet-index dd {
-  margin: 0;
-}
-
-.ct-facet-index ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 22px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.ct-facet-index a {
-  font-size: 15px;
-  color: var(--gray-12);
-  text-decoration: none;
-}
-
-.ct-facet-index a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.ct-facet-index .ct-mono {
-  font-size: 12px;
-  color: var(--gray-10);
-}
-
-@media (max-width: 640px) {
-  .ct-facet-index > div {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 .ct-logo {
   display: flex;
   align-items: center;
@@ -1041,18 +983,6 @@ body {
 
 .ct-card-link:hover {
   border-top-color: var(--gray-12);
-}
-
-/* 확인 안 된 값 자리표시 태그 */
-.ct-placeholder {
-  display: inline-flex;
-  align-items: center;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: var(--radius-1);
-  font-size: 12px;
-  border: 1px dashed var(--ct-ph-border);
-  color: var(--ct-muted);
 }
 
 /* 통계 칸(1px 간격 그리드) */
