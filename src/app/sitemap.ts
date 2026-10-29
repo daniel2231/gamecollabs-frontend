@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { CHANGELOG_PATH } from '@/lib/changelog';
+import { PROPERTIES_PATH } from '@/lib/featured';
 import { LIST_PATH, parseCollabQuery } from '@/lib/filters';
 import { LANDING_PHASES, landingPath, type Landing } from '@/lib/landing';
 import { languageAlternates } from '@/lib/seo';
@@ -39,6 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...entries(LIST_PATH),
     ...entries(STATS_PATH),
     ...entries(CHANGELOG_PATH),
+    ...entries(PROPERTIES_PATH),
     // 연도 리포트는 그해 시작한 콜라보가 있을 때만 있다(없으면 404)
     ...stats.years.filter((y) => y.count > 0).flatMap((y) => entries(`${STATS_PATH}/${y.year}`)),
     ...landingList.flatMap((l) => entries(landingPath(l))),

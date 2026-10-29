@@ -58,7 +58,7 @@ export function FeaturedManager({ properties, supported, kindOptions }: Props) {
   const q = query.trim();
   const candidates = q ? properties.filter((p) => !placed.has(p.id) && matches(p, q)).slice(0, 8) : [];
 
-  // 홈은 콜라보가 있는 작품만 앞에서부터 FEATURED_SIZE개 보여준다
+  // 홈 캐러셀은 콜라보가 있는 작품만 앞에서부터 FEATURED_SIZE개 넣는다
   let shown = 0;
   const visibility = list.map((p) => {
     if (p.collabCount === 0) return 'empty' as const;
@@ -112,7 +112,8 @@ export function FeaturedManager({ properties, supported, kindOptions }: Props) {
             홈 노출
           </Heading>
           <Text as="p" size="2" color="gray" mt="1">
-            홈 ‘IP로 찾아보기’에 보일 작품과 순서입니다. 끌어서 순서를 바꾸고 저장하세요. 콜라보가 있는 작품만 앞에서부터 {FEATURED_SIZE}개 보입니다.
+            홈 ‘IP로 찾아보기’에 보일 작품과 순서입니다. 끌어서 순서를 바꾸고 저장하세요. 콜라보가 있는 작품만 앞에서부터 {FEATURED_SIZE}개가 홈 캐러셀에 들어가고,
+            전부는 ‘IP로 찾아보기’ 목록 페이지(/properties)에 같은 순서로 나옵니다.
           </Text>
         </div>
         <Flex gap="2">
@@ -253,7 +254,7 @@ function FeaturedRow({ property: p, index, count, kindLabel, visibility, divider
         <Table.Row>
           <Table.Cell colSpan={5} style={{ background: 'var(--gray-a3)' }}>
             <Text size="1" color="gray">
-              여기부터는 홈에 보이지 않습니다({FEATURED_SIZE}개 초과)
+              여기부터는 홈 캐러셀에 들어가지 않고 IP 목록 페이지에만 나옵니다({FEATURED_SIZE}개 초과)
             </Text>
           </Table.Cell>
         </Table.Row>

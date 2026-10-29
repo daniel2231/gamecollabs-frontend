@@ -48,6 +48,11 @@
       "next": "Next collab",
       "slide": "{index} of {total}"
     },
+    "ipCarousel": {
+      "prev": "Previous IPs",
+      "next": "Next IPs",
+      "page": "{index} of {total}"
+    },
     "ipCollabs": "{count, plural, one {# collab} other {# collabs}}",
     "section": {
       "ongoing": "Happening now",
@@ -190,6 +195,11 @@
     "typeDistribution": "Collab types",
     "empty": "No published collabs yet.",
     "noData": "No data"
+  },
+  "Properties": {
+    "title": "Browse by IP",
+    "description": "Notable IPs that have taken part in game collabs. Pick one to see all of its collabs.",
+    "empty": "No IPs to show yet."
   },
   "Company": {
     "breadcrumb": "Companies",

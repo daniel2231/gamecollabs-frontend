@@ -7,22 +7,21 @@ import type { ReactNode } from 'react';
 import { CollabCard } from '@/components/collab/CollabCard';
 import { LeadCarousel } from '@/components/collab/LeadCarousel';
 import { PeriodText } from '@/components/collab/PeriodText';
-import { PhaseBadge } from '@/components/collab/PhaseBadge';
-import { CoverImage } from '@/components/site/CoverImage';
+import { IpTile } from '@/components/property/IpTile';
 import { JsonLd } from '@/components/site/JsonLd';
-import { FEATURED_SIZE } from '@/lib/featured';
 import { SignalX } from '@/components/site/SignalX';
+import { TileCarousel } from '@/components/site/TileCarousel';
 import { Link } from '@/i18n/navigation';
 import { isLocale, type Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
+import { FEATURED_SIZE, PROPERTIES_PATH } from '@/lib/featured';
 import { LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
-import { coverTone } from '@/lib/cover';
 import { formatDate } from '@/lib/format';
 import { websiteJsonLd } from '@/lib/jsonld';
 import { LANDING_PHASES } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import type { CollabQuery, CollabSummary, FeaturedProperty, Period, Phase } from '@/schema';
+import type { CollabQuery, CollabSummary, Period, Phase } from '@/schema';
 
 /** 대표 캐러셀의 최대 슬라이드 수 */
 const LEAD_SIZE = 5;
@@ -151,16 +150,18 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
           </div>
         )}
 
-        {/* IP로 찾아보기: 운영자가 관리자 화면에서 고른 작품. 작품 페이지로 이어진다 */}
+        {/* IP로 찾아보기: 운영자가 관리자 화면에서 고른 작품을 옆으로 넘겨 본다. 작품 페이지로, 전체는 IP 목록으로 이어진다 */}
         {ips.length > 0 && (
-          <Section id="ips" title={t('section.ips')}>
-            <ul className="ct-ip-grid">
-              {ips.map((p) => (
-                <li key={p.slug}>
-                  <IpTile property={p} collabs={t('ipCollabs', { count: p.collabCount })} />
-                </li>
+          <Section id="ips" title={t('section.ips')} action={seeAll(t('section.ips'), PROPERTIES_PATH)}>
+            <TileCarousel
+              label={t('section.ips')}
+              prevLabel={t('ipCarousel.prev')}
+              nextLabel={t('ipCarousel.next')}
+              pageLabel={t.raw('ipCarousel.page') as string}
+              tiles={ips.map((p) => (
+                <IpTile key={p.slug} property={p} collabs={t('ipCollabs', { count: p.collabCount })} />
               ))}
-            </ul>
+            />
           </Section>
         )}
 
@@ -182,33 +183,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
         )}
       </div>
     </>
-  );
-}
-
-/** IP 타일: 대표 이미지 → 최근 콜라보 커버 → 이름만(격자 바탕) 순으로 그림을 고른다 */
-function IpTile({ property: p, collabs }: { property: FeaturedProperty; collabs: string }) {
-  const cover = p.image ?? p.latestCover;
-  return (
-    <Link href={`/properties/${p.slug}`} className="ct-ip">
-      <div className="ct-ip-cover">
-        {cover ? (
-          <CoverImage src={cover.url} width={cover.width} height={cover.height} sizes="(max-width: 600px) 50vw, 240px" />
-        ) : (
-          <div className="ct-ip-mono" data-tone={coverTone(p.kind.key) ?? undefined} aria-hidden="true">
-            {p.name.value}
-          </div>
-        )}
-        {p.ongoingCount > 0 && (
-          <span className="ct-card-phase">
-            <PhaseBadge phase="ongoing" />
-          </span>
-        )}
-      </div>
-      <span className="ct-ip-name">{p.name.value}</span>
-      <span className="ct-ip-meta">
-        {p.kind.label} · <span className="ct-mono">{collabs}</span>
-      </span>
-    </Link>
   );
 }
 

@@ -48,6 +48,11 @@
       "next": "다음 콜라보",
       "slide": "{index} / {total}"
     },
+    "ipCarousel": {
+      "prev": "이전 IP",
+      "next": "다음 IP",
+      "page": "{index} / {total}"
+    },
     "ipCollabs": "콜라보 {count}건",
     "section": {
       "ongoing": "지금 진행 중",
@@ -190,6 +195,11 @@
     "typeDistribution": "콜라보 유형 분포",
     "empty": "아직 발행된 콜라보가 없습니다.",
     "noData": "데이터 없음"
+  },
+  "Properties": {
+    "title": "IP로 찾아보기",
+    "description": "게임 콜라보에 참여한 주요 IP를 모았습니다. IP를 고르면 그 IP의 콜라보를 모두 볼 수 있습니다.",
+    "empty": "아직 소개할 IP가 없습니다."
   },
   "Company": {
     "breadcrumb": "회사",
