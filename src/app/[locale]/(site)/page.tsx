@@ -20,7 +20,7 @@ import { websiteJsonLd } from '@/lib/jsonld';
 import { LANDING_PHASES } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import type { CollabQuery, CollabSummary, FeaturedProperty, Period } from '@/schema';
+import type { CollabQuery, CollabSummary, FeaturedProperty, Period, Phase } from '@/schema';
 
 /** 대표 캐러셀의 최대 슬라이드 수 */
 const LEAD_SIZE = 5;
@@ -82,6 +82,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     .slice(0, SCHEDULE_SIZE);
   // 운영자가 고른 작품 가운데 발행된 콜라보가 있는 것만
   const ips = featured.filter((p) => p.collabCount > 0).slice(0, FEATURED_SIZE);
+  // 시작일이 없는 콜라보도 전체 수에 들어가므로, 있을 때는 따로 한 칸을 둬야 합이 맞는다
+  const tallyPhases: Phase[] = (stats.byPhase.unknown ?? 0) > 0 ? [...LANDING_PHASES, 'unknown'] : [...LANDING_PHASES];
 
   const seeAll = (section: string, href: string) => (
     <Link href={href} className="ct-more" aria-label={t('seeAllLabel', { section })}>
@@ -102,14 +104,14 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       <div className="ct-home">
         {/* 현황: 얇은 한 줄. 등록된 콜라보 전체 수와 진행 상태별 수, 각각 목록으로 이어진다 */}
         <nav aria-label={t('tally')}>
-          <ul className="ct-tally">
+          <ul className="ct-tally" data-cols={tallyPhases.length + 1}>
             <li>
               <Link href={LIST_PATH}>
                 <span className="ct-tally-label">{t('total')}</span>
                 <span className="ct-tally-num ct-mono">{stats.published}</span>
               </Link>
             </li>
-            {LANDING_PHASES.map((phase) => (
+            {tallyPhases.map((phase) => (
               <li key={phase}>
                 <Link href={listHref({ phase })} data-phase={phase}>
                   <span className="ct-tally-label">{tPhase(phase)}</span>

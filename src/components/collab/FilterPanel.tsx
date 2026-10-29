@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useId, useOptimistic, useState, useTransition } from 'react';
 import { PendingMark } from '@/components/site/Pending';
 import { useRouter } from '@/i18n/navigation';
-import { listHref, toggleFacet } from '@/lib/list-url';
+import { EMPTY_FILTERS, hasFilterPanelValues, listHref, toggleFacet } from '@/lib/list-url';
 import { flatten, type TermNode } from '@/lib/taxonomy';
 import type { CollabQuery, FacetParam } from '@/schema';
 
@@ -39,16 +39,11 @@ export function FilterPanel({ query, facets }: Props) {
       <Flex align="center" justify="between" pb="2">
         <Text weight="bold">{t('filters')}</Text>
         <Flex gap="3" align="center">
-          <RadixLink
-            size="2"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate({ ...optimistic, category: [], partner_category: [], region: [], platform: [], collab_type: [], from: undefined, to: undefined, limit: 20 });
-            }}
-          >
-            {t('reset')}
-          </RadixLink>
+          {hasFilterPanelValues(optimistic) && (
+            <Button size="1" variant="ghost" color="gray" highContrast onClick={() => navigate({ ...optimistic, ...EMPTY_FILTERS, limit: 20 })}>
+              {t('reset')}
+            </Button>
+          )}
           <Button
             className="ct-filter-toggle"
             size="1"

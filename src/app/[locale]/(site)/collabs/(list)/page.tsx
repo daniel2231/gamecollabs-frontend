@@ -1,5 +1,5 @@
 import { Cross2Icon } from '@radix-ui/react-icons';
-import { Badge, Button, Flex, Heading, Text } from '@radix-ui/themes';
+import { Badge, Button, Flex, Heading, Link as RadixLink, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CollabCard } from '@/components/collab/CollabCard';
@@ -14,13 +14,13 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { groupByStartMonth } from '@/lib/format';
-import { hasActiveFilters, LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
+import { EMPTY_FILTERS, hasActiveFilters, hasFilterPanelValues, LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { landingOf, landingPath, type Landing } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
 import { buildTree, labelMap } from '@/lib/taxonomy';
-import { FACET_PARAMS, type CollabQuery, type TaxonomyTerm } from '@/schema';
+import { FACET_PARAMS, type CollabQuery, type Phase, type TaxonomyTerm } from '@/schema';
 
 const PHASE_TABS = [undefined, 'ongoing', 'upcoming', 'ended'] as const;
 
@@ -110,7 +110,11 @@ export default async function CollabListPage({ params, searchParams }: PageProps
   const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
   const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
   const href = (q: Partial<CollabQuery>) => listHref({ ...query, ...q });
+  // 상태 미상 탭은 그런 콜라보가 있거나 지금 그 탭을 보고 있을 때만
+  const tabs: readonly (Phase | undefined)[] =
+    (stats.byPhase.unknown ?? 0) > 0 || query.phase === 'unknown' ? [...PHASE_TABS, 'unknown'] : PHASE_TABS;
 
+  const hasFacetFilters = hasFilterPanelValues(query);
   const chips: { label: string; href: string }[] = [
     ...(query.q ? [{ label: t('searchChip', { q: query.q }), href: href({ q: undefined, limit: 20 }) }] : []),
     ...FACET_PARAMS.flatMap((f) =>
@@ -147,15 +151,18 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
       <nav aria-label={t('phaseTabs')}>
         <ul className="ct-tabs">
-          {PHASE_TABS.map((phase) => (
-            <li key={phase ?? 'all'}>
-              <Link href={href({ phase, limit: 20 })} scroll={false} aria-current={query.phase === phase ? 'page' : undefined}>
-                <LinkPending />
-                {phase ? tPhase(phase) : tPhase('all')}
-                {phase && stats.byPhase[phase] > 0 && <sup>{stats.byPhase[phase]}</sup>}
-              </Link>
-            </li>
-          ))}
+          {tabs.map((phase) => {
+            const count = phase ? (stats.byPhase[phase] ?? 0) : stats.published;
+            return (
+              <li key={phase ?? 'all'}>
+                <Link href={href({ phase, limit: 20 })} scroll={false} aria-current={query.phase === phase ? 'page' : undefined}>
+                  <LinkPending />
+                  {phase ? tPhase(phase) : tPhase('all')}
+                  <sup data-zero={count === 0 || undefined}>{count}</sup>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
@@ -194,10 +201,46 @@ export default async function CollabListPage({ params, searchParams }: PageProps
             {/* 필터·탭·정렬을 바꾸는 동안 흐려지는 영역 */}
             <Flex direction="column" gap="4" className="ct-pending-target">
               {list.items.length === 0 ? (
-                <Flex direction="column" align="center" gap="2" py="9" className="ct-panel">
+                <Flex direction="column" align="center" gap="2" py="9" px="4" className="ct-panel" style={{ textAlign: 'center' }}>
                   <Text weight="medium">{t('empty')}</Text>
                   <Text size="2" color="gray">
-                    {t('emptyHint')}
+                    {chips.length > 0 ? t('emptyHint') : t('emptyPhaseHint')}
+                  </Text>
+                  {/* 막다른 화면이 되지 않게: 조건을 푸는 버튼과, 그래도 없으면 제보로 */}
+                  <Flex wrap="wrap" justify="center" gap="2" mt="3">
+                    {query.q && (
+                      <Button asChild variant="surface" color="gray">
+                        <Link href={href({ q: undefined, limit: 20 })} scroll={false}>
+                          <LinkPending spinner dim={false} />
+                          {t('clearSearch')}
+                        </Link>
+                      </Button>
+                    )}
+                    {hasFacetFilters && (
+                      <Button asChild variant="surface" color="gray">
+                        <Link href={href({ ...EMPTY_FILTERS, limit: 20 })} scroll={false}>
+                          <LinkPending spinner dim={false} />
+                          {t('clearFilters')}
+                        </Link>
+                      </Button>
+                    )}
+                    {chips.length === 0 && query.phase && (
+                      <Button asChild variant="surface" color="gray">
+                        <Link href={href({ phase: undefined, limit: 20 })} scroll={false}>
+                          <LinkPending spinner dim={false} />
+                          {t('showAllPhases')}
+                        </Link>
+                      </Button>
+                    )}
+                  </Flex>
+                  <Text size="2" color="gray" mt="3">
+                    {t.rich('emptyReport', {
+                      link: (chunks) => (
+                        <RadixLink asChild highContrast underline="always">
+                          <Link href="/report">{chunks}</Link>
+                        </RadixLink>
+                      ),
+                    })}
                   </Text>
                 </Flex>
               ) : query.sort === 'recent' ? (

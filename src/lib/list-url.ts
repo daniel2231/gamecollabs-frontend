@@ -31,3 +31,19 @@ export function toggleFacet(query: CollabQuery, facet: FacetParam, key: string):
   const next = list.includes(key) ? list.filter((k) => k !== key) : [...list, key];
   return { ...query, [facet]: next, limit: 20 };
 }
+
+/** 필터 패널이 다루는 값(분류·기간)을 모두 비운 상태. 검색어·진행 상태·정렬은 그대로 둔다 */
+export const EMPTY_FILTERS = {
+  category: [],
+  partner_category: [],
+  region: [],
+  platform: [],
+  collab_type: [],
+  from: undefined,
+  to: undefined,
+} satisfies Partial<CollabQuery>;
+
+/** 필터 패널에서 고른 값(분류·기간)이 하나라도 있는지 */
+export function hasFilterPanelValues(query: CollabQuery): boolean {
+  return FACET_PARAMS.some((f) => query[f].length > 0) || Boolean(query.from || query.to);
+}

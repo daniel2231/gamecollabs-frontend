@@ -587,6 +587,37 @@ body {
   }
 }
 
+/* 시기 미상 칸이 붙으면 다섯 칸. 좁으면 전체 수를 한 줄 위에 두고 아래 2×2 */
+.ct-tally[data-cols='5'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .ct-tally[data-cols='5'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ct-tally[data-cols='5'] > li:first-child {
+    grid-column: 1 / -1;
+  }
+  .ct-tally[data-cols='5'] > li:nth-child(-n + 3) {
+    border-bottom: 1px solid var(--ct-line);
+  }
+  .ct-tally[data-cols='5'] > li:nth-child(2),
+  .ct-tally[data-cols='5'] > li:nth-child(4) {
+    border-left: 0;
+  }
+  .ct-tally[data-cols='5'] > li:nth-child(3) {
+    border-left: 1px solid var(--ct-line);
+  }
+  .ct-tally[data-cols='5'] > li:nth-child(2) a,
+  .ct-tally[data-cols='5'] > li:nth-child(4) a {
+    padding-left: 0;
+  }
+  .ct-tally[data-cols='5'] > li:nth-child(3) a {
+    padding-left: 12px;
+  }
+}
+
 .ct-logo { grid-area: logo; }
 .ct-header-search { grid-area: search; min-width: 0; }
 .ct-header-row > :last-child { grid-area: lang; justify-self: end; }
@@ -706,6 +737,20 @@ body {
 
 .ct-header-nav:hover {
   color: var(--gray-12);
+}
+
+/* 지금 보고 있는 구역: 글자를 밝히고 강조색 밑줄 */
+.ct-header-nav[aria-current='page'] {
+  color: var(--gray-12);
+  text-decoration: underline;
+  text-decoration-color: var(--ct-signal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+/* 0건인 탭의 숫자는 더 옅게 */
+.ct-tabs sup[data-zero] {
+  color: var(--gray-8);
 }
 
 /* ── 홈 ────────────────────────────────────────────────────── */
