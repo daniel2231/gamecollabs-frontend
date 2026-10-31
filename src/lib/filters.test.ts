@@ -11,7 +11,7 @@ describe('URL 필터 상태', () => {
   it('잘못된 값은 버리고 기본값을 쓴다', () => {
     const q = parseCollabQuery({ phase: 'nope', sort: 'x', from: '2026-1', limit: '999' });
     expect(q.phase).toBeUndefined();
-    expect(q.sort).toBe('start_desc');
+    expect(q.sort).toBe('current');
     expect(q.from).toBeUndefined();
     expect(q.limit).toBe(100);
   });

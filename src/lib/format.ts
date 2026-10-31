@@ -1,4 +1,4 @@
-import type { Period } from '@/schema';
+import type { Period, Phase } from '@/schema';
 
 /** 2026-10-06 → 2026.10.06, month 정밀도면 2026.10 */
 export function formatDate(date: string | null, precision: Period['precision']): string | null {
@@ -22,6 +22,17 @@ export function formatMonth(date: string | null): string | null {
   if (!date) return null;
   const [y, m] = date.split('-');
   return `${y}.${m}`;
+}
+
+/** 진행 상태로 연속 구간을 묶는다(current 정렬용). 입력 순서를 그대로 유지한다 */
+export function groupByPhase<T extends { phase: Phase }>(items: T[]): { key: Phase; items: T[] }[] {
+  const groups: { key: Phase; items: T[] }[] = [];
+  for (const item of items) {
+    const last = groups.at(-1);
+    if (last?.key === item.phase) last.items.push(item);
+    else groups.push({ key: item.phase, items: [item] });
+  }
+  return groups;
 }
 
 /** 시작 월(YYYY-MM)로 연속 구간을 묶는다. 입력 순서를 그대로 유지하고, 시기 미상은 key ''로 묶는다 */

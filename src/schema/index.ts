@@ -265,7 +265,7 @@ export const collabQuerySchema = z.object({
   to: z.string().regex(/^\d{4}-\d{2}$/).optional(),
   property: z.string().optional(),
   company: z.string().optional(),
-  sort: z.enum(SORTS).default('start_desc'),
+  sort: z.enum(SORTS).default('current'),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   cursor: z.string().optional(),
 });

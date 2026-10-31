@@ -22,6 +22,7 @@ import type {
   FollowUpItem,
   FollowUpState,
   Locale,
+  Phase,
   PropertyDetail,
   Submission,
   TaxonomyTerm,
@@ -158,6 +159,20 @@ function compareStart(a: DbCollab, b: DbCollab, dir: 1 | -1): number {
   return dir * sa.localeCompare(sb);
 }
 
+const PHASE_RANK: Record<Phase, number> = { ongoing: 0, upcoming: 1, ended: 2, unknown: 3 };
+
+/** current 정렬(백엔드와 같은 규칙): 진행 중은 최근 시작순, 예정은 가까운 순, 종료는 최근 종료순, 시기 미상은 맨 뒤 */
+function compareCurrent(now = new Date()) {
+  return (a: DbCollab, b: DbCollab): number => {
+    const pa = computePhase(a.period, now);
+    const pb = computePhase(b.period, now);
+    if (pa !== pb) return PHASE_RANK[pa] - PHASE_RANK[pb];
+    if (pa === 'upcoming') return compareStart(a, b, 1);
+    if (pa === 'ended') return (b.period.end ?? '').localeCompare(a.period.end ?? '') || compareStart(a, b, -1);
+    return compareStart(a, b, -1);
+  };
+}
+
 function filterCollabs(query: CollabQuery): DbCollab[] {
   const q = query.q?.toLowerCase();
   const property = query.property ? db.properties.find((p) => p.slug === query.property) : undefined;
@@ -186,6 +201,7 @@ function filterCollabs(query: CollabQuery): DbCollab[] {
   if (query.sort === 'recent') {
     return result.sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
   }
+  if (query.sort === 'current') return result.sort(compareCurrent());
   return result.sort((a, b) => compareStart(a, b, query.sort === 'start_asc' ? 1 : -1));
 }
 

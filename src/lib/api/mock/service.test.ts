@@ -16,6 +16,20 @@ async function load() {
   return import('./service');
 }
 
+describe('목 API: current 정렬', () => {
+  it('진행 중 → 예정(가까운 순) → 종료 → 시기 미상 순으로, 먼 미래 콜라보가 맨 위에 오지 않는다', async () => {
+    const svc = await load();
+    const { items } = await svc.mockPublicApi.listCollabs({ ...baseQuery, sort: 'current', limit: 100 }, 'ko');
+    const rank = { ongoing: 0, upcoming: 1, ended: 2, unknown: 3 } as const;
+    const ranks = items.map((c) => rank[c.phase]);
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+    const upcoming = items.filter((c) => c.phase === 'upcoming').map((c) => c.period.start!);
+    expect(upcoming).toEqual([...upcoming].sort());
+    const ongoing = items.filter((c) => c.phase === 'ongoing').map((c) => c.period.start!);
+    expect(ongoing).toEqual([...ongoing].sort().reverse());
+  });
+});
+
 describe('목 API: PRD 규칙', () => {
   let svc: Awaited<ReturnType<typeof load>>;
   beforeEach(async () => {

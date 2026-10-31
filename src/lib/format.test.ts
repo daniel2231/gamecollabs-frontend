@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupByStartMonth, originalName } from './format';
+import { groupByPhase, groupByStartMonth, originalName } from './format';
 
 const item = (slug: string, start: string | null, precision: 'day' | 'month' | 'unknown' = 'day') => ({
   slug,
@@ -18,6 +18,22 @@ describe('groupByStartMonth', () => {
 
   it('정밀도가 unknown이면 날짜가 있어도 시기 미상으로 본다', () => {
     expect(groupByStartMonth([item('a', '2026-10-01', 'unknown')])[0]!.key).toBe('');
+  });
+});
+
+describe('groupByPhase', () => {
+  it('같은 진행 상태끼리 묶고 입력 순서를 유지한다', () => {
+    const groups = groupByPhase([
+      { slug: 'a', phase: 'ongoing' as const },
+      { slug: 'b', phase: 'ongoing' as const },
+      { slug: 'c', phase: 'upcoming' as const },
+      { slug: 'd', phase: 'ended' as const },
+    ]);
+    expect(groups.map((g) => [g.key, g.items.map((i) => i.slug)])).toEqual([
+      ['ongoing', ['a', 'b']],
+      ['upcoming', ['c']],
+      ['ended', ['d']],
+    ]);
   });
 });
 
