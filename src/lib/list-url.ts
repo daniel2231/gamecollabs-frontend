@@ -15,7 +15,7 @@ export function serializeCollabQuery(query: Partial<CollabQuery>): string {
   if (query.phase) sp.set('phase', query.phase);
   if (query.from) sp.set('from', query.from);
   if (query.to) sp.set('to', query.to);
-  if (query.sort && query.sort !== 'start_desc') sp.set('sort', query.sort);
+  if (query.sort && query.sort !== 'current') sp.set('sort', query.sort);
   if (query.limit && query.limit !== 20) sp.set('limit', String(query.limit));
   const s = sp.toString();
   return s ? `?${s}` : '';

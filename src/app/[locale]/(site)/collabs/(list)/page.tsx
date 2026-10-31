@@ -14,7 +14,7 @@ import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { groupByStartMonth } from '@/lib/format';
+import { groupByPhase, groupByStartMonth } from '@/lib/format';
 import { EMPTY_FILTERS, hasActiveFilters, hasFilterPanelValues, LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { landingOf, landingPath, type Landing } from '@/lib/landing';
@@ -96,20 +96,33 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   const landing = landingOf(query);
   const heading = await landingTitle(landing, terms, locale);
-  // 시작일 정렬이면 시작 월별로 묶는다. 다음 페이지가 남아 있으면 마지막 달은 일부만 불러온 상태라
-  // 그 달의 전체 개수를 따로 받아 온다(불러온 개수만 세면 '더 보기'를 눌러야 숫자가 맞아진다)
-  const groups = (query.sort === 'recent' ? [] : groupByStartMonth(list.items)).map((g) => ({ ...g, total: g.items.length }));
+  // 기본(current) 정렬은 진행 상태별로, 시작일 정렬은 시작 월별로 묶는다(진행 상태 탭을 고르면 묶지 않는다).
+  // 다음 페이지가 남아 있으면 마지막 묶음은 일부만 불러온 상태라 그 묶음의 전체 개수를 따로 받아 온다
+  // (불러온 개수만 세면 '더 보기'를 눌러야 숫자가 맞아진다)
+  const grouping = query.sort === 'recent' ? null : query.sort === 'current' ? (query.phase ? null : 'phase') : 'month';
+  const groups =
+    grouping === 'phase'
+      ? groupByPhase(list.items).map((g) => ({ kind: 'phase' as const, key: g.key, items: g.items, total: g.items.length }))
+      : grouping === 'month'
+        ? groupByStartMonth(list.items).map((g) => ({ kind: 'month' as const, key: g.key, items: g.items, total: g.items.length }))
+        : [];
   const lastGroup = groups.at(-1);
   if (lastGroup && list.nextCursor) {
-    lastGroup.total = lastGroup.key
-      ? (await api.listCollabs({ ...query, from: lastGroup.key, to: lastGroup.key, limit: 1, cursor: undefined }, locale)).total
-      : // 시기 미상은 항상 맨 뒤에 오므로 남은 전부가 미상이다
-        list.total - (list.items.length - lastGroup.items.length);
+    const rest = { ...query, limit: 1, cursor: undefined };
+    lastGroup.total =
+      lastGroup.kind === 'phase'
+        ? (await api.listCollabs({ ...rest, phase: lastGroup.key }, locale)).total
+        : lastGroup.key
+          ? (await api.listCollabs({ ...rest, from: lastGroup.key, to: lastGroup.key }, locale)).total
+          : // 시기 미상은 항상 맨 뒤에 오므로 남은 전부가 미상이다
+            list.total - (list.items.length - lastGroup.items.length);
   }
 
   const labels = labelMap(terms, locale);
   const facets = FACET_PARAMS.map((param) => ({ param, tree: buildTree(terms, param, locale) }));
   const monthLabel = new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' });
+  const groupLabel = (g: (typeof groups)[number]) =>
+    g.kind === 'phase' ? tPhase(g.key) : g.key ? monthLabel.format(new Date(`${g.key}-01T00:00:00Z`)) : t('unknownMonth');
   const href = (q: Partial<CollabQuery>) => listHref({ ...query, ...q });
   // 시기 미상 탭은 그런 콜라보가 있거나 지금 그 탭을 보고 있을 때만
   const tabs: readonly (Phase | undefined)[] =
@@ -248,7 +261,7 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                       })}
                     </Text>
                   </Flex>
-                ) : query.sort === 'recent' ? (
+                ) : groups.length === 0 ? (
                   <ul className="ct-grid">
                     {list.items.map((item) => (
                       <li key={item.slug}>
@@ -257,11 +270,11 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                     ))}
                   </ul>
                 ) : (
-                  // 시작일 정렬일 때는 시작 월별로 나눠 보여준다
+                  // 진행 상태별(기본 정렬) 또는 시작 월별(시작일 정렬)로 나눠 보여준다
                   groups.map((group) => (
-                    <section key={group.key || 'unknown'} aria-labelledby={`month-${group.key || 'unknown'}`} className="ct-month">
-                      <Heading as="h2" id={`month-${group.key || 'unknown'}`} className="ct-month-heading">
-                        {group.key ? monthLabel.format(new Date(`${group.key}-01T00:00:00Z`)) : t('unknownMonth')}
+                    <section key={`${group.kind}-${group.key || 'unknown'}`} aria-labelledby={`${group.kind}-${group.key || 'unknown'}`} className="ct-month">
+                      <Heading as="h2" id={`${group.kind}-${group.key || 'unknown'}`} className="ct-month-heading">
+                        {groupLabel(group)}
                         <span className="ct-month-count">{t('monthCount', { count: group.total })}</span>
                       </Heading>
                       <ul className="ct-grid">

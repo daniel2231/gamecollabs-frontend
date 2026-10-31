@@ -103,6 +103,7 @@
     "resultCount": "<strong>{count}</strong> results",
     "sort": {
       "label": "Sort",
+      "current": "Ongoing first",
       "start_desc": "Start date, newest",
       "start_asc": "Start date, oldest",
       "recent": "Recently added"

@@ -103,6 +103,7 @@
     "resultCount": "<strong>{count}</strong>건",
     "sort": {
       "label": "정렬",
+      "current": "진행 중 우선",
       "start_desc": "시작일 최신순",
       "start_asc": "시작일 오래된순",
       "recent": "최근 등록순"
