@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { breadcrumbJsonLd, statsDatasetJsonLd } from '@/lib/jsonld';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { STATS_PATH, monthColumns, parseStatsYear, peakMonth, yearMonths, yearOverYear } from '@/lib/stats';
+import { STATS_FIRST_YEAR, STATS_PATH, monthColumns, parseStatsYear, peakMonth, yearMonths, yearOverYear } from '@/lib/stats';
 
 type Props = PageProps<'/[locale]/stats/[year]'>;
 
@@ -60,8 +60,8 @@ export default async function StatsYearPage({ params }: Props) {
   const months = yearMonths(stats.monthly, year, now);
   const peak = peakMonth(months);
   const peakLabel = peak ? monthColumns([peak], locale)[0]!.label : '—';
-  // 전년 기록이 아예 없으면(트래커가 다루기 전) 비교하지 않는다
-  const previous = stats.years.find((y) => y.year === year - 1)?.count ?? null;
+  // 전년 기록이 아예 없거나 통계에 넣지 않는 해(2026년 전)면 비교하지 않는다
+  const previous = year - 1 >= STATS_FIRST_YEAR ? (stats.years.find((y) => y.year === year - 1)?.count ?? null) : null;
   const change = yearOverYear(stats.published, previous);
   const signed = new Intl.NumberFormat(locale, { signDisplay: 'exceptZero' });
   const percent = new Intl.NumberFormat(locale, { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 0 });

@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import { statsDatasetJsonLd } from '@/lib/jsonld';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { STATS_PATH as PATH, collectionStartLabel, monthColumns, recentMonths } from '@/lib/stats';
+import { STATS_PATH as PATH, collectionStartLabel, monthColumns, recentMonths, statsYears } from '@/lib/stats';
 
 export const revalidate = 3600;
 
@@ -40,7 +40,7 @@ export default async function StatsPage({ params }: PageProps<'/[locale]/stats'>
   const now = new Date();
   const thisYear = now.getUTCFullYear();
   const base = siteUrl();
-  const years = stats.years.filter((y) => y.count > 0);
+  const years = statsYears(stats.years);
   const since = t('section.monthlySince', { month: collectionStartLabel(locale) });
 
   return (

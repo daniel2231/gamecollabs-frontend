@@ -9,6 +9,8 @@ export const STATS_PATH = '/stats';
 
 /** 수집을 시작한 달. 그 전 달은 수집하지 않았으므로 월별 차트에 넣지 않는다 */
 export const COLLECTION_START = '2026-04';
+/** 통계에 보여 줄 첫 해. 그 전 해는 연도 탭·연도 리포트·사이트맵에 넣지 않는다 */
+export const STATS_FIRST_YEAR = 2026;
 /** 통계 홈의 월별 차트 폭: 이번 달까지 최근 24개월(수집 시작 달보다 앞으로는 가지 않는다) */
 export const RECENT_MONTHS = 24;
 /** 순위마다 보여 줄 개수 */
@@ -85,11 +87,16 @@ export function yearOverYear(current: number, previous: number | null): { diff: 
   return { diff: current - previous, ratio: previous > 0 ? (current - previous) / previous : null };
 }
 
-/** 주소의 연도 부분: 네 자리 숫자이고 시작한 콜라보가 있는 해만 */
+/** 통계에 보여 줄 해: 첫 해(2026) 이후이고 시작한 콜라보가 있는 해만 */
+export function statsYears(years: Stats['years']): Stats['years'] {
+  return years.filter((y) => y.year >= STATS_FIRST_YEAR && y.count > 0);
+}
+
+/** 주소의 연도 부분: 네 자리 숫자이고 통계에 보여 줄 해(statsYears)만 */
 export function parseStatsYear(raw: string, years: Stats['years']): number | null {
   if (!/^\d{4}$/.test(raw)) return null;
   const year = Number(raw);
-  return years.some((y) => y.year === year && y.count > 0) ? year : null;
+  return statsYears(years).some((y) => y.year === year) ? year : null;
 }
 
 /** 전체 대비 비율(0~100, 정수 반올림). 전체가 0이면 0 */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { COLLECTION_START, addMonths, collectionStartLabel, fillMonths, monthColumns, monthRange, niceTicks, parseStatsYear, peakMonth, percentOf, recentMonths, yearMonths, yearOverYear } from './stats';
+import { COLLECTION_START, addMonths, collectionStartLabel, fillMonths, monthColumns, monthRange, niceTicks, parseStatsYear, peakMonth, percentOf, recentMonths, statsYears, yearMonths, yearOverYear } from './stats';
 
 const now = new Date('2026-10-27T03:00:00Z');
 
@@ -55,13 +55,15 @@ describe('numbers', () => {
     expect(percentOf(1, 0)).toBe(0);
   });
 
-  it('accepts only years that have collabs', () => {
-    const years = [{ year: 2025, count: 3 }, { year: 2026, count: 0 }];
-    expect(parseStatsYear('2025', years)).toBe(2025);
-    expect(parseStatsYear('2026', years)).toBeNull();
+  it('accepts only years from 2026 that have collabs', () => {
+    const years = [{ year: 2025, count: 5 }, { year: 2026, count: 3 }, { year: 2027, count: 0 }];
+    expect(parseStatsYear('2026', years)).toBe(2026);
+    expect(parseStatsYear('2027', years)).toBeNull();
+    expect(parseStatsYear('2025', years)).toBeNull();
     expect(parseStatsYear('2024', years)).toBeNull();
-    expect(parseStatsYear('25', years)).toBeNull();
-    expect(parseStatsYear('2025.json', years)).toBeNull();
+    expect(parseStatsYear('26', years)).toBeNull();
+    expect(parseStatsYear('2026.json', years)).toBeNull();
+    expect(statsYears(years)).toEqual([{ year: 2026, count: 3 }]);
   });
 });
 

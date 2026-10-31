@@ -2,7 +2,7 @@ import { useTranslations } from 'next-intl';
 import type { CSSProperties, ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
 import { MoreList } from './MoreList';
-import { BAR_LIST_SIZE, RANK_SIZE, STATS_PATH, niceTicks, percentOf, type MonthState } from '@/lib/stats';
+import { BAR_LIST_SIZE, RANK_SIZE, STATS_PATH, niceTicks, percentOf, statsYears, type MonthState } from '@/lib/stats';
 import type { RankedEntity, TermRef } from '@/schema';
 
 /** 통계 페이지의 한 묶음: 위 굵은 선, 제목과 보조 설명 */
@@ -196,7 +196,7 @@ export function RankList({ title, items, hrefPrefix }: { title: string; items: (
   );
 }
 
-/** 연도 고르기: 전체 + 시작한 콜라보가 있는 해. 목록 화면의 진행 상태 탭과 같은 모양 */
+/** 연도 고르기: 전체 + 2026년 이후 시작한 콜라보가 있는 해. 목록 화면의 진행 상태 탭과 같은 모양 */
 export function YearTabs({ label, allLabel, years, current }: { label: string; allLabel: string; years: { year: number; count: number }[]; current: number | null }) {
   return (
     <nav aria-label={label}>
@@ -206,16 +206,14 @@ export function YearTabs({ label, allLabel, years, current }: { label: string; a
             {allLabel}
           </Link>
         </li>
-        {years
-          .filter((y) => y.count > 0)
-          .map((y) => (
-            <li key={y.year}>
-              <Link href={`${STATS_PATH}/${y.year}`} aria-current={current === y.year ? 'page' : undefined}>
-                {y.year}
-                <sup>{y.count}</sup>
-              </Link>
-            </li>
-          ))}
+        {statsYears(years).map((y) => (
+          <li key={y.year}>
+            <Link href={`${STATS_PATH}/${y.year}`} aria-current={current === y.year ? 'page' : undefined}>
+              {y.year}
+              <sup>{y.count}</sup>
+            </Link>
+          </li>
+        ))}
       </ul>
     </nav>
   );

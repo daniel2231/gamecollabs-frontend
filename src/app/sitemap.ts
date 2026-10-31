@@ -7,7 +7,7 @@ import { LIST_PATH, parseCollabQuery } from '@/lib/filters';
 import { LANDING_PHASES, landingPath, type Landing } from '@/lib/landing';
 import { languageAlternates } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
-import { STATS_PATH } from '@/lib/stats';
+import { STATS_PATH, statsYears } from '@/lib/stats';
 import { FACET_PARAMS, type FacetParam, type Stats } from '@/schema';
 
 export const revalidate = 3600;
@@ -41,8 +41,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...entries(STATS_PATH),
     ...entries(CHANGELOG_PATH),
     ...entries(PROPERTIES_PATH),
-    // 연도 리포트는 그해 시작한 콜라보가 있을 때만 있다(없으면 404)
-    ...stats.years.filter((y) => y.count > 0).flatMap((y) => entries(`${STATS_PATH}/${y.year}`)),
+    // 연도 리포트는 2026년 이후 그해 시작한 콜라보가 있을 때만 있다(없으면 404)
+    ...statsYears(stats.years).flatMap((y) => entries(`${STATS_PATH}/${y.year}`)),
     ...landingList.flatMap((l) => entries(landingPath(l))),
     ...data.collabs.flatMap((c) => entries(`/collabs/${c.slug}`, c.updatedAt)),
     ...data.properties.flatMap((p) => entries(`/properties/${p.slug}`, p.updatedAt)),
