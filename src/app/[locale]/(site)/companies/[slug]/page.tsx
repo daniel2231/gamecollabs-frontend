@@ -15,7 +15,8 @@ import { siteUrl } from '@/lib/site';
 
 type Props = PageProps<'/[locale]/companies/[slug]'>;
 
-export const revalidate = 3600;
+// 웹훅(collab:/property:/company: 태그)이 갱신을 맡는다. 시간 재검증은 하루 한 번의 안전망
+export const revalidate = 86400;
 export async function generateStaticParams() {
   return [];
 }

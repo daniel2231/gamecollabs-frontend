@@ -30,7 +30,14 @@ import { ApiError, type AdminApi, type PublicApi } from './types';
  * 응답(`{ data, meta }`)은 adapt.ts에서 화면 스키마로 바꾼 뒤 그 스키마로 다시 검증한다.
  * 캐시 태그: collabs, collab:<slug>, property:<slug>, company:<slug>, taxonomies, featured(홈 노출 작품), changelog
  * → Express가 발행·수정 시 /api/revalidate 웹훅으로 무효화한다.
+ * 상세(콜라보·작품·회사)는 `collabs`를 달지 않는다. 발행 한 번에 모든 상세가 다시 쓰이지 않도록,
+ * Express가 바뀐 콜라보의 `collab:<slug>`와 연결된 `property:`·`company:` 태그를 직접 보낸다.
  */
+
+/** 태그로 무효화되는 공개 조회의 기본 재검증 주기(초). 목록·홈은 날짜에 따라 단계가 바뀌므로 짧게 둔다 */
+const DEFAULT_REVALIDATE = 3600;
+/** 상세 조회는 웹훅이 갱신을 맡으므로 길게 둔다. 웹훅을 놓쳤을 때와 날짜로 바뀌는 단계를 위한 안전망 */
+export const DETAIL_REVALIDATE = 86400;
 
 type RequestOptions = {
   method?: string;
@@ -42,6 +49,8 @@ type RequestOptions = {
   nullOn404?: boolean;
   /** 공개 조회도 캐시하지 않는다 */
   noStore?: boolean;
+  /** 공개 조회의 재검증 주기(초). 기본 DEFAULT_REVALIDATE */
+  revalidate?: number;
 };
 
 function baseUrl(): string {
@@ -64,7 +73,7 @@ async function request(path: string, opts: RequestOptions = {}): Promise<Respons
     },
     body: opts.body === undefined ? undefined : opts.body instanceof FormData ? opts.body : JSON.stringify(opts.body),
     // 공개 조회는 태그 캐시(웹훅으로 무효화), 관리자 요청은 항상 최신
-    ...(isRead && !opts.token && !opts.noStore ? { next: { tags: opts.tags ?? [], revalidate: 3600 } } : { cache: 'no-store' as const }),
+    ...(isRead && !opts.token && !opts.noStore ? { next: { tags: opts.tags ?? [], revalidate: opts.revalidate ?? DEFAULT_REVALIDATE } } : { cache: 'no-store' as const }),
   });
   if (res.status === 404 && opts.nullOn404) return null;
   if (!res.ok) {
@@ -124,21 +133,24 @@ export const httpPublicApi: PublicApi = {
   },
   getCollab: async (slug, locale) => {
     const body = await envelope<A.BeDetail>(`/v1/collabs/${encodeURIComponent(slug)}?locale=${locale}`, {
-      tags: ['collabs', `collab:${slug}`],
+      tags: [`collab:${slug}`],
+      revalidate: DETAIL_REVALIDATE,
       nullOn404: true,
     });
     return body && collabDetailSchema.parse(A.toDetail(body.data));
   },
   getProperty: async (slug, locale) => {
     const body = await envelope<A.BeEntityPage>(`/v1/properties/${encodeURIComponent(slug)}?locale=${locale}`, {
-      tags: ['collabs', `property:${slug}`],
+      tags: [`property:${slug}`],
+      revalidate: DETAIL_REVALIDATE,
       nullOn404: true,
     });
     return body && propertyDetailSchema.parse(A.toProperty(body.data));
   },
   getCompany: async (slug, locale) => {
     const body = await envelope<A.BeEntityPage>(`/v1/companies/${encodeURIComponent(slug)}?locale=${locale}`, {
-      tags: ['collabs', `company:${slug}`],
+      tags: [`company:${slug}`],
+      revalidate: DETAIL_REVALIDATE,
       nullOn404: true,
     });
     return body && companyDetailSchema.parse(A.toCompany(body.data));
