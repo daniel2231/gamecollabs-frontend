@@ -22,8 +22,8 @@ import type { CollabDetail, FacetParam, TermRef } from '@/schema';
 
 type Props = PageProps<'/[locale]/collabs/[slug]'>;
 
-// ISR: 첫 요청 때 렌더링 후 캐시. 발행·수정 시 revalidate 웹훅으로 갱신
-export const revalidate = 3600;
+// 웹훅(collab:/property:/company: 태그)이 갱신을 맡는다. 시간 재검증은 하루 한 번의 안전망
+export const revalidate = 86400;
 export async function generateStaticParams() {
   return [];
 }
