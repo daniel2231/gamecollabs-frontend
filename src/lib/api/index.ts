@@ -1,13 +1,13 @@
 import 'server-only';
 import { cache } from 'react';
 import { isMockApi } from './config';
-import { createHttpAdminApi, httpPublicApi } from './http';
-import { mockAdminApi, mockPublicApi } from './mock/service';
+import { createHttpAdminApi, createHttpMemberApi, httpPublicApi } from './http';
+import { mockAdminApi, mockMemberApi, mockPublicApi } from './mock/service';
 import type { Locale } from '@/schema';
-import type { AdminApi, PublicApi, StatsQuery } from './types';
+import type { AdminApi, MemberApi, PublicApi, StatsQuery } from './types';
 
 export { ApiError } from './types';
-export type { AdminApi, PublicApi } from './types';
+export type { AdminApi, DiscordProfile, MemberApi, MemberProfile, PublicApi } from './types';
 export { isMockApi } from './config';
 
 /** 호출할 때마다 API_BASE_URL을 보고 목/실제를 고른다 */
@@ -28,8 +28,14 @@ export const api: PublicApi = {
   getSitemap: () => pick().getSitemap(),
   submitReport: (...a) => pick().submitReport(...a),
   listChangelog: cache((...a: Parameters<PublicApi['listChangelog']>) => pick().listChangelog(...a)),
+  upsertDiscordMember: (...a) => pick().upsertDiscordMember(...a),
 };
 
 export function adminApi(token: string): AdminApi {
   return isMockApi() ? mockAdminApi : createHttpAdminApi(token);
+}
+
+/** 회원 JWT(쿠키 ct_member)로 부르는 /v1/me/* */
+export function memberApi(token: string): MemberApi {
+  return isMockApi() ? mockMemberApi(token) : createHttpMemberApi(token);
 }

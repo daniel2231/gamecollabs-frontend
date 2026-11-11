@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { PhaseBadge } from '@/components/collab/PhaseBadge';
+import { BookmarkButton } from '@/components/member/BookmarkButton';
 import { ReportDialog } from '@/components/report/ReportDialog';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { CopyLinkButton } from '@/components/site/CopyLinkButton';
@@ -112,6 +113,7 @@ export default async function CollabDetailPage({ params }: Props) {
                     <SignalX text={collab.title} />
                   </Heading>
                   <Flex gap="2" wrap="wrap" mt="1">
+                    <BookmarkButton slug={collab.slug} />
                     <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} />
                     <ReportDialog collab={collab.slug} title={collab.title} />
                   </Flex>

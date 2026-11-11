@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
+import { AccountMenu } from '@/components/member/AccountMenu';
 import { Link } from '@/i18n/navigation';
 import { LIST_PATH } from '@/lib/list-url';
 import { STATS_PATH } from '@/lib/stats';
@@ -34,6 +35,7 @@ export async function SiteHeader() {
             <Suspense fallback={<LanguageMenuFallback />}>
               <LanguageMenu />
             </Suspense>
+            <AccountMenu />
           </div>
         </div>
       </div>

@@ -57,7 +57,7 @@ src/
   app/
     [locale]/(site)/      공개 페이지 (헤더·고지·푸터 레이아웃)
     [locale]/admin/       관리자 (login, (protected)/…, actions.ts)
-    api/                  export, revalidate 웹훅, GitHub OAuth
+    api/                  export, revalidate 웹훅, GitHub OAuth(관리자), Discord OAuth·북마크(회원)
   components/{site,collab,entity,admin}/
   i18n/                   next-intl 라우팅
   lib/
@@ -75,6 +75,8 @@ messages/{ko,en}.json
 - 공개 조회: `Authorization: Bearer $API_SERVICE_TOKEN`, 응답은 태그 캐시(`collabs`, `collab:<slug>`, `property:<slug>`, `company:<slug>`, `taxonomies`, 홈 노출 작품은 `featured`).
 - 발행·수정 후 Express가 `POST /api/revalidate`를 호출한다: `Authorization: Bearer $REVALIDATE_SECRET`, 본문 `{ "tags": ["collabs", "collab:<slug>"] }`. 작품의 홈 노출 순서·대표 이미지를 바꾸면 `featured`를 보낸다.
 - 관리자: GitHub 로그인 후 발급한 JWT(HS256, `AUTH_SECRET`, `iss=gamecollabs-web`, `aud=gamecollabs-api`, `sub`=GitHub 로그인, 8시간)를 그대로 `Bearer`로 넘긴다. Express는 같은 값인 `ADMIN_JWT_SECRET`으로 검증하고, `users` 컬렉션에 등록된 GitHub 계정만 통과시킨다(`cli create-user --github <login> --role admin`).
+- 회원(Discord 로그인): `/api/auth/discord/login`이 Authorization Code + PKCE(범위 `identify`)로 Discord에 보내고, 콜백이 프로필을 읽은 뒤 Discord 토큰은 바로 폐기한다. 서비스 토큰으로 `POST /v1/members/discord`를 불러 회원을 만들거나 갱신하고, 회원 JWT(HS256, `AUTH_SECRET`, `iss=gamecollabs-web`, `aud=gamecollabs-api-member`, `scope=member`, `sub`=회원 id, 30일)를 `ct_member` 쿠키에 둔다. 관리자 JWT와 audience가 달라 서로 대신 쓸 수 없다. `/v1/me/*`(북마크)는 이 토큰으로 부른다.
+- 공개 페이지는 정적(ISR)이라 쿠키를 읽지 않는다. 헤더의 계정 메뉴는 `/api/me`, 상세 페이지의 저장 버튼은 `/api/me/bookmarks/<slug>`(GET·PUT·DELETE, 변경은 같은 출처만)를 브라우저에서 부른다. `/[locale]/bookmarks`와 `/[locale]/login`만 요청마다 렌더링한다.
 - Express 응답(`{ data, meta }`, 이름은 요청 언어의 문자열 하나)은 `src/lib/api/adapt.ts`가 화면 스키마(`src/schema/index.ts`)로 바꾸고, `http.ts`가 그 스키마로 다시 검증한다. 형태가 어긋나면 조용히 깨지지 않고 바로 오류가 난다.
 - 수집 초안은 아직 작품에 연결되지 않은 참여자(이름만 있음)를 가질 수 있다. 편집기는 이를 안내하고, 운영자가 작품을 고르기 전까지 저장해도 수집된 이름을 그대로 보존한다.
 
@@ -140,7 +142,7 @@ Express(`gamecollabs-backend`의 `POST /v1/admin/media`)가 형식 확인(JPEG·
 
 폼은 서버 액션(`src/app/[locale]/(site)/actions.ts`)으로 보내고, 서버 액션이 입력을 다시 검증한 뒤 서비스 토큰과 방문자 IP(`X-Forwarded-For`의 첫 값 → `X-Client-IP`)를 붙여 Express로 넘긴다. 봇 거르기는 숨은 `website` 칸(채워져 있으면 받은 척하고 버림), 백엔드의 IP당 시간당 10건 제한, 설정했을 때 Turnstile. 아직 열린 같은 제보(같은 URL, 같은 콜라보·같은 내용)는 한 번만 쌓인다. 운영자는 `/admin/submissions`에서 처리한다. 목 모드에서도 같은 규칙으로 메모리에 쌓인다.
 
-그 밖에 `NEXT_PUBLIC_SITE_URL`, `GITHUB_CLIENT_ID`·`GITHUB_CLIENT_SECRET`(콜백 `https://<사이트>/api/auth/github/callback`), `ADMIN_GITHUB_LOGINS`.
+그 밖에 `NEXT_PUBLIC_SITE_URL`, `GITHUB_CLIENT_ID`·`GITHUB_CLIENT_SECRET`(콜백 `https://<사이트>/api/auth/github/callback`), `ADMIN_GITHUB_LOGINS`, `DISCORD_CLIENT_ID`·`DISCORD_CLIENT_SECRET`(Discord 개발자 포털 → OAuth2 → Redirects에 `https://<사이트>/api/auth/discord/callback`). 개발 중에는 `MEMBER_DEV_LOGIN=1`이면 Discord 없이 가짜 회원으로 로그인한다(production에서는 무시).
 
 ## 알려 둘 점
 

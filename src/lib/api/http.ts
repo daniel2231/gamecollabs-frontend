@@ -23,7 +23,7 @@ import {
 } from '@/schema';
 import * as A from './adapt';
 import { apiBaseUrl } from './config';
-import { ApiError, type AdminApi, type PublicApi } from './types';
+import { ApiError, type AdminApi, type MemberApi, type MemberProfile, type PublicApi } from './types';
 
 /**
  * Express /v1 HTTP 클라이언트. 브라우저에서는 절대 쓰지 않는다(server-only).
@@ -188,7 +188,40 @@ export const httpPublicApi: PublicApi = {
     const body = await envelope<unknown[]>(`/v1/changelog?locale=${locale}`, { tags: ['changelog'], nullOn404: true });
     return body ? z.array(changelogEntrySchema).parse(body.data) : [];
   },
+  upsertDiscordMember: async (profile) => memberProfileSchema.parse(await data('/v1/members/discord', { method: 'POST', body: profile })),
 };
+
+const memberProfileSchema = z.object({
+  id: z.string(),
+  discordId: z.string(),
+  username: z.string(),
+  globalName: z.string().nullable(),
+  avatar: z.string().nullable(),
+  bookmarkCount: z.number().int().optional(),
+}) satisfies z.ZodType<MemberProfile>;
+
+/** /v1/me/* 는 회원 JWT로 부르고 캐시하지 않는다(token이 있으면 request가 no-store로 보낸다) */
+export function createHttpMemberApi(token: string): MemberApi {
+  const o = (extra: RequestOptions = {}): RequestOptions => ({ token, ...extra });
+  const path = (slug: string) => `/v1/me/bookmarks/${encodeURIComponent(slug)}`;
+  const state = async (slug: string, method?: string) =>
+    z.object({ bookmarked: z.boolean() }).parse(await data(path(slug), o(method ? { method } : {}))).bookmarked;
+  return {
+    getMe: async () => memberProfileSchema.parse(await data('/v1/me', o())),
+    deleteMe: async () => {
+      await request('/v1/me', o({ method: 'DELETE' }));
+    },
+    listBookmarks: async (locale, cursor) => {
+      const sp = new URLSearchParams({ locale, limit: '24' });
+      if (cursor) sp.set('cursor', cursor);
+      const body = await envelope<A.BeCard[], { total: number; nextCursor: string | null }>(`/v1/me/bookmarks?${sp}`, o());
+      if (!body?.meta) throw new ApiError(502, 'bad_response');
+      return collabListResponseSchema.parse(A.toListResponse(body.data, body.meta));
+    },
+    isBookmarked: (slug) => state(slug),
+    setBookmark: (slug, on) => state(slug, on ? 'PUT' : 'DELETE'),
+  };
+}
 
 /** 커버 없음 필터를 프론트에서 거를 때: 이만큼 모이거나 이 페이지 수(100건씩)에 닿을 때까지 읽는다 */
 const COVER_FILTER_MIN = 30;

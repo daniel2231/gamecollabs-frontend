@@ -51,6 +51,29 @@ export interface PublicApi {
   submitReport(input: SubmissionInput, clientIp: string | null): Promise<void>;
   /** 공개된 변경 내역(최신순): GET /v1/changelog. 백엔드에 아직 없으면 빈 목록 */
   listChangelog(locale: Locale): Promise<ChangelogEntry[]>;
+  /**
+   * Discord 로그인 직후 회원을 만들거나 프로필을 갱신한다: POST /v1/members/discord (서비스 토큰).
+   * 막힌 회원이면 ApiError(403, member_disabled)
+   */
+  upsertDiscordMember(profile: DiscordProfile): Promise<MemberProfile>;
+}
+
+/** Discord /users/@me에서 쓰는 값. avatar는 URL이 아니라 해시 */
+export type DiscordProfile = { discordId: string; username: string; globalName: string | null; avatar: string | null };
+export type MemberProfile = DiscordProfile & { id: string; bookmarkCount?: number };
+
+/**
+ * 로그인한 회원의 /v1/me/* (회원 JWT). 세션이 더는 통하지 않으면(탈퇴·차단) ApiError(401)
+ */
+export interface MemberApi {
+  getMe(): Promise<MemberProfile>;
+  deleteMe(): Promise<void>;
+  /** 저장한 콜라보, 최근 저장순. 보관된 콜라보는 빠진다 */
+  listBookmarks(locale: Locale, cursor?: string): Promise<CollabListResponse>;
+  /** 없는 콜라보면 ApiError(404) */
+  isBookmarked(slug: string): Promise<boolean>;
+  /** 저장(on) 또는 해제. 결과 상태를 돌려준다. 500개를 넘으면 ApiError(409, bookmark_limit) */
+  setBookmark(slug: string, on: boolean): Promise<boolean>;
 }
 
 export type StatsQuery = { locale?: Locale; year?: number };

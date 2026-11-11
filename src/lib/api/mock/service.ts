@@ -2,7 +2,8 @@
  * Express /v1 동작을 흉내 내는 메모리 구현. 서버 재시작 시 수정 사항은 사라진다.
  * 규칙(facetKeys 펼치기, phase 계산, en→ko 대체, 중복 판정)은 PRD 그대로 따른다.
  */
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
+import { decodeJwt } from 'jose';
 import { followUpReasonOf, nextCheckAt } from '@/lib/followup';
 import { computePhase } from '@/lib/phase';
 import { STATS_COMPANY_ROLES, type StatsCompanyRole } from '@/schema';
@@ -29,7 +30,7 @@ import type {
   TermRef,
   Transition,
 } from '@/schema';
-import { ApiError, type AdminApi, type EntityInput, type PublicApi, type QueueFilter, type TermInput } from '../types';
+import { ApiError, type AdminApi, type EntityInput, type MemberApi, type MemberProfile, type PublicApi, type QueueFilter, type TermInput } from '../types';
 import * as seed from './data';
 import type { DbCollab, DbCompany, DbProperty } from './data';
 
@@ -42,6 +43,8 @@ type Store = {
   collabs: DbCollab[];
   submissions: DbSubmission[];
   changelog: AdminChangelogEntry[];
+  /** 회원과 북마크(최근 저장이 앞) */
+  members: (MemberProfile & { bookmarks: { slug: string; at: string }[] })[];
 };
 // 개발 서버 핫 리로드에도 수정 내용이 유지되도록 전역에 둔다
 const g = globalThis as { __collabTrackerMock?: Store };
@@ -52,10 +55,12 @@ const db: Store = (g.__collabTrackerMock ??= structuredClone({
   collabs: seed.collabs,
   submissions: [],
   changelog: seed.changelog,
+  members: [],
 }));
 // 제보·변경 내역이 생기기 전에 띄운 개발 서버의 전역 저장소에는 이 목록이 없다
 db.submissions ??= [];
 db.changelog ??= structuredClone(seed.changelog);
+db.members ??= [];
 
 // ── 공통 도우미 ───────────────────────────────────────────────
 
@@ -477,7 +482,76 @@ export const mockPublicApi: PublicApi = {
       .filter((e) => e.published)
       .map((e) => ({ id: e.id, version: e.version, date: e.date, body: e.body[locale] }));
   },
+
+  async upsertDiscordMember(profile) {
+    await delay();
+    let m = db.members.find((x) => x.discordId === profile.discordId);
+    if (m) Object.assign(m, profile);
+    else db.members.push((m = { ...profile, id: randomBytes(12).toString('hex'), bookmarks: [] }));
+    const { bookmarks: _b, ...rest } = m;
+    return rest;
+  },
 };
+
+const BOOKMARK_PAGE = 24;
+
+/** 백엔드처럼 회원 JWT의 sub(회원 id)로 찾는다. 서명은 Next.js가 이미 확인했다 */
+export function mockMemberApi(token: string): MemberApi {
+  const member = () => {
+    let sub: string | undefined;
+    try {
+      sub = decodeJwt(token).sub;
+    } catch {
+      sub = undefined;
+    }
+    const m = db.members.find((x) => x.id === sub);
+    if (!m) throw new ApiError(401, 'unauthorized');
+    return m;
+  };
+  const collab = (slug: string) => published().find((c) => c.slug === slug);
+  return {
+    async getMe() {
+      await delay();
+      const { bookmarks, ...rest } = member();
+      return { ...rest, bookmarkCount: bookmarks.filter((b) => collab(b.slug)).length };
+    },
+    async deleteMe() {
+      await delay();
+      const m = member();
+      db.members = db.members.filter((x) => x !== m);
+    },
+    async listBookmarks(locale, cursor) {
+      await delay();
+      const all = member().bookmarks.flatMap((b) => {
+        const c = collab(b.slug);
+        return c ? [toSummary(c, locale)] : [];
+      });
+      const offset = cursor ? Number(Buffer.from(cursor, 'base64url').toString()) || 0 : 0;
+      const next = offset + BOOKMARK_PAGE < all.length ? Buffer.from(String(offset + BOOKMARK_PAGE)).toString('base64url') : null;
+      return { items: all.slice(offset, offset + BOOKMARK_PAGE), total: all.length, nextCursor: next };
+    },
+    async isBookmarked(slug) {
+      await delay();
+      const m = member();
+      if (!collab(slug)) throw new ApiError(404, 'not_found');
+      return m.bookmarks.some((b) => b.slug === slug);
+    },
+    async setBookmark(slug, on) {
+      await delay();
+      const m = member();
+      if (!on) {
+        m.bookmarks = m.bookmarks.filter((b) => b.slug !== slug);
+        return false;
+      }
+      if (!collab(slug)) throw new ApiError(404, 'not_found');
+      if (!m.bookmarks.some((b) => b.slug === slug)) {
+        if (m.bookmarks.length >= 500) throw new ApiError(409, 'bookmark_limit');
+        m.bookmarks.unshift({ slug, at: now() });
+      }
+      return true;
+    },
+  };
+}
 
 /** 백엔드와 같은 순서: 날짜 내림차순, 같은 날이면 나중에 만든 것 먼저(목은 배열 뒤쪽이 나중) */
 function changelogNewestFirst(): AdminChangelogEntry[] {

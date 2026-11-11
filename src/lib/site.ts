@@ -6,3 +6,8 @@ export function siteUrl(): string {
 export function oauthCallbackUrl(): string {
   return `${siteUrl()}/api/auth/github/callback`;
 }
+
+/** Discord 앱 OAuth2 설정의 Redirects에 그대로 등록해야 하는 주소 */
+export function discordCallbackUrl(): string {
+  return `${siteUrl()}/api/auth/discord/callback`;
+}
