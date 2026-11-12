@@ -4,31 +4,21 @@ import { PersonIcon } from '@radix-ui/react-icons';
 import { Avatar, Button, DropdownMenu } from '@radix-ui/themes';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Link } from '@/i18n/navigation';
 import { loginHref } from './loginHref';
-
-type Me = { name: string; avatarUrl: string } | null;
+import { useMember } from './MemberProvider';
 
 /**
- * 헤더의 로그인 버튼 / 계정 메뉴. 공개 페이지는 정적이라 서버에서 쿠키를 읽지 않고,
- * 하이드레이션 뒤 /api/me로 상태를 받는다. 대부분은 로그아웃 상태라 처음엔 로그인 버튼을 그린다.
+ * 헤더의 로그인 버튼 / 계정 메뉴. 상태는 MemberProvider가 받아 온다.
+ * 대부분은 로그아웃 상태라 확인 전에도 로그인 버튼을 그린다.
  */
 export function AccountMenu() {
   const t = useTranslations('Member');
-  const [me, setMe] = useState<Me>(null);
+  const { me } = useMember();
   const logout = useRef<HTMLFormElement>(null);
   // next/navigation의 경로는 로케일 접두사(/ko)를 포함한다
   const pathname = usePathname();
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch('/api/me', { signal: ctrl.signal, cache: 'no-store' })
-      .then((r) => (r.ok ? (r.json() as Promise<{ member: Me }>) : { member: null }))
-      .then((body) => setMe(body.member))
-      .catch(() => undefined);
-    return () => ctrl.abort();
-  }, []);
 
   if (!me) {
     return (
@@ -53,7 +43,13 @@ export function AccountMenu() {
         <DropdownMenu.Content align="end" variant="soft" style={{ minWidth: 180 }}>
           <DropdownMenu.Label>{me.name}</DropdownMenu.Label>
           <DropdownMenu.Item asChild>
+            <Link href="/feed">{t('feed')}</Link>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item asChild>
             <Link href="/bookmarks">{t('bookmarks')}</Link>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item asChild>
+            <Link href="/account">{t('account')}</Link>
           </DropdownMenu.Item>
           <DropdownMenu.Separator />
           <DropdownMenu.Item onSelect={() => logout.current?.requestSubmit()}>{t('signOut')}</DropdownMenu.Item>

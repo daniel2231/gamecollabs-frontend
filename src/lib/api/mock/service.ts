@@ -30,7 +30,7 @@ import type {
   TermRef,
   Transition,
 } from '@/schema';
-import { ApiError, type AdminApi, type EntityInput, type MemberApi, type MemberProfile, type PublicApi, type QueueFilter, type TermInput } from '../types';
+import { ApiError, type AdminApi, type EntityInput, type FollowType, type MemberApi, type MemberProfile, type PublicApi, type QueueFilter, type TermInput } from '../types';
 import * as seed from './data';
 import type { DbCollab, DbCompany, DbProperty } from './data';
 
@@ -44,7 +44,7 @@ type Store = {
   submissions: DbSubmission[];
   changelog: AdminChangelogEntry[];
   /** 회원과 북마크(최근 저장이 앞) */
-  members: (MemberProfile & { bookmarks: { slug: string; at: string }[] })[];
+  members: (MemberProfile & { bookmarks: { slug: string; at: string }[]; follows?: { type: FollowType; id: string; at: string }[] })[];
 };
 // 개발 서버 핫 리로드에도 수정 내용이 유지되도록 전역에 둔다
 const g = globalThis as { __collabTrackerMock?: Store };
@@ -488,7 +488,7 @@ export const mockPublicApi: PublicApi = {
     let m = db.members.find((x) => x.discordId === profile.discordId);
     if (m) Object.assign(m, profile);
     else db.members.push((m = { ...profile, id: randomBytes(12).toString('hex'), bookmarks: [] }));
-    const { bookmarks: _b, ...rest } = m;
+    const { bookmarks: _b, follows: _f, ...rest } = m;
     return rest;
   },
 };
@@ -512,8 +512,8 @@ export function mockMemberApi(token: string): MemberApi {
   return {
     async getMe() {
       await delay();
-      const { bookmarks, ...rest } = member();
-      return { ...rest, bookmarkCount: bookmarks.filter((b) => collab(b.slug)).length };
+      const { bookmarks, follows = [], ...rest } = member();
+      return { ...rest, bookmarkCount: bookmarks.filter((b) => collab(b.slug)).length, followCount: follows.length };
     },
     async deleteMe() {
       await delay();
@@ -550,7 +550,60 @@ export function mockMemberApi(token: string): MemberApi {
       }
       return true;
     },
+    async getState() {
+      await delay();
+      const m = member();
+      const follows = m.follows ?? [];
+      const slugsOf = (type: FollowType) => follows.filter((f) => f.type === type).flatMap((f) => entity(type, f.id)?.slug ?? []);
+      return {
+        bookmarks: m.bookmarks.filter((b) => collab(b.slug)).map((b) => b.slug),
+        follows: { property: slugsOf('property'), company: slugsOf('company') },
+      };
+    },
+    async listFollows(locale) {
+      await delay();
+      return (member().follows ?? []).flatMap((f) => {
+        const e = entity(f.type, f.id);
+        if (!e) return [];
+        const kind = 'kind' in e ? termRef(e.kind, locale).label : null;
+        const count = published().filter((c) => (f.type === 'property' ? c.parties.some((p) => p.propertyId === e.id) : c.companies.some((x) => x.companyId === e.id))).length;
+        return [{ type: f.type, slug: e.slug, name: localize(e.name, locale).value, kind, collabCount: count, followedAt: f.at }];
+      });
+    },
+    async setFollow(type, slug, on) {
+      await delay();
+      const m = member();
+      const e = (type === 'property' ? db.properties : db.companies).find((x) => x.slug === slug);
+      if (!e) throw new ApiError(404, 'not_found');
+      m.follows ??= [];
+      if (!on) {
+        m.follows = m.follows.filter((f) => !(f.type === type && f.id === e.id));
+        return false;
+      }
+      if (!m.follows.some((f) => f.type === type && f.id === e.id)) {
+        if (m.follows.length >= 200) throw new ApiError(409, 'follow_limit');
+        m.follows.unshift({ type, id: e.id, at: now() });
+      }
+      return true;
+    },
+    async listFeed(locale, cursor) {
+      await delay();
+      const follows = member().follows ?? [];
+      const props = new Set(follows.filter((f) => f.type === 'property').map((f) => f.id));
+      const comps = new Set(follows.filter((f) => f.type === 'company').map((f) => f.id));
+      const all = published()
+        .filter((c) => c.parties.some((p) => props.has(p.propertyId)) || c.companies.some((x) => comps.has(x.companyId)))
+        .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))
+        .map((c) => toSummary(c, locale));
+      const offset = cursor ? Number(Buffer.from(cursor, 'base64url').toString()) || 0 : 0;
+      const next = offset + BOOKMARK_PAGE < all.length ? Buffer.from(String(offset + BOOKMARK_PAGE)).toString('base64url') : null;
+      return { items: all.slice(offset, offset + BOOKMARK_PAGE), total: all.length, nextCursor: next };
+    },
   };
+}
+
+function entity(type: FollowType, id: string): DbProperty | DbCompany | undefined {
+  return type === 'property' ? propertyById(id) : companyById(id);
 }
 
 /** 백엔드와 같은 순서: 날짜 내림차순, 같은 날이면 나중에 만든 것 먼저(목은 배열 뒤쪽이 나중) */

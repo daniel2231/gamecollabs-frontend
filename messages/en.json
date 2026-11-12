@@ -387,6 +387,40 @@
       "emptyHint": "Press “Save” on a collab page and it will show up here.",
       "browse": "Browse collabs",
       "more": "Load more"
+    },
+    "feed": "My feed",
+    "account": "Account",
+    "saveNamed": "Save {title}",
+    "unsaveNamed": "Remove {title} from saved",
+    "follow": "Follow",
+    "following": "Following",
+    "followHint": "Sign in to follow and see new collabs in your feed",
+    "followFailed": "Couldn’t follow. Please try again.",
+    "followLimit": "You can follow up to 200 properties and companies.",
+    "feedPage": {
+      "description": "Collabs of the properties and companies you follow, newest first.",
+      "following": "Following",
+      "noFollows": "You don’t follow any properties or companies yet.",
+      "empty": "No collabs yet for what you follow.",
+      "hint": "Press “Follow” on a property or company page and its collabs will show up here."
+    },
+    "accountPage": {
+      "discord": "Discord account @{username}",
+      "bookmarkCount": "{count, plural, one {# saved collab} other {# saved collabs}}",
+      "followCount": "Following {count}",
+      "dataTitle": "What we store",
+      "dataProfile": "Your Discord user ID, username, display name and avatar (hash), refreshed from Discord every time you sign in.",
+      "dataLists": "The collabs you saved, the properties and companies you follow, and when you last signed in.",
+      "dataNot": "We don’t receive your email, servers or messages. The Discord access token is discarded right after reading your profile and never stored.",
+      "dataKeep": "Kept until you delete your account; deleting it removes all of the above immediately.",
+      "deleteTitle": "Delete account",
+      "deleteDescription": "Your account, saved collabs and follows are deleted permanently. Signing in again with the same Discord account starts a new, empty account.",
+      "delete": "Delete account",
+      "deleteConfirmTitle": "Delete your account?",
+      "deleteConfirm": "Your saved collabs and follows will be deleted. This can’t be undone.",
+      "deleteNow": "Delete",
+      "cancel": "Cancel",
+      "deleteFailed": "Couldn’t delete your account. Please try again in a moment."
     }
   }
 }
