@@ -353,5 +353,40 @@
     "title": "Changelog",
     "description": "New features and changes to GameCollabs, by version.",
     "empty": "No changelog entries yet."
+  },
+  "Member": {
+    "signIn": "Sign in",
+    "signInWithDiscord": "Sign in with Discord",
+    "accountMenu": "Account menu: {name}",
+    "bookmarks": "Saved collabs",
+    "signOut": "Sign out",
+    "save": "Save",
+    "saved": "Saved",
+    "saveHint": "Sign in to save this collab",
+    "saveFailed": "Couldn’t save. Please try again.",
+    "saveLimit": "You can save up to 500 collabs.",
+    "login": {
+      "title": "Sign in",
+      "description": "Sign in with your Discord account to save the collabs you care about and find them again in one place.",
+      "privacy": "We only receive your Discord username and avatar. Not your email, servers or messages.",
+      "signedIn": "You’re signed in as {name}.",
+      "errors": {
+        "expired": "Your session has expired. Please sign in again.",
+        "cancelled": "Discord sign-in was cancelled.",
+        "invalid_state": "The sign-in request expired. Please try again.",
+        "token_exchange_failed": "Discord authentication failed. Please try again.",
+        "profile_failed": "Couldn’t load your Discord profile.",
+        "disabled": "This account has been restricted.",
+        "default": "Sign-in failed. Please try again in a moment."
+      }
+    },
+    "bookmarksPage": {
+      "description": "Most recently saved first.",
+      "count": "{count, plural, one {# collab} other {# collabs}}",
+      "empty": "You haven’t saved any collabs yet.",
+      "emptyHint": "Press “Save” on a collab page and it will show up here.",
+      "browse": "Browse collabs",
+      "more": "Load more"
+    }
   }
 }
