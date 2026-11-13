@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { ApiError, memberApi } from '@/lib/api';
 import { discordAvatarUrl, displayName, getMemberSession, memberLoginPath } from '@/lib/auth/member';
+import { PRIVACY_PATH } from '@/lib/legal';
 import { DeleteAccount } from './DeleteAccount';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/account'>): Promise<Metadata> {
@@ -72,6 +73,15 @@ export default async function AccountPage({ params, searchParams }: PageProps<'/
           <li>{t('accountPage.dataNot')}</li>
           <li>{t('accountPage.dataKeep')}</li>
         </ul>
+        <Text as="p" size="2" color="gray" mt="3">
+          {t.rich('accountPage.policy', {
+            privacy: (chunks) => (
+              <RadixLink asChild size="2" highContrast>
+                <Link href={PRIVACY_PATH}>{chunks}</Link>
+              </RadixLink>
+            ),
+          })}
+        </Text>
       </section>
 
       <section>

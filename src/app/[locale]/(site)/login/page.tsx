@@ -1,9 +1,11 @@
 import { DiscordLogoIcon } from '@radix-ui/react-icons';
-import { Button, Callout, Card, Flex, Heading, Text } from '@radix-ui/themes';
+import { Button, Callout, Card, Flex, Heading, Link as RadixLink, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { getMemberSession, safeMemberNext } from '@/lib/auth/member';
+import { PRIVACY_PATH, TERMS_PATH } from '@/lib/legal';
 
 const ERRORS = ['expired', 'cancelled', 'invalid_state', 'token_exchange_failed', 'profile_failed', 'disabled'] as const;
 
@@ -53,6 +55,20 @@ export default async function LoginPage({ params, searchParams }: PageProps<'/[l
           </Button>
           <Text color="gray" size="1">
             {t('login.privacy')}
+          </Text>
+          <Text color="gray" size="1">
+            {t.rich('login.policy', {
+              terms: (chunks) => (
+                <RadixLink asChild size="1" color="gray" underline="always">
+                  <Link href={TERMS_PATH}>{chunks}</Link>
+                </RadixLink>
+              ),
+              privacy: (chunks) => (
+                <RadixLink asChild size="1" color="gray" underline="always">
+                  <Link href={PRIVACY_PATH}>{chunks}</Link>
+                </RadixLink>
+              ),
+            })}
           </Text>
         </Flex>
       </Card>

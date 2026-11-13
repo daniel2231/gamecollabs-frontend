@@ -22,7 +22,9 @@
     "skip": "본문으로 건너뛰기",
     "report": "콜라보 제보",
     "changelog": "변경 내역",
-    "disclaimer": "이 사이트는 소개된 회사나 게임과 제휴 관계가 없으며, 이들로부터 보증을 받지 않았습니다. 모든 이미지와 지식재산권은 각 저작권자에게 있습니다."
+    "disclaimer": "이 사이트는 소개된 회사나 게임과 제휴 관계가 없으며, 이들로부터 보증을 받지 않았습니다. 모든 이미지와 지식재산권은 각 저작권자에게 있습니다.",
+    "privacy": "개인정보 처리방침",
+    "terms": "이용약관"
   },
   "Phase": {
     "all": "전체",
@@ -378,7 +380,8 @@
         "profile_failed": "Discord 프로필을 불러오지 못했습니다.",
         "disabled": "이용이 제한된 계정입니다.",
         "default": "로그인에 실패했습니다. 잠시 후 다시 시도하세요."
-      }
+      },
+      "policy": "로그인하면 <terms>이용약관</terms>과 <privacy>개인정보 처리방침</privacy>에 동의하는 것으로 봅니다."
     },
     "bookmarksPage": {
       "description": "저장한 순서대로, 최근에 저장한 콜라보가 먼저 보입니다.",
@@ -420,7 +423,19 @@
       "deleteConfirm": "저장한 콜라보와 팔로우 목록이 모두 지워지며 되돌릴 수 없습니다.",
       "deleteNow": "탈퇴",
       "cancel": "취소",
-      "deleteFailed": "탈퇴하지 못했습니다. 잠시 후 다시 시도하세요."
+      "deleteFailed": "탈퇴하지 못했습니다. 잠시 후 다시 시도하세요.",
+      "policy": "자세한 내용은 <privacy>개인정보 처리방침</privacy>을 확인하세요."
+    }
+  },
+  "Legal": {
+    "effective": "시행일 {date}",
+    "privacy": {
+      "title": "개인정보 처리방침",
+      "description": "GameCollabs가 처리하는 개인정보의 항목, 목적, 보유 기간, 위탁, 쿠키, 이용자의 권리를 안내합니다."
+    },
+    "terms": {
+      "title": "이용약관",
+      "description": "GameCollabs 게임 콜라보 정보 서비스의 이용 조건과 이용자·서비스의 권리와 의무를 정합니다."
     }
   }
 }

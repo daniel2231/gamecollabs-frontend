@@ -22,7 +22,9 @@
     "skip": "Skip to content",
     "report": "Submit a collab",
     "changelog": "Changelog",
-    "disclaimer": "This website is not affiliated with or endorsed by any of the companies or games featured on it. All images and intellectual property belong to their respective copyright holders."
+    "disclaimer": "This website is not affiliated with or endorsed by any of the companies or games featured on it. All images and intellectual property belong to their respective copyright holders.",
+    "privacy": "Privacy",
+    "terms": "Terms"
   },
   "Phase": {
     "all": "All",
@@ -378,7 +380,8 @@
         "profile_failed": "Couldn’t load your Discord profile.",
         "disabled": "This account has been restricted.",
         "default": "Sign-in failed. Please try again in a moment."
-      }
+      },
+      "policy": "By signing in, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>."
     },
     "bookmarksPage": {
       "description": "Most recently saved first.",
@@ -420,7 +423,19 @@
       "deleteConfirm": "Your saved collabs and follows will be deleted. This can’t be undone.",
       "deleteNow": "Delete",
       "cancel": "Cancel",
-      "deleteFailed": "Couldn’t delete your account. Please try again in a moment."
+      "deleteFailed": "Couldn’t delete your account. Please try again in a moment.",
+      "policy": "See our <privacy>Privacy Policy</privacy> for details."
+    }
+  },
+  "Legal": {
+    "effective": "Effective {date}",
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "What personal information GameCollabs processes, why, how long we keep it, who processes it for us, cookies, and your rights."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "The conditions for using GameCollabs, a game collaboration information service, and the rights and obligations of users and the Service."
     }
   }
 }

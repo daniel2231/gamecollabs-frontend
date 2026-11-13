@@ -3,6 +3,7 @@ import { routing } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { CHANGELOG_PATH } from '@/lib/changelog';
 import { PROPERTIES_PATH } from '@/lib/featured';
+import { PRIVACY_PATH, TERMS_PATH } from '@/lib/legal';
 import { LIST_PATH, parseCollabQuery } from '@/lib/filters';
 import { LANDING_PHASES, landingPath, type Landing } from '@/lib/landing';
 import { languageAlternates } from '@/lib/seo';
@@ -41,6 +42,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...entries(STATS_PATH),
     ...entries(CHANGELOG_PATH),
     ...entries(PROPERTIES_PATH),
+    ...entries(TERMS_PATH),
+    ...entries(PRIVACY_PATH),
     // 연도 리포트는 2026년 이후 그해 시작한 콜라보가 있을 때만 있다(없으면 404)
     ...statsYears(stats.years).flatMap((y) => entries(`${STATS_PATH}/${y.year}`)),
     ...landingList.flatMap((l) => entries(landingPath(l))),
