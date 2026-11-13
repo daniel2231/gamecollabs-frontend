@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import { CHANGELOG_PATH } from '@/lib/changelog';
+import { PRIVACY_PATH, TERMS_PATH } from '@/lib/legal';
 import { LIST_PATH } from '@/lib/list-url';
 import { STATS_PATH } from '@/lib/stats';
 import { siteUrl } from '@/lib/site';
@@ -36,6 +37,7 @@ Every entry is reviewed by a person against public sources (official announcemen
 - All collabs: ${both(LIST_PATH)} — searchable, filterable list
 - Statistics: ${both(STATS_PATH)} — counts by category, partner type, region, platform and company; yearly reports at \`/{locale}${STATS_PATH}/{year}\`
 - Changelog: ${both(CHANGELOG_PATH)}
+- Terms of Service: ${both(TERMS_PATH)}; Privacy Policy: ${both(PRIVACY_PATH)}
 
 ## URL patterns
 

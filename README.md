@@ -44,6 +44,7 @@ pnpm build
 | `/[locale]/report` | 콜라보 제보: 아직 없는 콜라보의 출처 링크(필수)와 메모. 상세 페이지의 “오류 제보” 버튼은 같은 폼을 대화상자로 열어 그 콜라보의 틀린 내용(필수)과 근거 링크를 받는다. 푸터에서 연결, noindex | F-15 |
 | `/[locale]/admin/submissions` | 제보 큐: 미처리·반영함·버림, 오류 제보/새 콜라보로 거르기. 오류 제보는 편집기에서 고친 뒤 “반영함”, 새 콜라보는 등록한 뒤 “반영함”. 메뉴에 미처리 건수 | F-15 |
 | `/[locale]/changelog` | 변경 내역: 관리자가 공개한 릴리스 노트를 최신순으로(버전·날짜·마크다운 본문, 버전별 앵커 `#v1-4-0`). 푸터에서 연결, sitemap 포함, `changelog` 태그로 갱신. ISR | — |
+| `/[locale]/privacy`, `/[locale]/terms` | 개인정보 처리방침·이용약관. 본문은 `src/content/legal/*.ts`(ko/en 마크다운), 시행일은 `src/lib/legal.ts`. 보호책임자 이름·문의 이메일은 `LEGAL_OPERATOR_NAME`·`LEGAL_CONTACT_EMAIL`(비우면 제보 페이지로 안내). 푸터·로그인·내 계정에서 연결, sitemap 포함. 수집 항목(Discord 프로필, 제보 IP 해시, GA, Turnstile, 쿠키)이 바뀌면 같이 고친다 | — |
 | `/[locale]/admin/changelog` | 변경 내역 작성·수정·삭제·공개(관리자 전용, 편집자는 안내만). 본문은 ko/en 마크다운, 작성/미리보기 전환 | — |
 | `/[locale]/rss.xml` | 최신 발행 콜라보 피드(ko/en 분리) | F-11 |
 | `/sitemap.xml`, `/robots.txt`, OG 이미지, `/tools/game-ip-collab-tracker/*` → 301 | SEO | F-08 |
