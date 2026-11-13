@@ -5,6 +5,8 @@ import type { LegalContact } from '@/lib/legal';
  * 개인정보 처리방침 본문(마크다운). 「개인정보 보호법」 제30조와 표준 개인정보 처리방침 작성지침의 항목 순서를 따른다.
  * 실제 수집 항목은 Discord 콜백(src/app/api/auth/discord/callback), 제보 액션((site)/actions.ts),
  * Analytics·Turnstile 컴포넌트, 쿠키 설정(lib/auth/member.ts, proxy.ts)과 맞춰야 한다.
+ * 백엔드(gamecollabs-backend)에서 확인한 사실: 회원 탈퇴는 즉시 하드 삭제, 제보의 ipHash는 기한 없이 제보와 함께 보관,
+ * pino-http 접속 기록에 X-Client-IP(제보자 IP 원문)가 남음, 국내 자체 서버 + Cloudflare Tunnel, DB 백업은 Cloudflare R2에 30일.
  */
 export function privacyMarkdown(locale: Locale, c: LegalContact): string {
   return locale === 'ko' ? ko(c) : en(c);
@@ -13,7 +15,7 @@ export function privacyMarkdown(locale: Locale, c: LegalContact): string {
 function ko({ operator, email }: LegalContact): string {
   const who = operator ?? 'GameCollabs 운영자';
   const reach = email ? `이메일 [${email}](mailto:${email})` : '[콜라보 제보](/ko/report) 페이지의 메모 칸';
-  return `GameCollabs(이하 “서비스”)는 「개인정보 보호법」 등 관련 법령을 지키며, 이용자의 개인정보를 필요한 만큼만 받고 안전하게 다룹니다. 이 방침은 서비스가 어떤 정보를 왜 처리하고 언제 지우는지 알려 드립니다.
+  return `GameCollabs(이하 “서비스”)는 운영자 1인이 운영하는 개인 프로젝트로, 「개인정보 보호법」 등 관련 법령을 지키며, 이용자의 개인정보를 필요한 만큼만 받고 안전하게 다룹니다. 이 방침은 서비스가 어떤 정보를 왜 처리하고 언제 지우는지 알려 드립니다.
 
 ## 1. 처리하는 개인정보와 목적
 
@@ -29,19 +31,20 @@ function ko({ operator, email }: LegalContact): string {
 
 - 항목: 입력한 링크와 메모, 접속 IP 주소의 해시값
 - 목적: 제보 내용 확인과 콜라보 정보 등록·수정, 반복 제출·자동 입력 등 남용 방지
-- 이름이나 연락처는 받지 않습니다. IP 주소는 원래 값을 저장하지 않고 되돌릴 수 없는 해시로만 기록합니다. 메모에 개인정보를 적지 말아 주세요.
+- 이름이나 연락처는 받지 않습니다. 제보 기록에는 IP 주소를 비밀값을 섞은 해시로만 저장해, 해시만으로는 원래 주소를 알 수 없습니다. 다만 아래 ‘자동으로 생성되는 정보’처럼 서버 접속 기록에는 IP 주소가 남습니다. 메모에 개인정보를 적지 말아 주세요.
 
 **서비스 이용 과정에서 자동으로 생성되는 정보**
 
-- 항목: 접속 IP 주소, 브라우저·기기 정보, 방문 페이지와 시각, 쿠키
+- 항목: 접속 IP 주소, 브라우저·기기 정보, 방문 페이지와 시각, 쿠키, 서버 접속 기록(제보를 보낼 때의 IP 주소 포함)
 - 목적: 서비스 운영과 보안, 오류 확인, 이용 통계(어떤 페이지가 많이 읽히는지 등) 분석
 
 ## 2. 보유 및 이용 기간
 
-- 회원 정보와 저장·팔로우 목록: 탈퇴할 때까지 보관하며, 탈퇴하면 바로 지웁니다.
-- 제보 내용: 콜라보 정보의 근거 기록으로 보관합니다. 링크·메모 자체는 개인을 식별하지 않으며, IP 해시는 남용 방지에 필요한 기간이 지나면 지웁니다.
+- 회원 정보와 저장·팔로우 목록: 탈퇴할 때까지 보관하며, 탈퇴하면 운영 데이터베이스에서 바로 지웁니다. 장애 복구용 데이터베이스 백업에는 최대 30일 동안 남아 있다가 자동으로 지워집니다.
+- 제보 내용(링크, 메모, IP 해시): 콜라보 정보의 근거와 남용 방지 기록으로, 서비스를 운영하는 동안 보관합니다. 지우기를 원하면 아래 9항의 문의처로 요청해 주세요.
+- 서버 접속 기록: 서비스 운영과 보안에 필요한 기간 동안 보관합니다.
 - 로그인 쿠키: 최대 30일. 로그아웃하면 바로 지워집니다.
-- 이용 통계(Google Analytics): Google Analytics의 데이터 보관 설정에 따릅니다.
+- 이용 통계(Google Analytics): 이벤트 데이터는 2개월, 사용자 수준 데이터는 14개월 뒤 자동으로 지워집니다.
 - 법령에 따라 보관해야 하는 경우에는 그 기간 동안 보관합니다.
 
 ## 3. 개인정보의 제3자 제공
@@ -50,14 +53,14 @@ function ko({ operator, email }: LegalContact): string {
 
 ## 4. 처리 위탁과 국외 이전
 
-서비스는 운영을 위해 아래 업체의 서비스를 이용하며, 이 과정에서 정보가 국외(주로 미국)에서 처리될 수 있습니다. 각 업체는 정보를 전송받은 시점부터 자신의 개인정보 처리방침에 따라 처리합니다.
+회원 정보와 제보를 저장하는 데이터베이스와 API 서버는 운영자가 대한민국에서 직접 운영합니다. 그 밖에 아래 업체의 서비스를 이용하며, 이 과정에서 정보가 국외(주로 미국)에서 처리될 수 있습니다. 각 업체는 정보를 전송받은 시점부터 자신의 개인정보 처리방침에 따라 처리합니다.
 
-- **Vercel Inc.** (미국): 웹사이트 호스팅. 접속 IP 주소, 요청 정보, 접속 국가가 서버 로그로 처리됩니다.
+- **Vercel Inc.** (미국): 웹사이트 호스팅. 모든 방문의 접속 IP 주소, 요청 정보, 접속 국가가 처리되며, 로그인할 때 받은 Discord 프로필과 제보 내용이 국내 서버로 전달되는 과정에서 거쳐 갑니다. 보유 기간: Vercel의 로그 보관 정책에 따름.
+- **Cloudflare, Inc.** (미국): ① 국내 API 서버로 들어가는 통신을 중계하는 보안 터널(Cloudflare Tunnel). 회원 정보, 제보 내용, 제보자 IP 주소가 암호화된 상태로 거쳐 가며 저장되지 않습니다. ② 데이터베이스 백업 저장(Cloudflare R2). 회원 정보, 저장·팔로우 목록, 제보 내용이 매일 백업되어 30일 동안 보관됩니다. ③ 제보 폼의 자동 입력 방지(Turnstile). 브라우저·기기 정보와 접속 IP 주소가 전송됩니다.
 - **Discord Inc.** (미국): 회원 로그인(OAuth). 로그인할 때 Discord에서 위 1항의 프로필 정보를 받습니다.
-- **Google LLC** (미국): 이용 통계(Google Analytics). 쿠키, 접속 IP 주소, 브라우저·기기 정보, 방문 페이지가 전송됩니다.
-- **Cloudflare, Inc.** (미국): 제보 폼의 자동 입력 방지(Turnstile). 브라우저·기기 정보와 접속 IP 주소가 전송됩니다.
+- **Google LLC** (미국): 이용 통계(Google Analytics). 쿠키, 접속 IP 주소, 브라우저·기기 정보, 방문 페이지가 전송되며, 위 2항의 기간 동안 보관됩니다.
 
-정보는 이용자가 서비스를 이용하는 시점에 네트워크를 통해 전송됩니다. 국외 이전을 원하지 않으면 Discord 로그인과 제보 기능을 쓰지 않거나, 아래 6항의 방법으로 통계 수집을 거부할 수 있습니다. 다만 호스팅은 서비스 제공에 꼭 필요해 거부할 수 없습니다.
+정보는 이용자가 서비스를 이용하는 시점(백업은 매일 1회)에 네트워크를 통해 암호화되어 전송됩니다. 국외 이전을 원하지 않으면 Discord 로그인과 제보 기능을 쓰지 않거나, 아래 6항의 방법으로 통계 수집을 거부할 수 있습니다. 다만 호스팅은 서비스 제공에 꼭 필요해 거부할 수 없습니다.
 
 ## 5. 개인정보의 파기
 
@@ -88,10 +91,14 @@ function ko({ operator, email }: LegalContact): string {
 
 - 로그인 세션은 서명된 토큰으로 관리하고, 자바스크립트로 읽을 수 없는(httpOnly) 쿠키에 둡니다.
 - 모든 통신은 HTTPS로 암호화합니다.
+- API 서버는 인터넷에 직접 열려 있지 않고, 암호화된 터널과 서비스 토큰으로만 접근할 수 있습니다.
 - 관리자 화면은 허가된 운영자 계정만 쓸 수 있습니다.
-- 꼭 필요한 정보만 받고, 받지 않아도 되는 정보(이메일, Discord 토큰, IP 원문 등)는 저장하지 않습니다.
+- 데이터베이스는 매일 백업하고, 백업은 30일이 지나면 자동으로 지웁니다.
+- 꼭 필요한 정보만 받고, 받지 않아도 되는 정보(이메일, Discord 토큰 등)는 저장하지 않습니다.
 
 ## 9. 개인정보 보호책임자와 문의처
+
+서비스는 운영자 1인이 운영하며, 운영자가 개인정보 보호책임자를 겸합니다.
 
 - 개인정보 보호책임자: ${who}
 - 문의: ${reach}
@@ -118,7 +125,7 @@ function ko({ operator, email }: LegalContact): string {
 function en({ operator, email }: LegalContact): string {
   const who = operator ?? 'the GameCollabs operator';
   const reach = email ? `email [${email}](mailto:${email})` : 'the note field on the [Submit a collab](/en/report) page';
-  return `GameCollabs (“the Service”) collects only the personal information it needs and handles it in line with applicable law, including the Personal Information Protection Act of the Republic of Korea. This policy explains what we process, why, and when we delete it.
+  return `GameCollabs (“the Service”) is a personal project run by a single operator. It collects only the personal information it needs and handles it in line with applicable law, including the Personal Information Protection Act of the Republic of Korea. This policy explains what we process, why, and when we delete it.
 
 ## 1. What we process and why
 
@@ -134,19 +141,20 @@ You can browse every collab without an account. We process the information below
 
 - Data: the link and note you enter, and a hash of your IP address
 - Purpose: checking your submission and adding or correcting collab information, and preventing spam and automated submissions
-- We don’t ask for your name or contact details. We never store your IP address itself, only a one-way hash. Please don’t put personal information in the note.
+- We don’t ask for your name or contact details. The submission record stores your IP address only as a hash mixed with a secret, so the address can’t be read back from it. Server access logs do keep the IP address, as described below. Please don’t put personal information in the note.
 
 **Information generated automatically when you use the Service**
 
-- Data: IP address, browser and device information, pages visited and when, cookies
+- Data: IP address, browser and device information, pages visited and when, cookies, server access logs (including your IP address when you send a submission)
 - Purpose: running and securing the Service, diagnosing errors, and usage statistics (such as which pages are read most)
 
 ## 2. How long we keep it
 
-- Member information and your saves and follows: until you delete your account, then deleted immediately.
-- Submissions: kept as the source record for collab information. The link and note don’t identify you, and the IP hash is deleted once it is no longer needed to prevent abuse.
+- Member information and your saves and follows: until you delete your account, then deleted from the live database immediately. They remain in disaster-recovery database backups for up to 30 days, which are then deleted automatically.
+- Submissions (link, note, IP hash): kept for as long as the Service runs, as the source record for collab information and to prevent abuse. Contact us as in section 9 to have yours deleted.
+- Server access logs: for as long as needed to run and secure the Service.
 - Sign-in cookie: up to 30 days; removed as soon as you sign out.
-- Usage statistics (Google Analytics): according to our Google Analytics data retention setting.
+- Usage statistics (Google Analytics): event data is deleted after 2 months and user-level data after 14 months.
 - Where the law requires us to keep information longer, we keep it for that period.
 
 ## 3. Sharing with third parties
@@ -155,14 +163,14 @@ We don’t share your personal information with third parties, except where the 
 
 ## 4. Service providers and international transfers
 
-We use the providers below to run the Service, so your information may be processed outside your country, mainly in the United States. Each provider handles the information it receives under its own privacy policy.
+The database and API server that store member information and submissions are run by the operator in the Republic of Korea. We also use the providers below, so your information may be processed outside your country, mainly in the United States. Each provider handles the information it receives under its own privacy policy.
 
-- **Vercel Inc.** (USA): website hosting. Your IP address, request details and country are processed in server logs.
+- **Vercel Inc.** (USA): website hosting. Every visit’s IP address, request details and country are processed, and the Discord profile received at sign-in and your submissions pass through it on their way to our server in Korea. Retention: per Vercel’s log retention.
+- **Cloudflare, Inc.** (USA): (1) a secure tunnel (Cloudflare Tunnel) that carries traffic to our API server in Korea; member information, submissions and submitters’ IP addresses pass through it encrypted and are not stored. (2) Database backup storage (Cloudflare R2); member information, saves, follows and submissions are backed up daily and kept for 30 days. (3) Bot protection on the submission form (Turnstile); browser and device information and your IP address are sent.
 - **Discord Inc.** (USA): member sign-in (OAuth). We receive the profile information in section 1 from Discord when you sign in.
-- **Google LLC** (USA): usage statistics (Google Analytics). Cookies, IP address, browser and device information and pages visited are sent.
-- **Cloudflare, Inc.** (USA): bot protection on the submission form (Turnstile). Browser and device information and your IP address are sent.
+- **Google LLC** (USA): usage statistics (Google Analytics). Cookies, IP address, browser and device information and pages visited are sent and kept for the periods in section 2.
 
-Information is transferred over the network at the moment you use the Service. If you don’t want it transferred, you can avoid Discord sign-in and submissions, or opt out of statistics as described in section 6. Hosting is essential to providing the Service and can’t be opted out of.
+Information is transferred encrypted over the network at the moment you use the Service (backups once a day). If you don’t want it transferred, you can avoid Discord sign-in and submissions, or opt out of statistics as described in section 6. Hosting is essential to providing the Service and can’t be opted out of.
 
 ## 5. Deletion
 
@@ -193,10 +201,14 @@ You can access, correct or delete your personal information, or ask us to stop p
 
 - Sign-in sessions use signed tokens kept in cookies that JavaScript can’t read (httpOnly).
 - All traffic is encrypted with HTTPS.
+- The API server isn’t exposed directly to the internet; it can only be reached through an encrypted tunnel with a service token.
 - Only authorized operator accounts can use the admin pages.
-- We collect only what we need and don’t store what we don’t (email, Discord tokens, raw IP addresses and so on).
+- The database is backed up daily, and backups are deleted automatically after 30 days.
+- We collect only what we need and don’t store what we don’t (email, Discord tokens and so on).
 
 ## 9. Privacy officer and contact
+
+The Service is run by a single operator, who is also the privacy officer.
 
 - Privacy officer: ${who}
 - Contact: ${reach}
