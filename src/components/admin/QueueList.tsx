@@ -91,6 +91,11 @@ export function QueueList({ items, nextCursor, filter, query, selectedId, emptyM
                     수집기 반영
                   </Badge>
                 )}
+                {!!q.bookmarkCount && (
+                  <Badge size="1" variant="soft" color="gray" title="이 콜라보를 저장한 회원 수">
+                    저장 {q.bookmarkCount}
+                  </Badge>
+                )}
                 {!filter.cover && q.hasCover === false && (
                   <Badge size="1" variant="outline" color="gray">
                     커버 없음

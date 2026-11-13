@@ -452,6 +452,8 @@ export const adminCollabSchema = collabInputSchema.extend({
   ),
   /** 후속 확인 상태. undefined면 백엔드가 아직 주지 않음 */
   followUp: followUpStateSchema.optional(),
+  /** 이 콜라보를 저장한 회원 수. 보관 전에 알려 준다. null이면 백엔드가 알려주지 않음 */
+  bookmarkCount: z.number().int().nullable().optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });
@@ -469,6 +471,8 @@ export const adminQueueItemSchema = z.object({
   hasCover: z.boolean().nullable(),
   /** 수집기가 바꾼 뒤 관리자가 아직 확인하지 않음 */
   followUpApplied: z.boolean(),
+  /** 저장한 회원 수. null이면 백엔드가 알려주지 않음 */
+  bookmarkCount: z.number().int().nullable().optional(),
   updatedAt: z.iso.datetime(),
 });
 export type AdminQueueItem = z.infer<typeof adminQueueItemSchema>;
@@ -494,8 +498,46 @@ export const adminEntitySchema = z.object({
   featuredOrder: z.number().int().min(1).nullable().optional(),
   /** 작품 대표 이미지. undefined면 백엔드가 알려주지 않음(저장할 때 건드리지 않는다) */
   image: adminCoverSchema.nullable().optional(),
+  /** 팔로우한 회원 수. undefined면 백엔드가 알려주지 않음 */
+  followerCount: z.number().int().optional(),
 });
 export type AdminEntity = z.infer<typeof adminEntitySchema>;
+
+/** 관리자 회원 목록의 한 줄(GET /v1/admin/members) */
+export const adminMemberSchema = z.object({
+  id: z.string(),
+  discordId: z.string(),
+  username: z.string(),
+  globalName: z.string().nullable(),
+  avatar: z.string().nullable(),
+  active: z.boolean(),
+  lastLoginAt: z.string().nullable(),
+  createdAt: z.string().nullable(),
+  bookmarkCount: z.number().int(),
+  followCount: z.number().int(),
+});
+export type AdminMember = z.infer<typeof adminMemberSchema>;
+export const MEMBER_STATUS_FILTERS = ['all', 'active', 'disabled'] as const;
+export type MemberStatusFilter = (typeof MEMBER_STATUS_FILTERS)[number];
+
+/** 회원 통계(GET /v1/admin/members/stats): 개인정보 없는 숫자만 */
+export const memberStatsSchema = z.object({
+  members: z.object({
+    total: z.number().int(),
+    active: z.number().int(),
+    disabled: z.number().int(),
+    new7d: z.number().int(),
+    new30d: z.number().int(),
+    active30d: z.number().int(),
+  }),
+  /** 최근 12주, 월요일 기준(UTC) */
+  weekly: z.array(z.object({ week: z.string(), signups: z.number().int() })),
+  bookmarks: z.number().int(),
+  follows: z.number().int(),
+  topSaved: z.array(z.object({ id: z.string(), slug: z.string(), title: z.string(), status: z.enum(COLLAB_STATUSES), count: z.number().int() })),
+  topFollowed: z.array(z.object({ type: entityKindSchema, id: z.string(), slug: z.string(), name: z.string(), count: z.number().int() })),
+});
+export type MemberStats = z.infer<typeof memberStatsSchema>;
 
 /** GET /v1/admin/match?name= */
 export const matchResponseSchema = z.object({

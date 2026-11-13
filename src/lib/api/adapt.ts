@@ -127,6 +127,7 @@ export type BeEntitySummary = BeFeaturedFields & {
   country?: string | null;
   aliases: string[];
   collabCount: number;
+  followerCount?: number;
 };
 
 /** 생성·수정·병합 응답은 저장된 문서 그대로다 */
@@ -144,6 +145,8 @@ type BeLocaleText = { title: string; summary: string; note: string | null };
 
 export type BeAdminCollab = {
   id: string;
+  /** 저장한 회원 수(회원 기능 이후 백엔드) */
+  bookmarkCount?: number;
   slug: string;
   status: AdminCollab['status'];
   rev: number;
@@ -574,6 +577,7 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
     contentTba: c.contentTba,
     // 기능 이전 문서는 필드가 없거나 비어 있다
     followUp: c.followUp ? toFollowUpState(c.followUp) : undefined,
+    bookmarkCount: c.bookmarkCount ?? null,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -657,6 +661,7 @@ export function toQueueItem(c: BeAdminCollab): AdminQueueItem {
     duplicateCandidate: (c.duplicateCount ?? 0) > 0,
     hasCover: c.cover === undefined ? null : Boolean(c.cover),
     followUpApplied: Boolean(c.followUp?.applied),
+    bookmarkCount: c.bookmarkCount ?? null,
     updatedAt: c.updatedAt,
   };
 }
@@ -765,6 +770,7 @@ export function fromEntitySummary(kind: EntityKind, e: BeEntitySummary, mediaBas
     category: e.kind?.key ?? null,
     country: e.country ?? null,
     collabCount: e.collabCount,
+    ...(e.followerCount === undefined ? {} : { followerCount: e.followerCount }),
   };
 }
 

@@ -9,6 +9,7 @@ import { computePhase } from '@/lib/phase';
 import { STATS_COMPANY_ROLES, type StatsCompanyRole } from '@/schema';
 import type {
   AdminChangelogEntry,
+  AdminMember,
   AdminCollab,
   AdminCover,
   AdminEntity,
@@ -30,7 +31,7 @@ import type {
   TermRef,
   Transition,
 } from '@/schema';
-import { ApiError, type AdminApi, type EntityInput, type FollowType, type MemberApi, type MemberProfile, type PublicApi, type QueueFilter, type TermInput } from '../types';
+import { ApiError, type AdminApi, type EntityInput, type FollowType, type MemberList, type MemberApi, type MemberProfile, type PublicApi, type QueueFilter, type TermInput } from '../types';
 import * as seed from './data';
 import type { DbCollab, DbCompany, DbProperty } from './data';
 
@@ -44,7 +45,14 @@ type Store = {
   submissions: DbSubmission[];
   changelog: AdminChangelogEntry[];
   /** 회원과 북마크(최근 저장이 앞) */
-  members: (MemberProfile & { bookmarks: { slug: string; at: string }[]; follows?: { type: FollowType; id: string; at: string }[] })[];
+  members: (MemberProfile & {
+    bookmarks: { slug: string; at: string }[];
+    follows?: { type: FollowType; id: string; at: string }[];
+    /** 관리자 화면용(이전 개발 서버의 회원에는 없을 수 있다) */
+    active?: boolean;
+    createdAt?: string;
+    lastLoginAt?: string;
+  })[];
 };
 // 개발 서버 핫 리로드에도 수정 내용이 유지되도록 전역에 둔다
 const g = globalThis as { __collabTrackerMock?: Store };
@@ -486,10 +494,10 @@ export const mockPublicApi: PublicApi = {
   async upsertDiscordMember(profile) {
     await delay();
     let m = db.members.find((x) => x.discordId === profile.discordId);
-    if (m) Object.assign(m, profile);
-    else db.members.push((m = { ...profile, id: randomBytes(12).toString('hex'), bookmarks: [] }));
-    const { bookmarks: _b, follows: _f, ...rest } = m;
-    return rest;
+    if (m?.active === false) throw new ApiError(403, 'member_disabled');
+    if (m) Object.assign(m, profile, { lastLoginAt: now() });
+    else db.members.push((m = { ...profile, id: randomBytes(12).toString('hex'), bookmarks: [], active: true, createdAt: now(), lastLoginAt: now() }));
+    return { id: m.id, discordId: m.discordId, username: m.username, globalName: m.globalName, avatar: m.avatar };
   },
 };
 
@@ -505,15 +513,23 @@ export function mockMemberApi(token: string): MemberApi {
       sub = undefined;
     }
     const m = db.members.find((x) => x.id === sub);
-    if (!m) throw new ApiError(401, 'unauthorized');
+    if (!m || m.active === false) throw new ApiError(401, 'unauthorized');
     return m;
   };
   const collab = (slug: string) => published().find((c) => c.slug === slug);
   return {
     async getMe() {
       await delay();
-      const { bookmarks, follows = [], ...rest } = member();
-      return { ...rest, bookmarkCount: bookmarks.filter((b) => collab(b.slug)).length, followCount: follows.length };
+      const m = member();
+      return {
+        id: m.id,
+        discordId: m.discordId,
+        username: m.username,
+        globalName: m.globalName,
+        avatar: m.avatar,
+        bookmarkCount: m.bookmarks.filter((b) => collab(b.slug)).length,
+        followCount: (m.follows ?? []).length,
+      };
     },
     async deleteMe() {
       await delay();
@@ -688,6 +704,7 @@ function toAdmin(c: DbCollab): AdminCollab {
     contentTba: c.contentTba ?? false,
     duplicates: findDuplicates(c),
     followUp: followUpOf(c),
+    bookmarkCount: savedCount(c.slug),
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   };
@@ -780,9 +797,30 @@ function toAdminEntity(kind: EntityKind, e: DbProperty | DbCompany): AdminEntity
     category: 'kind' in e ? e.kind : null,
     country: 'country' in e ? e.country : null,
     collabCount: count,
+    followerCount: db.members.filter((m) => m.follows?.some((f) => f.type === kind && f.id === e.id)).length,
     ...('kind' in e ? { featuredOrder: e.featuredOrder ?? null, image: e.image ?? null } : {}),
   };
 }
+
+const savedCount = (slug: string) => db.members.filter((m) => m.bookmarks.some((b) => b.slug === slug)).length;
+
+function toAdminMember(m: Store['members'][number]): AdminMember {
+  return {
+    id: m.id,
+    discordId: m.discordId,
+    username: m.username,
+    globalName: m.globalName,
+    avatar: m.avatar,
+    active: m.active !== false,
+    lastLoginAt: m.lastLoginAt ?? null,
+    createdAt: m.createdAt ?? null,
+    bookmarkCount: m.bookmarks.length,
+    followCount: (m.follows ?? []).length,
+  };
+}
+
+const MEMBER_PAGE = 50;
+const DAY = 24 * 60 * 60 * 1000;
 
 function matches(e: DbProperty | DbCompany, q: string): string | null | false {
   const needle = q.toLowerCase();
@@ -832,6 +870,7 @@ export const mockAdminApi: AdminApi = {
         duplicateCandidate: findDuplicates(c).length > 0,
         hasCover: Boolean(c.cover),
         followUpApplied: Boolean(c.followUp?.applied),
+        bookmarkCount: savedCount(c.slug),
         updatedAt: c.updatedAt,
       }));
     return { items, counts, nextCursor };
@@ -1013,6 +1052,82 @@ export const mockAdminApi: AdminApi = {
     }
     list.splice(list.indexOf(source), 1);
     return toAdminEntity(kind, target);
+  },
+
+  async getMemberStats() {
+    await delay();
+    const t = Date.now();
+    const created = (m: Store['members'][number]) => (m.createdAt ? Date.parse(m.createdAt) : t);
+    const since = (days: number) => t - days * DAY;
+    const today = new Date(new Date(t).toISOString().slice(0, 10));
+    const monday = today.getTime() - ((today.getUTCDay() + 6) % 7) * DAY;
+    const weekly = Array.from({ length: 12 }, (_, i) => {
+      const start = monday - (11 - i) * 7 * DAY;
+      return { week: new Date(start).toISOString().slice(0, 10), signups: db.members.filter((m) => created(m) >= start && created(m) < start + 7 * DAY).length };
+    });
+    const savedBy = new Map<string, number>();
+    db.members.forEach((m) => m.bookmarks.forEach((b) => savedBy.set(b.slug, (savedBy.get(b.slug) ?? 0) + 1)));
+    const followedBy = new Map<string, { type: FollowType; id: string; n: number }>();
+    db.members.forEach((m) =>
+      (m.follows ?? []).forEach((f) => {
+        const k = `${f.type}:${f.id}`;
+        followedBy.set(k, { type: f.type, id: f.id, n: (followedBy.get(k)?.n ?? 0) + 1 });
+      }),
+    );
+    const disabled = db.members.filter((m) => m.active === false).length;
+    return {
+      members: {
+        total: db.members.length,
+        active: db.members.length - disabled,
+        disabled,
+        new7d: db.members.filter((m) => created(m) >= since(7)).length,
+        new30d: db.members.filter((m) => created(m) >= since(30)).length,
+        active30d: db.members.filter((m) => m.lastLoginAt && Date.parse(m.lastLoginAt) >= since(30)).length,
+      },
+      weekly,
+      bookmarks: [...savedBy.values()].reduce((a, b) => a + b, 0),
+      follows: [...followedBy.values()].reduce((a, b) => a + b.n, 0),
+      topSaved: [...savedBy]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .flatMap(([slug, count]) => {
+          const c = db.collabs.find((x) => x.slug === slug);
+          return c ? [{ id: c.id, slug, title: c.i18n.ko.title, status: c.status, count }] : [];
+        }),
+      topFollowed: [...followedBy.values()]
+        .sort((a, b) => b.n - a.n)
+        .slice(0, 10)
+        .flatMap((f) => {
+          const e = entity(f.type, f.id);
+          return e ? [{ type: f.type, id: e.id, slug: e.slug, name: e.name.ko, count: f.n }] : [];
+        }),
+    };
+  },
+
+  async listMembers({ q, status = 'all', cursor }): Promise<MemberList> {
+    await delay();
+    const needle = q?.trim().toLowerCase();
+    const all = [...db.members]
+      .filter((m) => status === 'all' || (status === 'active') === (m.active !== false))
+      .filter((m) => !needle || m.discordId === needle || m.username.toLowerCase().includes(needle) || (m.globalName ?? '').toLowerCase().includes(needle))
+      .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
+    const offset = cursor ? Number(Buffer.from(cursor, 'base64url').toString()) || 0 : 0;
+    const next = offset + MEMBER_PAGE < all.length ? Buffer.from(String(offset + MEMBER_PAGE)).toString('base64url') : null;
+    return { items: all.slice(offset, offset + MEMBER_PAGE).map(toAdminMember), total: all.length, nextCursor: next };
+  },
+
+  async setMemberActive(id, active) {
+    await delay();
+    const m = db.members.find((x) => x.id === id);
+    if (!m) throw new ApiError(404, 'not_found');
+    m.active = active;
+    return toAdminMember(m);
+  },
+
+  async deleteMember(id) {
+    await delay();
+    if (!db.members.some((x) => x.id === id)) throw new ApiError(404, 'not_found');
+    db.members = db.members.filter((x) => x.id !== id);
   },
 
   async createTerm(input: TermInput) {
