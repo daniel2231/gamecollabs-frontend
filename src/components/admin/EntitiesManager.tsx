@@ -29,6 +29,8 @@ export function EntitiesManager({ kind, q, entities, kindOptions, featuredSuppor
   const noun = kind === 'property' ? '작품' : '회사';
   const kindLabel = new Map(kindOptions.map((o) => [o.key, o.label]));
 
+  // 회원 기능 이후 백엔드만 팔로워 수를 준다
+  const showFollowers = entities.some((e) => e.followerCount !== undefined);
   return (
     <Flex direction="column" gap="4">
       <Flex justify="between" align="center" wrap="wrap" gap="3">
@@ -77,6 +79,7 @@ export function EntitiesManager({ kind, q, entities, kindOptions, featuredSuppor
             <Table.ColumnHeaderCell>별칭</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell>{kind === 'property' ? '분류' : '국가'}</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell justify="end">콜라보</Table.ColumnHeaderCell>
+            {showFollowers && <Table.ColumnHeaderCell justify="end">팔로워</Table.ColumnHeaderCell>}
             {featuredSupported && <Table.ColumnHeaderCell justify="center">홈 노출</Table.ColumnHeaderCell>}
             <Table.ColumnHeaderCell>
               <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>작업</span>
@@ -106,6 +109,11 @@ export function EntitiesManager({ kind, q, entities, kindOptions, featuredSuppor
               <Table.Cell justify="end" className="ct-mono">
                 {e.collabCount}
               </Table.Cell>
+              {showFollowers && (
+                <Table.Cell justify="end" className="ct-mono">
+                  {e.followerCount ?? '—'}
+                </Table.Cell>
+              )}
               {featuredSupported && (
                 <Table.Cell justify="center">
                   {e.featuredOrder != null && (
@@ -167,7 +175,8 @@ function MergeDialog({ kind, source, kindOptions, onClose, onMerged }: { kind: E
       <Dialog.Content maxWidth="520px">
         <Dialog.Title>“{source.name.ko}” 병합</Dialog.Title>
         <Dialog.Description size="2" color="gray" mb="4">
-          이 항목을 대상에 합칩니다. 콜라보 {source.collabCount}건이 대상으로 옮겨지고, 이름과 별칭은 대상의 별칭이 됩니다. 되돌릴 수 없습니다.
+          이 항목을 대상에 합칩니다. 콜라보 {source.collabCount}건이 대상으로 옮겨지고, 이름과 별칭은 대상의 별칭이 됩니다.
+          {!!source.followerCount && ` 팔로워 ${source.followerCount}명도 대상을 팔로우하게 됩니다(이미 둘 다 팔로우한 회원은 하나로 합칩니다).`} 되돌릴 수 없습니다.
         </Dialog.Description>
         <EntityCombobox kind={kind} label="병합 대상" value={target} onChange={setTarget} kindOptions={kindOptions} />
         {target?.id === source.id && (
@@ -195,6 +204,7 @@ function MergeDialog({ kind, source, kindOptions, onClose, onMerged }: { kind: E
             <AlertDialog.Title>정말 병합할까요?</AlertDialog.Title>
             <AlertDialog.Description size="2">
               “{source.name.ko}” → “{target?.label}”. 원본 항목은 삭제됩니다.
+              {!!source.followerCount && ` 팔로워 ${source.followerCount}명이 옮겨집니다.`}
             </AlertDialog.Description>
             <Flex justify="end" gap="2" mt="4">
               <AlertDialog.Cancel>

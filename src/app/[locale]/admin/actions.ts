@@ -17,6 +17,7 @@ import {
   taxonomySchema,
   TRANSITIONS,
   type AdminChangelogEntry,
+  type AdminMember,
   type AdminCollab,
   type ChangelogInput,
   type AdminEntity,
@@ -171,6 +172,21 @@ export async function saveChangelog(id: string | null, input: ChangelogInput): P
 export async function deleteChangelog(id: string): Promise<ActionResult<null>> {
   return run(async (api) => {
     await api.deleteChangelog(z.string().min(1).max(64).parse(id));
+    return null;
+  });
+}
+
+const memberId = z.string().regex(/^[a-f0-9]{24}$/i);
+
+/** 회원 차단(active=false)·해제. 관리자만(백엔드가 members:manage로 확인) */
+export async function setMemberActive(id: string, active: boolean): Promise<ActionResult<AdminMember>> {
+  return run((api) => api.setMemberActive(memberId.parse(id), z.boolean().parse(active)));
+}
+
+/** 회원과 저장·팔로우 삭제. 관리자만 */
+export async function deleteMember(id: string): Promise<ActionResult<null>> {
+  return run(async (api) => {
+    await api.deleteMember(memberId.parse(id));
     return null;
   });
 }

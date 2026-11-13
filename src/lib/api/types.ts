@@ -1,4 +1,7 @@
 import type {
+  AdminMember,
+  MemberStats,
+  MemberStatusFilter,
   AdminChangelogEntry,
   AdminCollab,
   AdminCover,
@@ -183,7 +186,18 @@ export interface AdminApi {
   updateChangelog(id: string, input: ChangelogInput): Promise<AdminChangelogEntry>;
   /** DELETE /v1/admin/changelog/:id */
   deleteChangelog(id: string): Promise<void>;
+  /** 회원 통계(개인정보 없음, 편집자도): GET /v1/admin/members/stats. 백엔드에 없으면 ApiError(501, members_unavailable) */
+  getMemberStats(): Promise<MemberStats>;
+  /** 회원 목록(관리자만, 아니면 ApiError(403)): GET /v1/admin/members */
+  listMembers(filter: MemberFilter): Promise<MemberList>;
+  /** 차단(false)·해제(true): PATCH /v1/admin/members/:id */
+  setMemberActive(id: string, active: boolean): Promise<AdminMember>;
+  /** 회원과 저장·팔로우 삭제: DELETE /v1/admin/members/:id */
+  deleteMember(id: string): Promise<void>;
 }
+
+export type MemberFilter = { q?: string; status?: MemberStatusFilter; cursor?: string };
+export type MemberList = { items: AdminMember[]; total: number; nextCursor: string | null };
 
 export class ApiError extends Error {
   constructor(

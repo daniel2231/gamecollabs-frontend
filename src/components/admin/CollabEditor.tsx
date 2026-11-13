@@ -332,7 +332,7 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
             )}
           </Flex>
           <Flex wrap="wrap" gap="2">
-            {collab && status !== 'archived' && <ArchiveButton disabled={pending} onConfirm={(reason) => onTransition('archive', reason)} published={status === 'published'} />}
+            {collab && status !== 'archived' && <ArchiveButton disabled={pending} onConfirm={(reason) => onTransition('archive', reason)} published={status === 'published'} savedCount={collab.bookmarkCount ?? 0} />}
             <Button variant="surface" color="gray" onClick={onSave} loading={pending} disabled={!dirty && Boolean(collab)}>
               {collab ? '임시 저장' : '초안 만들기'}
             </Button>
@@ -897,7 +897,7 @@ function VenuesEditor({ rows, errors, onChange }: { rows: VenueRow[]; errors?: R
   );
 }
 
-function ArchiveButton({ onConfirm, disabled, published }: { onConfirm: (reason: string) => void; disabled: boolean; published: boolean }) {
+function ArchiveButton({ onConfirm, disabled, published, savedCount }: { onConfirm: (reason: string) => void; disabled: boolean; published: boolean; savedCount: number }) {
   const [reason, setReason] = useState('');
   return (
     <AlertDialog.Root>
@@ -911,6 +911,13 @@ function ArchiveButton({ onConfirm, disabled, published }: { onConfirm: (reason:
         <AlertDialog.Description size="2">
           {published ? '공개 페이지에서 내려가고 보관 목록으로 옮겨집니다.' : '보관 상태로 옮겨집니다. 폐기 사유는 수집 프롬프트 개선에 쓰입니다.'}
         </AlertDialog.Description>
+        {published && savedCount > 0 && (
+          <Callout.Root color="amber" size="1" mt="3">
+            <Callout.Text>
+              회원 {savedCount}명이 이 콜라보를 저장했습니다. 보관하면 그들의 저장 목록과 피드에서 사라집니다(다시 발행하면 돌아옵니다).
+            </Callout.Text>
+          </Callout.Root>
+        )}
         <Text as="label" className="ct-field" mt="3">
           <span className="ct-label">사유</span>
           <TextArea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="예: 공식 발표 아님, 중복, 날짜 오류" />

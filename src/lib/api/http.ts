@@ -4,6 +4,8 @@ import {
   adminChangelogEntrySchema,
   adminCollabSchema,
   adminEntitySchema,
+  adminMemberSchema,
+  memberStatsSchema,
   adminQueueItemSchema,
   changelogEntrySchema,
   collabDetailSchema,
@@ -415,6 +417,30 @@ export function createHttpAdminApi(token: string): AdminApi {
       adminChangelogEntrySchema.parse(await data(`/v1/admin/changelog/${encodeURIComponent(id)}`, o({ method: 'PATCH', body: input }))),
     deleteChangelog: async (id) => {
       await request(`/v1/admin/changelog/${encodeURIComponent(id)}`, o({ method: 'DELETE' }));
+    },
+    getMemberStats: async () => {
+      try {
+        return memberStatsSchema.parse(await data('/v1/admin/members/stats', o()));
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) {
+          throw new ApiError(501, 'members_unavailable', '백엔드에 회원 관리 API(/v1/admin/members)가 아직 없습니다. 백엔드 배포 후 다시 시도하세요.');
+        }
+        throw e;
+      }
+    },
+    listMembers: async ({ q, status, cursor }) => {
+      const sp = new URLSearchParams({ limit: '50' });
+      if (q) sp.set('q', q);
+      if (status) sp.set('status', status);
+      if (cursor) sp.set('cursor', cursor);
+      const body = await envelope<unknown[], { total: number; nextCursor: string | null }>(`/v1/admin/members?${sp}`, o());
+      if (!body?.meta) throw new ApiError(502, 'bad_response');
+      return { items: z.array(adminMemberSchema).parse(body.data), total: body.meta.total, nextCursor: body.meta.nextCursor };
+    },
+    setMemberActive: async (id, active) =>
+      adminMemberSchema.parse(await data(`/v1/admin/members/${encodeURIComponent(id)}`, o({ method: 'PATCH', body: { active } }))),
+    deleteMember: async (id) => {
+      await request(`/v1/admin/members/${encodeURIComponent(id)}`, o({ method: 'DELETE' }));
     },
     createTerm: async (input) =>
       taxonomyTermSchema.parse(A.fromTerm(await data<A.BeTerm>('/v1/admin/taxonomies', o({ method: 'POST', body: A.toTermBody(input) })))),

@@ -163,6 +163,7 @@ export function FeaturedManager({ properties, supported, kindOptions }: Props) {
                   {p.name.ko}{' '}
                   <Text color="gray" size="1">
                     {p.name.en} · 콜라보 {p.collabCount}
+                    {p.followerCount !== undefined && ` · 팔로워 ${p.followerCount}`}
                   </Text>
                 </Text>
                 <Button
@@ -299,6 +300,7 @@ function FeaturedRow({ property: p, index, count, kindLabel, visibility, divider
               <Text weight="medium">{p.name.ko}</Text>
               <Text as="div" size="1" color="gray">
                 {[p.name.en, p.name.original].filter(Boolean).join(' · ')}
+                {p.followerCount !== undefined && ` · 팔로워 ${p.followerCount}`}
               </Text>
             </div>
           </Flex>

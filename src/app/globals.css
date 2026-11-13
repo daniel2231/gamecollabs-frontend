@@ -2720,3 +2720,68 @@ body {
   font-size: 14px;
   line-height: 1.6;
 }
+
+/* ── 관리자: 회원 통계 ─────────────────────────────────────── */
+.ct-admin-stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.ct-admin-two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+/* 주별 가입 막대: 위 숫자, 막대, 아래 날짜(MM-DD) */
+.ct-admin-bars {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 6px;
+  height: 140px;
+}
+
+.ct-admin-bar {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--gray-11);
+}
+
+.ct-admin-bar > div {
+  width: 100%;
+  min-height: 2px;
+  background: var(--gray-9);
+}
+
+.ct-admin-bar:last-child > div {
+  background: var(--ct-signal);
+}
+
+.ct-admin-rank {
+  margin: 0;
+  padding-left: 1.4em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.ct-admin-rank li {
+  padding-left: 2px;
+}
+
+.ct-admin-rank li > a {
+  color: var(--gray-12);
+  margin-right: 6px;
+}
+
+.ct-admin-rank li > .ct-mono {
+  float: right;
+  color: var(--gray-11);
+}
