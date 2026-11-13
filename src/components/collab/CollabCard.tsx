@@ -1,5 +1,6 @@
 import { Flex, Text } from '@radix-ui/themes';
 import { Link } from '@/i18n/navigation';
+import { BookmarkButton } from '@/components/member/BookmarkButton';
 import { CoverImage } from '@/components/site/CoverImage';
 import { SignalX } from '@/components/site/SignalX';
 import { coverFit, coverTone } from '@/lib/cover';
@@ -24,7 +25,7 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
   const fit = collab.cover ? coverFit(collab.cover) : 'cover';
   const sizes = feature ? FEATURE_SIZES : GRID_SIZES;
 
-  return (
+  const card = (
     <Link href={`/collabs/${collab.slug}`} className={feature ? 'ct-card ct-card-feature' : 'ct-card'}>
       <div className="ct-card-cover">
         {/* 배경과 본 이미지는 같은 srcset이라 한 번만 받는다 */}
@@ -82,5 +83,13 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
         )}
       </Flex>
     </Link>
+  );
+  if (feature) return card;
+  // 저장 버튼은 링크 안에 둘 수 없어(a 안의 button) 링크 옆에 두고 커버 오른쪽 위에 겹친다
+  return (
+    <div className="ct-card-shell">
+      {card}
+      <BookmarkButton slug={collab.slug} title={collab.title} variant="icon" />
+    </div>
   );
 }

@@ -819,6 +819,26 @@ body {
   min-width: 0;
 }
 
+/* 카드 + 저장 버튼(커버 오른쪽 위). 버튼은 링크 밖에 있어야 해서 둘을 감싼다 */
+.ct-card-shell {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.ct-card-save {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  box-shadow: 0 0 0 1px var(--black-a6);
+}
+
+.ct-card-save:not([aria-pressed='true']) {
+  background-color: var(--black-a9);
+  color: var(--white-a12);
+  backdrop-filter: blur(4px);
+}
+
 .ct-card {
   display: flex;
   flex-direction: column;
@@ -2687,4 +2707,16 @@ body {
   font-size: 12px;
   line-height: 1.6;
   color: var(--ct-muted);
+}
+
+/* 내 계정: 저장하는 정보 목록 */
+.ct-account-list {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--gray-11);
+  font-size: 14px;
+  line-height: 1.6;
 }

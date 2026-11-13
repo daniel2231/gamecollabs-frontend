@@ -60,7 +60,12 @@ export interface PublicApi {
 
 /** Discord /users/@me에서 쓰는 값. avatar는 URL이 아니라 해시 */
 export type DiscordProfile = { discordId: string; username: string; globalName: string | null; avatar: string | null };
-export type MemberProfile = DiscordProfile & { id: string; bookmarkCount?: number };
+export type MemberProfile = DiscordProfile & { id: string; bookmarkCount?: number; followCount?: number };
+
+export type FollowType = 'property' | 'company';
+/** 저장·팔로우 버튼을 그리는 데 필요한 것: 저장한 콜라보와 팔로우한 작품·회사의 slug */
+export type MemberState = { bookmarks: string[]; follows: Record<FollowType, string[]> };
+export type FollowedEntity = { type: FollowType; slug: string; name: string; kind: string | null; collabCount: number; followedAt: string };
 
 /**
  * 로그인한 회원의 /v1/me/* (회원 JWT). 세션이 더는 통하지 않으면(탈퇴·차단) ApiError(401)
@@ -74,6 +79,14 @@ export interface MemberApi {
   isBookmarked(slug: string): Promise<boolean>;
   /** 저장(on) 또는 해제. 결과 상태를 돌려준다. 500개를 넘으면 ApiError(409, bookmark_limit) */
   setBookmark(slug: string, on: boolean): Promise<boolean>;
+  /** GET /v1/me/state */
+  getState(): Promise<MemberState>;
+  /** 팔로우한 작품·회사, 최근 팔로우순 */
+  listFollows(locale: Locale): Promise<FollowedEntity[]>;
+  /** 팔로우(on) 또는 해제. 없는 작품·회사면 ApiError(404), 200개를 넘으면 ApiError(409, follow_limit) */
+  setFollow(type: FollowType, slug: string, on: boolean): Promise<boolean>;
+  /** 팔로우한 작품·회사의 발행 콜라보, 발행일 최신순 */
+  listFeed(locale: Locale, cursor?: string): Promise<CollabListResponse>;
 }
 
 export type StatsQuery = { locale?: Locale; year?: number };

@@ -23,7 +23,7 @@ import {
 } from '@/schema';
 import * as A from './adapt';
 import { apiBaseUrl } from './config';
-import { ApiError, type AdminApi, type MemberApi, type MemberProfile, type PublicApi } from './types';
+import { ApiError, type AdminApi, type FollowedEntity, type MemberApi, type MemberProfile, type MemberState, type PublicApi } from './types';
 
 /**
  * Express /v1 HTTP 클라이언트. 브라우저에서는 절대 쓰지 않는다(server-only).
@@ -198,12 +198,35 @@ const memberProfileSchema = z.object({
   globalName: z.string().nullable(),
   avatar: z.string().nullable(),
   bookmarkCount: z.number().int().optional(),
+  followCount: z.number().int().optional(),
 }) satisfies z.ZodType<MemberProfile>;
+
+const memberStateSchema = z.object({
+  bookmarks: z.array(z.string()),
+  follows: z.object({ property: z.array(z.string()), company: z.array(z.string()) }),
+}) satisfies z.ZodType<MemberState>;
+
+const followedEntitySchema = z.object({
+  type: z.enum(['property', 'company']),
+  slug: z.string(),
+  name: z.string(),
+  kind: z.object({ label: z.string() }).nullable().transform((k) => k?.label ?? null),
+  collabCount: z.number().int(),
+  followedAt: z.string(),
+}) satisfies z.ZodType<FollowedEntity, unknown>;
 
 /** /v1/me/* 는 회원 JWT로 부르고 캐시하지 않는다(token이 있으면 request가 no-store로 보낸다) */
 export function createHttpMemberApi(token: string): MemberApi {
   const o = (extra: RequestOptions = {}): RequestOptions => ({ token, ...extra });
   const path = (slug: string) => `/v1/me/bookmarks/${encodeURIComponent(slug)}`;
+  /** 저장 목록·피드: /v1/collabs와 같은 카드 형태, 24개씩 */
+  const cards = async (base: string, locale: string, cursor?: string) => {
+    const sp = new URLSearchParams({ locale, limit: '24' });
+    if (cursor) sp.set('cursor', cursor);
+    const body = await envelope<A.BeCard[], { total: number; nextCursor: string | null }>(`${base}?${sp}`, o());
+    if (!body?.meta) throw new ApiError(502, 'bad_response');
+    return collabListResponseSchema.parse(A.toListResponse(body.data, body.meta));
+  };
   const state = async (slug: string, method?: string) =>
     z.object({ bookmarked: z.boolean() }).parse(await data(path(slug), o(method ? { method } : {}))).bookmarked;
   return {
@@ -211,15 +234,16 @@ export function createHttpMemberApi(token: string): MemberApi {
     deleteMe: async () => {
       await request('/v1/me', o({ method: 'DELETE' }));
     },
-    listBookmarks: async (locale, cursor) => {
-      const sp = new URLSearchParams({ locale, limit: '24' });
-      if (cursor) sp.set('cursor', cursor);
-      const body = await envelope<A.BeCard[], { total: number; nextCursor: string | null }>(`/v1/me/bookmarks?${sp}`, o());
-      if (!body?.meta) throw new ApiError(502, 'bad_response');
-      return collabListResponseSchema.parse(A.toListResponse(body.data, body.meta));
-    },
+    listBookmarks: (locale, cursor) => cards('/v1/me/bookmarks', locale, cursor),
     isBookmarked: (slug) => state(slug),
     setBookmark: (slug, on) => state(slug, on ? 'PUT' : 'DELETE'),
+    getState: async () => memberStateSchema.parse(await data('/v1/me/state', o())),
+    listFollows: async (locale) => z.array(followedEntitySchema).parse(await data(`/v1/me/follows?locale=${locale}`, o())),
+    setFollow: async (type, slug, on) =>
+      z
+        .object({ following: z.boolean() })
+        .parse(await data(`/v1/me/follows/${type}/${encodeURIComponent(slug)}`, o({ method: on ? 'PUT' : 'DELETE' }))).following,
+    listFeed: (locale, cursor) => cards('/v1/me/feed', locale, cursor),
   };
 }
 

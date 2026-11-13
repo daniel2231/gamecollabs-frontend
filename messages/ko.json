@@ -387,6 +387,40 @@
       "emptyHint": "콜라보 상세 페이지에서 ‘저장’을 누르면 여기에 모입니다.",
       "browse": "콜라보 둘러보기",
       "more": "더 보기"
+    },
+    "feed": "내 피드",
+    "account": "내 계정",
+    "saveNamed": "{title} 저장",
+    "unsaveNamed": "{title} 저장 해제",
+    "follow": "팔로우",
+    "following": "팔로우 중",
+    "followHint": "로그인하면 팔로우하고 새 콜라보를 내 피드에서 볼 수 있습니다",
+    "followFailed": "팔로우하지 못했습니다. 다시 시도하세요.",
+    "followLimit": "팔로우는 작품·회사 합쳐 200개까지 할 수 있습니다.",
+    "feedPage": {
+      "description": "팔로우한 작품과 회사의 콜라보를 새로 올라온 순서로 보여 줍니다.",
+      "following": "팔로우 중",
+      "noFollows": "아직 팔로우한 작품이나 회사가 없습니다.",
+      "empty": "팔로우한 작품·회사의 콜라보가 아직 없습니다.",
+      "hint": "작품이나 회사 페이지에서 ‘팔로우’를 누르면 그 콜라보가 여기에 모입니다."
+    },
+    "accountPage": {
+      "discord": "Discord 계정 @{username}",
+      "bookmarkCount": "저장한 콜라보 {count}건",
+      "followCount": "팔로우 {count}개",
+      "dataTitle": "저장하는 정보",
+      "dataProfile": "Discord 사용자 ID, 사용자 이름, 표시 이름, 프로필 사진(해시). 로그인할 때마다 Discord의 최신 값으로 바뀝니다.",
+      "dataLists": "저장한 콜라보와 팔로우한 작품·회사 목록, 마지막 로그인 시각.",
+      "dataNot": "이메일, Discord 서버 목록, 메시지는 받지 않습니다. Discord 접근 토큰은 프로필을 읽은 직후 폐기하고 보관하지 않습니다.",
+      "dataKeep": "탈퇴할 때까지 보관하며, 탈퇴하면 위 정보를 모두 바로 지웁니다.",
+      "deleteTitle": "탈퇴",
+      "deleteDescription": "계정과 저장·팔로우 목록이 모두 지워지고 되돌릴 수 없습니다. 같은 Discord 계정으로 다시 로그인하면 빈 계정으로 새로 시작합니다.",
+      "delete": "탈퇴하기",
+      "deleteConfirmTitle": "정말 탈퇴할까요?",
+      "deleteConfirm": "저장한 콜라보와 팔로우 목록이 모두 지워지며 되돌릴 수 없습니다.",
+      "deleteNow": "탈퇴",
+      "cancel": "취소",
+      "deleteFailed": "탈퇴하지 못했습니다. 잠시 후 다시 시도하세요."
     }
   }
 }

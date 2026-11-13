@@ -7,7 +7,7 @@ import type { Locale } from '@/schema';
 import type { AdminApi, MemberApi, PublicApi, StatsQuery } from './types';
 
 export { ApiError } from './types';
-export type { AdminApi, DiscordProfile, MemberApi, MemberProfile, PublicApi } from './types';
+export type { AdminApi, DiscordProfile, FollowedEntity, FollowType, MemberApi, MemberProfile, MemberState, PublicApi } from './types';
 export { isMockApi } from './config';
 
 /** 호출할 때마다 API_BASE_URL을 보고 목/실제를 고른다 */

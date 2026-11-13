@@ -1,70 +1,49 @@
 'use client';
 
 import { BookmarkFilledIcon, BookmarkIcon } from '@radix-ui/react-icons';
-import { Button, Text } from '@radix-ui/themes';
+import { Button, IconButton, Text } from '@radix-ui/themes';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
-import { loginHref } from './loginHref';
-
-/** loading: 상태 확인 중, out: 로그아웃(누르면 로그인), off/on: 저장 여부 */
-type State = 'loading' | 'out' | 'off' | 'on';
+import { useState } from 'react';
+import { useMember } from './MemberProvider';
 
 /**
- * 콜라보 저장 버튼. 상세 페이지는 정적이라 저장 여부는 브라우저에서 /api/me/bookmarks/<slug>로 받는다.
- * 누르면 바로 바뀌고(낙관적 갱신) 실패하면 되돌린다.
+ * 콜라보 저장 버튼. 상세 페이지는 글자 버튼, 카드 위에는 아이콘(icon). 로그아웃 상태에서 누르면 로그인으로 간다.
+ * 저장 여부는 MemberProvider가 페이지마다 한 번 받아 온 목록에서 읽는다.
  */
-export function BookmarkButton({ slug }: { slug: string }) {
+export function BookmarkButton({ slug, title, variant = 'button' }: { slug: string; title?: string; variant?: 'button' | 'icon' }) {
   const t = useTranslations('Member');
-  const [state, setState] = useState<State>('loading');
-  const [busy, setBusy] = useState(false);
+  const { status, isBookmarked, toggleBookmark } = useMember();
   const [error, setError] = useState<string | null>(null);
-  const url = `/api/me/bookmarks/${encodeURIComponent(slug)}`;
+  const on = isBookmarked(slug);
+  const pressed = status === 'in' ? on : undefined;
 
-  useEffect(() => {
-    const ctrl = new AbortController();
-    fetch(url, { signal: ctrl.signal, cache: 'no-store' })
-      .then(async (r) => {
-        if (r.status === 401) return setState('out');
-        if (!r.ok) return setState('off');
-        setState(((await r.json()) as { bookmarked: boolean }).bookmarked ? 'on' : 'off');
-      })
-      .catch(() => undefined);
-    return () => ctrl.abort();
-  }, [url]);
-
-  async function toggle() {
-    if (state === 'out') {
-      window.location.href = loginHref();
-      return;
-    }
-    if (state === 'loading' || busy) return;
-    const previous = state;
-    const next = state === 'on' ? 'off' : 'on';
-    setState(next);
-    setBusy(true);
+  async function click() {
     setError(null);
-    try {
-      const r = await fetch(url, { method: next === 'on' ? 'PUT' : 'DELETE' });
-      if (r.status === 401) {
-        setState('out');
-        window.location.href = loginHref();
-        return;
-      }
-      if (!r.ok) {
-        setState(previous);
-        setError(r.status === 409 ? t('saveLimit') : t('saveFailed'));
-        return;
-      }
-      setState(((await r.json()) as { bookmarked: boolean }).bookmarked ? 'on' : 'off');
-    } catch {
-      setState(previous);
-      setError(t('saveFailed'));
-    } finally {
-      setBusy(false);
-    }
+    const err = await toggleBookmark(slug);
+    if (err) setError(err === 'limit' ? t('saveLimit') : t('saveFailed'));
   }
 
-  const on = state === 'on';
+  if (variant === 'icon') {
+    const label = title ? t(on ? 'unsaveNamed' : 'saveNamed', { title }) : t(on ? 'saved' : 'save');
+    return (
+      <IconButton
+        type="button"
+        size="2"
+        variant={on ? 'solid' : 'soft'}
+        color="gray"
+        highContrast={on}
+        className="ct-card-save"
+        aria-label={error ?? label}
+        aria-pressed={pressed}
+        title={error ?? (status === 'out' ? t('saveHint') : label)}
+        disabled={status === 'loading'}
+        onClick={click}
+      >
+        {on ? <BookmarkFilledIcon /> : <BookmarkIcon />}
+      </IconButton>
+    );
+  }
+
   return (
     <>
       <Button
@@ -72,10 +51,10 @@ export function BookmarkButton({ slug }: { slug: string }) {
         color="gray"
         size="2"
         highContrast={on}
-        aria-pressed={state === 'on' || state === 'off' ? on : undefined}
-        title={state === 'out' ? t('saveHint') : undefined}
-        disabled={state === 'loading'}
-        onClick={toggle}
+        aria-pressed={pressed}
+        title={status === 'out' ? t('saveHint') : undefined}
+        disabled={status === 'loading'}
+        onClick={click}
         style={{ whiteSpace: 'nowrap' }}
       >
         {on ? <BookmarkFilledIcon /> : <BookmarkIcon />}

@@ -1,4 +1,5 @@
 import { Badge, Flex, Heading, Text } from '@radix-ui/themes';
+import { FollowButton } from '@/components/member/FollowButton';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -73,6 +74,7 @@ export default async function CompanyPage({ params }: Props) {
               </Text>
             ))}
           </Flex>
+          <FollowButton type="company" slug={c.slug} />
           {c.aliases.length > 0 && (
             <Flex wrap="wrap" align="center" gap="2" mt="1">
               <Text size="1" color="gray" mr="1">
