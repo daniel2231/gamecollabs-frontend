@@ -5,8 +5,9 @@ import type { LegalContact } from '@/lib/legal';
  * 개인정보 처리방침 본문(마크다운). 「개인정보 보호법」 제30조와 표준 개인정보 처리방침 작성지침의 항목 순서를 따른다.
  * 실제 수집 항목은 Discord 콜백(src/app/api/auth/discord/callback), 제보 액션((site)/actions.ts),
  * Analytics·Turnstile 컴포넌트, 쿠키 설정(lib/auth/member.ts, proxy.ts)과 맞춰야 한다.
- * 백엔드(gamecollabs-backend)에서 확인한 사실: 회원 탈퇴는 즉시 하드 삭제, 제보의 ipHash는 기한 없이 제보와 함께 보관,
- * pino-http 접속 기록에 X-Client-IP(제보자 IP 원문)가 남음, 국내 자체 서버 + Cloudflare Tunnel, DB 백업은 Cloudflare R2에 30일.
+ * 백엔드(gamecollabs-backend)와 맞춘 사실: 회원 탈퇴는 즉시 하드 삭제, 제보의 ipHash는 90일 뒤 비움(purge-ip-hashes 작업),
+ * 접속 기록에서 X-Client-IP는 지움(logger.ts redact), 컨테이너 로그는 10MB × 3개, 국내 자체 서버 + Cloudflare Tunnel,
+ * DB 백업은 Cloudflare R2에 30일. 백엔드에서 이 값을 바꾸면 여기도 고친다.
  */
 export function privacyMarkdown(locale: Locale, c: LegalContact): string {
   return locale === 'ko' ? ko(c) : en(c);
@@ -31,18 +32,19 @@ function ko({ operator, email }: LegalContact): string {
 
 - 항목: 입력한 링크와 메모, 접속 IP 주소의 해시값
 - 목적: 제보 내용 확인과 콜라보 정보 등록·수정, 반복 제출·자동 입력 등 남용 방지
-- 이름이나 연락처는 받지 않습니다. 제보 기록에는 IP 주소를 비밀값을 섞은 해시로만 저장해, 해시만으로는 원래 주소를 알 수 없습니다. 다만 아래 ‘자동으로 생성되는 정보’처럼 서버 접속 기록에는 IP 주소가 남습니다. 메모에 개인정보를 적지 말아 주세요.
+- 이름이나 연락처는 받지 않습니다. IP 주소는 원래 값을 저장하지 않고, 비밀값을 섞은 해시로만 기록해 해시만으로는 원래 주소를 알 수 없습니다. 메모에 개인정보를 적지 말아 주세요.
 
 **서비스 이용 과정에서 자동으로 생성되는 정보**
 
-- 항목: 접속 IP 주소, 브라우저·기기 정보, 방문 페이지와 시각, 쿠키, 서버 접속 기록(제보를 보낼 때의 IP 주소 포함)
+- 항목: 접속 IP 주소, 브라우저·기기 정보, 방문 페이지와 시각, 쿠키, 서버 접속 기록
 - 목적: 서비스 운영과 보안, 오류 확인, 이용 통계(어떤 페이지가 많이 읽히는지 등) 분석
 
 ## 2. 보유 및 이용 기간
 
 - 회원 정보와 저장·팔로우 목록: 탈퇴할 때까지 보관하며, 탈퇴하면 운영 데이터베이스에서 바로 지웁니다. 장애 복구용 데이터베이스 백업에는 최대 30일 동안 남아 있다가 자동으로 지워집니다.
-- 제보 내용(링크, 메모, IP 해시): 콜라보 정보의 근거와 남용 방지 기록으로, 서비스를 운영하는 동안 보관합니다. 지우기를 원하면 아래 9항의 문의처로 요청해 주세요.
-- 서버 접속 기록: 서비스 운영과 보안에 필요한 기간 동안 보관합니다.
+- 제보의 IP 해시: 제보한 날부터 90일 뒤 자동으로 지웁니다(데이터베이스 백업에는 최대 30일 더 남습니다).
+- 제보 내용(링크, 메모): 콜라보 정보의 근거 기록으로 서비스를 운영하는 동안 보관합니다. 개인을 식별하는 정보가 아니며, 지우기를 원하면 아래 9항의 문의처로 요청해 주세요.
+- API 서버의 접속 기록: 방문자 IP 주소는 남기지 않으며, 일정 용량(서비스별 30MB)을 넘으면 오래된 기록부터 자동으로 지웁니다.
 - 로그인 쿠키: 최대 30일. 로그아웃하면 바로 지워집니다.
 - 이용 통계(Google Analytics): 이벤트 데이터는 2개월, 사용자 수준 데이터는 14개월 뒤 자동으로 지워집니다.
 - 법령에 따라 보관해야 하는 경우에는 그 기간 동안 보관합니다.
@@ -94,7 +96,7 @@ function ko({ operator, email }: LegalContact): string {
 - API 서버는 인터넷에 직접 열려 있지 않고, 암호화된 터널과 서비스 토큰으로만 접근할 수 있습니다.
 - 관리자 화면은 허가된 운영자 계정만 쓸 수 있습니다.
 - 데이터베이스는 매일 백업하고, 백업은 30일이 지나면 자동으로 지웁니다.
-- 꼭 필요한 정보만 받고, 받지 않아도 되는 정보(이메일, Discord 토큰 등)는 저장하지 않습니다.
+- 꼭 필요한 정보만 받고, 받지 않아도 되는 정보(이메일, Discord 토큰, IP 주소 원문 등)는 저장하지 않습니다.
 
 ## 9. 개인정보 보호책임자와 문의처
 
@@ -141,18 +143,19 @@ You can browse every collab without an account. We process the information below
 
 - Data: the link and note you enter, and a hash of your IP address
 - Purpose: checking your submission and adding or correcting collab information, and preventing spam and automated submissions
-- We don’t ask for your name or contact details. The submission record stores your IP address only as a hash mixed with a secret, so the address can’t be read back from it. Server access logs do keep the IP address, as described below. Please don’t put personal information in the note.
+- We don’t ask for your name or contact details. We never store your IP address itself, only a hash mixed with a secret, so the address can’t be read back from it. Please don’t put personal information in the note.
 
 **Information generated automatically when you use the Service**
 
-- Data: IP address, browser and device information, pages visited and when, cookies, server access logs (including your IP address when you send a submission)
+- Data: IP address, browser and device information, pages visited and when, cookies, server access logs
 - Purpose: running and securing the Service, diagnosing errors, and usage statistics (such as which pages are read most)
 
 ## 2. How long we keep it
 
 - Member information and your saves and follows: until you delete your account, then deleted from the live database immediately. They remain in disaster-recovery database backups for up to 30 days, which are then deleted automatically.
-- Submissions (link, note, IP hash): kept for as long as the Service runs, as the source record for collab information and to prevent abuse. Contact us as in section 9 to have yours deleted.
-- Server access logs: for as long as needed to run and secure the Service.
+- IP hash on submissions: deleted automatically 90 days after the submission (it can remain in database backups for up to 30 more days).
+- Submission content (link, note): kept for as long as the Service runs, as the source record for collab information. It doesn’t identify you; contact us as in section 9 to have yours deleted.
+- API server access logs: don’t contain visitors’ IP addresses, and the oldest entries are deleted automatically once they exceed a fixed size (30 MB per service).
 - Sign-in cookie: up to 30 days; removed as soon as you sign out.
 - Usage statistics (Google Analytics): event data is deleted after 2 months and user-level data after 14 months.
 - Where the law requires us to keep information longer, we keep it for that period.
@@ -204,7 +207,7 @@ You can access, correct or delete your personal information, or ask us to stop p
 - The API server isn’t exposed directly to the internet; it can only be reached through an encrypted tunnel with a service token.
 - Only authorized operator accounts can use the admin pages.
 - The database is backed up daily, and backups are deleted automatically after 30 days.
-- We collect only what we need and don’t store what we don’t (email, Discord tokens and so on).
+- We collect only what we need and don’t store what we don’t (email, Discord tokens, raw IP addresses and so on).
 
 ## 9. Privacy officer and contact
 
