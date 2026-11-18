@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { formatPeriod } from '@/lib/format';
+import { formatPeriod, periodLabels } from '@/lib/format';
 import { OG_SIZE, ogCard } from '@/lib/og-card';
 
 export const size = OG_SIZE;
@@ -15,6 +15,6 @@ export default async function OgImage({ params }: { params: Promise<{ locale: st
     getTranslations({ locale: locale as Locale, namespace: 'Site' }),
     getTranslations({ locale: locale as Locale, namespace: 'Period' }),
   ]);
-  const period = collab ? formatPeriod(collab.period, { unknown: tPeriod('unknown'), permanent: tPeriod('permanent'), tba: tPeriod('tba') }) : '';
+  const period = collab ? formatPeriod(collab.period, periodLabels(tPeriod)) : '';
   return ogCard({ siteName: tSite('name'), title: collab?.title ?? tSite('name'), subtitle: period });
 }

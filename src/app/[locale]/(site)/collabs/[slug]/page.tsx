@@ -13,7 +13,7 @@ import { SignalX } from '@/components/site/SignalX';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
-import { formatDate, formatPeriod } from '@/lib/format';
+import { formatDate, formatPeriod, formatPeriodEnd, periodLabels } from '@/lib/format';
 import { breadcrumbJsonLd, collabJsonLd } from '@/lib/jsonld';
 import { LIST_PATH } from '@/lib/filters';
 import { landingPath } from '@/lib/landing';
@@ -68,13 +68,11 @@ export default async function CollabDetailPage({ params }: Props) {
     getTranslations('Role'),
   ]);
   const partner = collab.parties.find((p) => p.role === 'partner');
+  const labels = periodLabels(tPeriod);
   const start = formatDate(collab.period.start, collab.period.precision);
-  const end =
-    collab.period.endKind === 'permanent'
-      ? tPeriod('permanent')
-      : collab.period.endKind === 'tba' || !collab.period.end
-        ? tPeriod('tba')
-        : formatDate(collab.period.end, collab.period.precision);
+  const end = formatPeriodEnd(collab.period, labels);
+  // 조건부 종료가 끝난 것으로 보이는 건 발표된 날짜가 아니라 추정이다
+  const estimatedEnd = collab.phase === 'ended' && collab.period.endKind === 'conditional';
   // 값이 없는 분류는 '—' 줄을 늘어놓지 않고 뺀다
   const facts = (
     [
@@ -168,8 +166,14 @@ export default async function CollabDetailPage({ params }: Props) {
                   <Text as="div" size="1" color="gray">
                     {t('status')}
                   </Text>
-                  <Text as="div" size="5" weight="medium" style={collab.phase === 'ongoing' ? { color: 'var(--ct-signal)' } : undefined}>
-                    {tPhase(collab.phase)}
+                  <Text
+                    as="div"
+                    size="5"
+                    weight="medium"
+                    style={collab.phase === 'ongoing' ? { color: 'var(--ct-signal)' } : undefined}
+                    title={estimatedEnd ? tPeriod('estimatedHint') : undefined}
+                  >
+                    {estimatedEnd ? tPeriod('endedEstimated') : tPhase(collab.phase)}
                   </Text>
                 </div>
               </section>
@@ -296,7 +300,7 @@ export default async function CollabDetailPage({ params }: Props) {
                           <SignalX text={r.title} />
                         </Text>
                         <Text size="2" color="gray" className={r.period.start && r.period.precision !== 'unknown' ? 'ct-mono' : undefined}>
-                          {formatPeriod(r.period, { unknown: tPeriod('unknown'), permanent: tPeriod('permanent'), tba: tPeriod('tba') })}
+                          {formatPeriod(r.period, labels)}
                         </Text>
                       </Link>
                     ))}

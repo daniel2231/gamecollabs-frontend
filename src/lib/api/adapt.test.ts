@@ -452,3 +452,57 @@ describe('제보', () => {
     expect(issues({ kind: 'correction', collab: 'a-x-b', note: '종료일이 틀렸습니다', locale: 'en' })).toEqual({});
   });
 });
+
+describe('조건부 종료 변환', () => {
+  it('공개 카드: 조건부일 때만 조건 필드를 붙인다', () => {
+    expect(A.toSummary(card).period).toEqual({ start: '2027-01-01', end: null, precision: 'month', endKind: 'tba' });
+    const conditional = A.toSummary({
+      ...card,
+      period: { start: '2026-11-04', end: null, precision: 'day', endKind: 'conditional', endCondition: 'sold_out', endNote: '재고 소진 시 종료', expectedEnd: null, endEstimated: true },
+    }).period;
+    expect(conditional).toEqual({
+      start: '2026-11-04',
+      end: null,
+      precision: 'day',
+      endKind: 'conditional',
+      endCondition: 'sold_out',
+      endNote: '재고 소진 시 종료',
+      expectedEnd: null,
+      endEstimated: true,
+    });
+  });
+
+  it('관리자 문서: 저장된 예상 종료 시기를 정밀도에 맞춰 줄인다', () => {
+    expect(
+      A.fromStoredPeriod({
+        start: '2026-11-06T00:00:00.000Z',
+        end: null,
+        precision: 'day',
+        endKind: 'conditional',
+        endCondition: 'tied_event',
+        endNote: { ko: '제11탄 점검까지', en: 'Until the 11th pack' },
+        expectedEnd: '2026-12-01T00:00:00.000Z',
+        expectedPrecision: 'month',
+      }),
+    ).toMatchObject({ endKind: 'conditional', endCondition: 'tied_event', endNoteI18n: { ko: '제11탄 점검까지', en: 'Until the 11th pack' }, expectedEnd: '2026-12' });
+  });
+
+  it('저장 본문: 조건부일 때만 조건 필드를 보내고, 문구는 두 언어가 모두 있어야 보낸다', () => {
+    const input = {
+      slug: 'a',
+      i18n: { ko: { title: 't', summary: 's', note: '' }, en: { title: 't', summary: 's', note: '' } },
+      parties: [],
+      companies: [],
+      category: null,
+      regions: [],
+      platforms: [],
+      collabTypes: [],
+      period: { start: '2026-11-04', end: null, precision: 'day', endKind: 'conditional', endCondition: 'sold_out', endNoteI18n: { ko: '재고 소진 시 종료', en: '' }, expectedEnd: '2026-12' },
+      sources: [],
+    } satisfies CollabInput;
+    expect(A.toCollabBody(input).period).toEqual({ start: '2026-11-04', end: null, precision: 'day', endKind: 'conditional', endCondition: 'sold_out', endNote: null, expectedEnd: '2026-12' });
+    const both = { ...input, period: { ...input.period, endNoteI18n: { ko: '재고 소진 시 종료', en: 'While stocks last' } } };
+    expect(A.toCollabBody(both).period.endNote).toEqual({ ko: '재고 소진 시 종료', en: 'While stocks last' });
+    expect(A.toCollabBody({ ...input, period: { start: '2026-11-04', end: null, precision: 'day', endKind: 'tba' } }).period).not.toHaveProperty('endCondition');
+  });
+});

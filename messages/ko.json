@@ -36,7 +36,14 @@
   "Period": {
     "unknown": "시기 미상",
     "permanent": "상시",
-    "tba": "종료일 미발표"
+    "tba": "종료일 미발표",
+    "conditional": {
+      "sold_out": "재고 소진 시 종료",
+      "tied_event": "다른 일정에 따라 종료",
+      "other": "조건부 종료"
+    },
+    "endedEstimated": "종료(추정)",
+    "estimatedHint": "종료일이 발표되지 않아 시작일 기준으로 추정한 상태입니다."
   },
   "Home": {
     "title": "게임 콜라보 모음 · 콜라보 이벤트 일정",

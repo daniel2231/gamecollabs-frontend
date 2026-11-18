@@ -1,4 +1,4 @@
-import type { Period, Phase } from '@/schema';
+import type { EndCondition, Period, Phase } from '@/schema';
 
 /** 2026-10-06 → 2026.10.06, month 정밀도면 2026.10 */
 export function formatDate(date: string | null, precision: Period['precision']): string | null {
@@ -7,12 +7,33 @@ export function formatDate(date: string | null, precision: Period['precision']):
   return precision === 'month' ? `${y}.${m}` : `${y}.${m}.${d}`;
 }
 
-export type PeriodLabels = { unknown: string; permanent: string; tba: string };
+export type PeriodLabels = { unknown: string; permanent: string; tba: string; conditional: Record<EndCondition, string> };
+
+export type PeriodLabelKey = 'unknown' | 'permanent' | 'tba' | 'conditional.sold_out' | 'conditional.tied_event' | 'conditional.other';
+
+/** `Period` 메시지 묶음에서 기간 문구를 만든다 */
+export function periodLabels(t: (key: PeriodLabelKey) => string): PeriodLabels {
+  return {
+    unknown: t('unknown'),
+    permanent: t('permanent'),
+    tba: t('tba'),
+    conditional: { sold_out: t('conditional.sold_out'), tied_event: t('conditional.tied_event'), other: t('conditional.other') },
+  };
+}
+
+/** 종료 쪽 표기(시작일과 별개). 조건부 종료는 출처의 조건 문구, 없으면 조건별 기본 문구 */
+export function formatPeriodEnd(period: Period, labels: PeriodLabels): string {
+  if (period.endKind === 'permanent') return labels.permanent;
+  if (period.endKind === 'conditional') return period.endNote || labels.conditional[period.endCondition ?? 'other'];
+  if (period.endKind === 'tba' || !period.end) return labels.tba;
+  return formatDate(period.end, period.precision) ?? labels.tba;
+}
 
 export function formatPeriod(period: Period, labels: PeriodLabels): string {
   const start = formatDate(period.start, period.precision);
   if (!start) return labels.unknown;
   if (period.endKind === 'permanent') return `${start} – ${labels.permanent}`;
+  if (period.endKind === 'conditional') return `${start} – ${formatPeriodEnd(period, labels)}`;
   if (period.endKind === 'tba' || !period.end) return `${start} – ${labels.tba}`;
   return `${start} – ${formatDate(period.end, period.precision)}`;
 }

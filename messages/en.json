@@ -36,7 +36,14 @@
   "Period": {
     "unknown": "Date unknown",
     "permanent": "Permanent",
-    "tba": "End date TBA"
+    "tba": "End date TBA",
+    "conditional": {
+      "sold_out": "While stocks last",
+      "tied_event": "Ends with another event",
+      "other": "Ends on a condition"
+    },
+    "endedEstimated": "Ended (estimated)",
+    "estimatedHint": "No end date was announced; this status is estimated from the start date."
   },
   "Home": {
     "title": "Game Collaborations & Crossover Tracker",

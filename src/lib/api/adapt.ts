@@ -4,6 +4,7 @@
  * 화면은 `src/schema`의 형태를 쓰므로 여기서 한 번에 맞춘다. 순수 함수만 둔다(테스트 대상).
  */
 import type {
+  EndCondition,
   AdminCollab,
   AdminCover,
   AdminEntity,
@@ -37,7 +38,38 @@ import type { EntityInput, QueueFilter, QueueResponse, SitemapData, TermInput } 
 // ── Express 응답 형태 (필요한 필드만) ─────────────────────────
 
 type Ref = { key: string; label: string } | null;
-type BePeriod = { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+/** 공개 API 기간. 조건부 종료 필드는 endKind가 conditional일 때만 온다 */
+type BePeriod = {
+  start: string | null;
+  end: string | null;
+  precision: Period['precision'];
+  endKind: Period['endKind'];
+  endCondition?: EndCondition | null;
+  endNote?: string | null;
+  expectedEnd?: string | null;
+  endEstimated?: boolean;
+};
+/** 후속 확인 행의 기간: 조건 문구는 두 언어, 예상 종료 시기는 이미 `YYYY-MM[-DD]` */
+type BeFollowUpPeriod = {
+  start: string | null;
+  end: string | null;
+  precision: Period['precision'];
+  endKind: Period['endKind'];
+  endCondition?: EndCondition | null;
+  endNote?: { ko: string | null; en: string | null } | null;
+  expectedEnd?: string | null;
+};
+/** 관리자 응답(저장된 문서)의 기간 */
+type BeStoredPeriod = {
+  start: string | null;
+  end: string | null;
+  precision: Period['precision'];
+  endKind: Period['endKind'];
+  endCondition?: EndCondition | null;
+  endNote?: { ko: string | null; en: string | null } | null;
+  expectedEnd?: string | null;
+  expectedPrecision?: 'day' | 'month' | null;
+};
 type BeCover = {
   url: string;
   originalUrl?: string | null;
@@ -157,7 +189,7 @@ export type BeAdminCollab = {
   regions: string[];
   platforms: string[];
   collabTypes: string[];
-  period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+  period: BeStoredPeriod;
   sources: (BeDetail['sources'][number] & { httpStatus: number | null })[];
   venues?: { name: { ko: string | null; en: string | null }; address: string | null; url: string | null }[];
   /** 내용 미정. 이 기능 이전 백엔드는 주지 않는다 */
@@ -179,7 +211,15 @@ export type BeAdminCollab = {
 };
 
 /** 재확인 제안의 기간: 입력 형태 그대로(날짜는 `YYYY-MM` 또는 `YYYY-MM-DD`, 정밀도는 없을 수 있다) */
-type BePeriodInput = { start?: string | null; end?: string | null; precision?: Period['precision']; endKind?: Period['endKind'] };
+type BePeriodInput = {
+  start?: string | null;
+  end?: string | null;
+  precision?: Period['precision'];
+  endKind?: Period['endKind'];
+  endCondition?: EndCondition | null;
+  endNote?: { ko: string; en: string } | null;
+  expectedEnd?: string | null;
+};
 
 export type BeFollowUpProposal = {
   changes: { period?: BePeriodInput; i18n?: { ko: { title: string; summary: string }; en: { title: string; summary: string } }; contentTba?: boolean };
@@ -193,7 +233,7 @@ export type BeFollowUpProposal = {
 /** 초안에 바로 반영된 변경. before는 처음 반영 전 값 */
 export type BeFollowUpApplied = BeFollowUpProposal & {
   before: {
-    period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+    period: BeFollowUpPeriod;
     i18n: { ko: { title: string | null; summary: string | null }; en: { title: string | null; summary: string | null } };
     contentTba: boolean;
   };
@@ -219,7 +259,7 @@ export type BeFollowUpRow = {
   reason: FollowUpState['reason'];
   title: { ko: string | null; en: string | null };
   summary: { ko: string | null; en: string | null };
-  period: { start: string | null; end: string | null; precision: Period['precision']; endKind: Period['endKind'] };
+  period: BeFollowUpPeriod;
   /** 이 기능 이전 백엔드는 주지 않는다 */
   contentTba?: boolean;
   sourceUrls: string[];
@@ -278,7 +318,37 @@ const terms = (list: Ref[]): TermRef[] => list.filter((r): r is TermRef => r !==
 const named = (value: string | null, original: string | null = null) => ({ value: value ?? '', fallback: false, original });
 
 function period(p: BePeriod): Period {
-  return { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind };
+  const base: Period = { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind };
+  if (p.endKind !== 'conditional') return base;
+  return { ...base, endCondition: p.endCondition ?? 'other', endNote: p.endNote ?? null, expectedEnd: p.expectedEnd ?? null, endEstimated: true };
+}
+
+function followUpPeriod(p: BeFollowUpPeriod): Period {
+  const base: Period = { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind };
+  if (p.endKind !== 'conditional') return base;
+  return {
+    ...base,
+    endCondition: p.endCondition ?? 'other',
+    endNoteI18n: p.endNote ? { ko: p.endNote.ko ?? '', en: p.endNote.en ?? '' } : null,
+    endNote: p.endNote?.ko ?? null,
+    expectedEnd: p.expectedEnd ?? null,
+    endEstimated: true,
+  };
+}
+
+/** 저장된 기간(관리자) → 화면 기간. 예상 종료 시기는 정밀도에 맞춰 `YYYY-MM` 또는 `YYYY-MM-DD` */
+export function fromStoredPeriod(p: BeStoredPeriod): Period {
+  const base: Period = { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind };
+  if (p.endKind !== 'conditional') return base;
+  const expected = isoDay(p.expectedEnd ?? null);
+  return {
+    ...base,
+    endCondition: p.endCondition ?? 'other',
+    endNoteI18n: p.endNote ? { ko: p.endNote.ko ?? '', en: p.endNote.en ?? '' } : null,
+    endNote: p.endNote?.ko ?? null,
+    expectedEnd: expected && p.expectedPrecision === 'month' ? expected.slice(0, 7) : expected,
+    endEstimated: true,
+  };
 }
 
 // ── 공개 API ─────────────────────────────────────────────────
@@ -547,12 +617,7 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
     regions: c.regions,
     platforms: c.platforms,
     collabTypes: c.collabTypes,
-    period: {
-      start: isoDay(c.period.start),
-      end: isoDay(c.period.end),
-      precision: c.period.precision,
-      endKind: c.period.endKind,
-    },
+    period: fromStoredPeriod(c.period),
     sources: c.sources.map((s) => ({
       url: s.url,
       title: s.title ?? '',
@@ -589,7 +654,9 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
 export function fromPeriodInput(p: BePeriodInput): Period {
   const start = p.start ?? null;
   const precision = p.precision ?? (!start ? 'unknown' : start.length === 7 ? 'month' : 'day');
-  return { start: isoDay(start), end: isoDay(p.end), precision, endKind: p.endKind ?? 'fixed' };
+  const base: Period = { start: isoDay(start), end: isoDay(p.end), precision, endKind: p.endKind ?? 'fixed' };
+  if (p.endKind !== 'conditional') return base;
+  return { ...base, endCondition: p.endCondition ?? 'other', endNoteI18n: p.endNote ?? null, endNote: p.endNote?.ko ?? null, expectedEnd: p.expectedEnd ?? null, endEstimated: true };
 }
 
 export function toFollowUpProposal(p: BeFollowUpProposal): FollowUpProposal {
@@ -610,7 +677,7 @@ export function toFollowUpApplied(a: BeFollowUpApplied): FollowUpApplied {
   const text = (t: { title: string | null; summary: string | null }) => ({ title: t.title ?? '', summary: t.summary ?? '' });
   return {
     ...toFollowUpProposal(a),
-    before: { period: period(a.before.period), text: { ko: text(a.before.i18n.ko), en: text(a.before.i18n.en) }, contentTba: a.before.contentTba },
+    before: { period: followUpPeriod(a.before.period), text: { ko: text(a.before.i18n.ko), en: text(a.before.i18n.en) }, contentTba: a.before.contentTba },
   };
 }
 
@@ -637,7 +704,7 @@ export function toFollowUpItem(r: BeFollowUpRow): FollowUpItem {
       ko: { title: r.title.ko ?? '', summary: r.summary.ko ?? '' },
       en: { title: r.title.en ?? '', summary: r.summary.en ?? '' },
     },
-    period: period(r.period),
+    period: followUpPeriod(r.period),
     contentTba: r.contentTba ?? false,
     sourceUrls: r.sourceUrls,
     reason: r.reason,
@@ -719,6 +786,13 @@ export function toCollabBody(input: CollabInput, existing?: BeAdminCollab['parti
       end: p.endKind !== 'fixed' || p.precision === 'unknown' ? null : p.precision === 'month' ? p.end?.slice(0, 7) ?? null : p.end,
       precision: p.precision,
       endKind: p.endKind,
+      ...(p.endKind === 'conditional'
+        ? {
+            endCondition: p.endCondition ?? 'other',
+            endNote: p.endNoteI18n && p.endNoteI18n.ko.trim() && p.endNoteI18n.en.trim() ? { ko: p.endNoteI18n.ko.trim(), en: p.endNoteI18n.en.trim() } : null,
+            expectedEnd: p.expectedEnd || null,
+          }
+        : {}),
     },
     sources: input.sources.map((s) => ({
       url: s.url,

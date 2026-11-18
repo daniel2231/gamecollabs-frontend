@@ -29,4 +29,14 @@ describe('computePhase', () => {
     expect(computePhase({ start: '2020-01-01', end: null, precision: 'day', endKind: 'permanent' }, at('2030-01-01'))).toBe('ongoing');
     expect(computePhase({ start: '2020-01-01', end: '2020-02-01', precision: 'day', endKind: 'tba' }, at('2030-01-01'))).toBe('ongoing');
   });
+
+  it('조건부 종료: 예상 종료 시기가 있으면 그때까지, 없으면 시작 후 60일까지 진행 중', () => {
+    const soldOut = { start: '2026-11-04', end: null, precision: 'day', endKind: 'conditional', endCondition: 'sold_out' } as const;
+    expect(computePhase(soldOut, at('2027-01-02'))).toBe('ongoing'); // 시작 + 59일
+    expect(computePhase(soldOut, at('2027-01-03'))).toBe('ended');
+    const tied = { ...soldOut, endCondition: 'tied_event', expectedEnd: '2026-12' } as const;
+    expect(computePhase(tied, at('2026-12-31'))).toBe('ongoing');
+    expect(computePhase(tied, at('2027-01-01'))).toBe('ended');
+    expect(computePhase({ ...tied, expectedEnd: '2026-11-30' }, at('2026-12-01'))).toBe('ended');
+  });
 });
