@@ -32,15 +32,18 @@ import {
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import { getCollabForCompare, mirrorCollabCover, saveCollab, transitionCollab } from '@/app/[locale]/admin/actions';
 import { Link, useRouter } from '@/i18n/navigation';
-import { FOLLOW_UP_REASON_HINT, FOLLOW_UP_REASON_LABEL } from '@/lib/followup';
+import { adminPeriodLabel, FOLLOW_UP_REASON_HINT, FOLLOW_UP_REASON_LABEL } from '@/lib/followup';
 import type { TermNode } from '@/lib/taxonomy';
 import { flatten } from '@/lib/taxonomy';
 import {
   COMPANY_ROLES,
+  CONDITIONAL_DEFAULT_DAYS,
+  END_CONDITIONS,
   SOURCE_TYPES,
   type AdminCollab,
   type CollabInput,
   type CompanyRole,
+  type EndCondition,
   type FollowUpApplied,
   type Period,
   type Transition,
@@ -682,6 +685,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
 }
 
 function normalizePeriod(p: Period): Period {
+  if (p.endKind !== 'conditional') p = { ...p, endCondition: undefined, endNote: undefined, endNoteI18n: undefined, expectedEnd: undefined, endEstimated: undefined };
+  else if (!p.endCondition) p = { ...p, endCondition: 'other' };
   if (p.precision === 'unknown') return { ...p, start: null, end: p.endKind === 'fixed' ? p.end : null };
   const fix = (d: string | null) => (d && p.precision === 'month' ? `${d.slice(0, 7)}-01` : d);
   return { ...p, start: fix(p.start), end: p.endKind === 'fixed' ? fix(p.end) : null };
@@ -735,14 +740,84 @@ function PeriodFields({ period, onChange }: { period: Period; onChange: (p: Peri
           <SegmentedControl.Item value="fixed">종료일 지정</SegmentedControl.Item>
           <SegmentedControl.Item value="permanent">상시</SegmentedControl.Item>
           <SegmentedControl.Item value="tba">미발표</SegmentedControl.Item>
+          <SegmentedControl.Item value="conditional">조건부</SegmentedControl.Item>
         </SegmentedControl.Root>
       </div>
+      {period.endKind === 'conditional' && <ConditionalEndFields period={period} onChange={onChange} />}
       {period.endKind === 'fixed' && period.precision !== 'unknown' && (
         <Text as="label" className="ct-field">
           <span className="ct-label">종료일</span>
           <TextField.Root type={inputType} className="ct-mono" value={shown(period.end)} onChange={(e) => onChange({ ...period, end: parse(e.target.value) })} style={{ colorScheme: 'dark' }} />
         </Text>
       )}
+    </Flex>
+  );
+}
+
+const END_CONDITION_LABEL: Record<EndCondition, string> = {
+  sold_out: '재고 소진 시 종료',
+  tied_event: '다른 일정에 종속',
+  other: '기타 조건',
+};
+
+/** 조건부 종료: 조건, 출처가 말하는 조건 문구(두 언어), 출처가 준 경우에만 예상 종료 시기 */
+function ConditionalEndFields({ period, onChange }: { period: Period; onChange: (p: Period) => void }) {
+  const note = period.endNoteI18n ?? { ko: '', en: '' };
+  const expected = period.expectedEnd ?? '';
+  const expectedMonth = expected.length === 7;
+  return (
+    <Flex direction="column" gap="3" width="100%">
+      <Flex wrap="wrap" gap="4" align="end">
+        <div className="ct-field">
+          <span className="ct-label">종료 조건</span>
+          <Select.Root value={period.endCondition ?? 'other'} onValueChange={(v) => onChange({ ...period, endCondition: v as EndCondition })}>
+            <Select.Trigger aria-label="종료 조건" />
+            <Select.Content position="popper">
+              {END_CONDITIONS.map((c) => (
+                <Select.Item key={c} value={c}>
+                  {END_CONDITION_LABEL[c]}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </div>
+        <div className="ct-field">
+          <span className="ct-label">예상 종료 시기 단위</span>
+          <Select.Root
+            value={expectedMonth ? 'month' : 'day'}
+            onValueChange={(v) => onChange({ ...period, expectedEnd: expected ? (v === 'month' ? expected.slice(0, 7) : `${expected.slice(0, 7)}-01`) : null })}
+          >
+            <Select.Trigger aria-label="예상 종료 시기 단위" />
+            <Select.Content position="popper">
+              <Select.Item value="month">월 단위</Select.Item>
+              <Select.Item value="day">일 단위</Select.Item>
+            </Select.Content>
+          </Select.Root>
+        </div>
+        <Text as="label" className="ct-field">
+          <span className="ct-label">예상 종료 시기 (출처에 있을 때만)</span>
+          <TextField.Root
+            type={expectedMonth ? 'month' : 'date'}
+            className="ct-mono"
+            value={expected}
+            onChange={(e) => onChange({ ...period, expectedEnd: e.target.value || null })}
+            style={{ colorScheme: 'dark' }}
+          />
+        </Text>
+      </Flex>
+      <Flex wrap="wrap" gap="4">
+        <Text as="label" className="ct-field" style={{ flex: 1, minWidth: 220 }}>
+          <span className="ct-label">조건 문구 (한국어)</span>
+          <TextField.Root placeholder="예: 제11탄 업데이트 점검까지" value={note.ko} maxLength={200} onChange={(e) => onChange({ ...period, endNoteI18n: { ...note, ko: e.target.value } })} />
+        </Text>
+        <Text as="label" className="ct-field" style={{ flex: 1, minWidth: 220 }}>
+          <span className="ct-label">조건 문구 (영어)</span>
+          <TextField.Root placeholder="e.g. Until the 11th pack's maintenance" value={note.en} maxLength={200} onChange={(e) => onChange({ ...period, endNoteI18n: { ...note, en: e.target.value } })} />
+        </Text>
+      </Flex>
+      <Text size="1" color="gray">
+        예상 종료 시기가 없으면 시작 후 {CONDITIONAL_DEFAULT_DAYS}일까지 진행 중, 그 뒤로 “종료(추정)”으로 표시됩니다. 조건 문구는 두 언어를 모두 넣어야 저장됩니다.
+      </Text>
     </Flex>
   );
 }
@@ -946,7 +1021,7 @@ function CompareDialog({ current, otherId }: { current: AdminCollab; otherId: st
     ['상태', (c) => STATUS_LABEL[c.status]],
     ['제목', (c) => c.i18n.ko.title],
     ['slug', (c) => c.slug],
-    ['기간', (c) => `${c.period.start ?? '미상'} ~ ${c.period.endKind === 'fixed' ? (c.period.end ?? '') : c.period.endKind}`],
+    ['기간', (c) => adminPeriodLabel(c.period)],
     ['작품', (c) => c.parties.map((p) => `${p.role}:${p.propertyId}`).join(', ')],
     ['출처', (c) => c.sources.map((s) => s.url).join('\n')],
   ];

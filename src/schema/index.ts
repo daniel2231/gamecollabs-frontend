@@ -36,14 +36,29 @@ export type TermRef = z.infer<typeof termRefSchema>;
 // ── 기간·진행 상태 ─────────────────────────────────────────────
 
 export const PRECISIONS = ['day', 'month', 'unknown'] as const;
-export const END_KINDS = ['fixed', 'permanent', 'tba'] as const;
+/** conditional: 날짜 대신 조건으로 끝난다(재고 소진, 다른 일정에 종속 등) */
+export const END_KINDS = ['fixed', 'permanent', 'tba', 'conditional'] as const;
+/** sold_out: 재고 소진 시 종료 · tied_event: 날짜 미정인 다른 일정에 종속 · other: 그 밖의 조건 */
+export const END_CONDITIONS = ['sold_out', 'tied_event', 'other'] as const;
+export type EndCondition = (typeof END_CONDITIONS)[number];
+/** 예상 종료 시기가 없는 조건부 종료는 시작 후 이 일수까지 진행 중으로 본다(백엔드 CONDITIONAL_DEFAULT_DAYS와 같은 값) */
+export const CONDITIONAL_DEFAULT_DAYS = 60;
 
-/** 날짜는 ISO 문자열(UTC 자정)로 주고받는다. */
+/** 날짜는 ISO 문자열(UTC 자정)로 주고받는다. 조건부 종료 필드는 endKind가 conditional일 때만 있다 */
 export const periodSchema = z.object({
   start: z.iso.date().nullable(),
   end: z.iso.date().nullable(),
   precision: z.enum(PRECISIONS),
   endKind: z.enum(END_KINDS),
+  endCondition: z.enum(END_CONDITIONS).nullable().optional(),
+  /** 표시용 조건 문구(현재 언어) */
+  endNote: z.string().nullable().optional(),
+  /** 관리자 편집용 조건 문구(두 언어) */
+  endNoteI18n: z.object({ ko: z.string(), en: z.string() }).nullable().optional(),
+  /** 출처가 준 대략적 종료 시기: `YYYY-MM` 또는 `YYYY-MM-DD` */
+  expectedEnd: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/).nullable().optional(),
+  /** 진행 상태가 발표된 날짜가 아니라 추정에서 나왔는지(조건부 종료) */
+  endEstimated: z.boolean().optional(),
 });
 export type Period = z.infer<typeof periodSchema>;
 
@@ -357,9 +372,9 @@ export type CollabInput = z.infer<typeof collabInputSchema>;
 /**
  * 다시 확인할 사유. 백엔드가 기간과 contentTba에서 계산한다(날짜가 먼저).
  * start_tba: 시작일 미발표 · month_only: 시작 월만 앎 · end_tba: 종료일 미발표 · end_missing: 종료일 누락(fixed인데 비어 있음)
- * · content_tba: 날짜는 다 있고 내용만 미발표
+ * · end_tied: 조건부 종료가 날짜 미정인 다른 일정에 묶여 있음 · content_tba: 날짜는 다 있고 내용만 미발표
  */
-export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing', 'content_tba'] as const;
+export const FOLLOW_UP_REASONS = ['start_tba', 'month_only', 'end_tba', 'end_missing', 'end_tied', 'content_tba'] as const;
 export type FollowUpReason = (typeof FOLLOW_UP_REASONS)[number];
 /** queued: 재확인 중인 전체(차례가 안 된 것 포함, 다음 확인일 순) */
 export const FOLLOW_UP_VIEWS = ['proposals', 'applied', 'escalated', 'queued'] as const;
