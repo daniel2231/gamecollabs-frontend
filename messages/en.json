@@ -201,7 +201,14 @@
       "same_partner": "Same partner"
     },
     "coverCredit": "Image: {credit}",
-    "updated": "Last updated {date}"
+    "updated": "Last updated {date}",
+    "meta": {
+      "title": "{title} Collab",
+      "titleYear": "{title} Collab ({year})",
+      "descriptionFallback": "Dates, what the collab adds, the companies involved and official sources, checked by hand.",
+      "page": "Web page",
+      "markdownNote": "Markdown copy of the page for AI tools and readers. Sources are linked below; dates not announced are left blank."
+    }
   },
   "Property": {
     "breadcrumb": "Properties",

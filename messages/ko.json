@@ -201,7 +201,14 @@
       "same_partner": "같은 파트너"
     },
     "coverCredit": "이미지 출처: {credit}",
-    "updated": "최종 수정 {date}"
+    "updated": "최종 수정 {date}",
+    "meta": {
+      "title": "{title} 콜라보",
+      "titleYear": "{title} 콜라보 ({year})",
+      "descriptionFallback": "기간, 콜라보 내용, 참여 회사와 공식 출처를 사람이 직접 확인해 정리했습니다.",
+      "page": "웹 페이지",
+      "markdownNote": "AI 도구와 독자를 위한 이 페이지의 마크다운 사본입니다. 출처는 아래에 있고, 발표되지 않은 날짜는 비워 둡니다."
+    }
   },
   "Property": {
     "breadcrumb": "작품",

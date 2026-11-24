@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { AdminNav } from '@/components/admin/AdminNav';
+import { AnalyticsOptOut } from '@/components/admin/AnalyticsOptOut';
 import { LogoMark } from '@/components/site/LogoMark';
 import { adminApi, isMockApi } from '@/lib/api';
 import { devBypassEnabled, getAdminSession } from '@/lib/auth/session';
@@ -23,6 +24,7 @@ export default async function AdminLayout({ children, params }: LayoutProps<'/[l
 
   return (
     <div className="ct-admin">
+      <AnalyticsOptOut />
       <nav aria-label="관리자 메뉴" className="ct-admin-nav">
         <Flex align="center" gap="2" className="ct-admin-nav-brand">
           <LogoMark size={22} />

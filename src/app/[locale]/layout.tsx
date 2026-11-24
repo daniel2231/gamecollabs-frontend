@@ -5,7 +5,6 @@ import { JetBrains_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Analytics } from '@/components/site/Analytics';
 import { routing } from '@/i18n/routing';
 import { siteVerification } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
@@ -52,7 +51,6 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
           </Theme>
         </NextIntlClientProvider>
       </body>
-      <Analytics />
     </html>
   );
 }

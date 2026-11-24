@@ -1113,6 +1113,11 @@ body {
   padding-left: 18px;
 }
 
+.ct-stat-grid dt,
+.ct-stat-grid dd {
+  margin: 0;
+}
+
 /* 좁으면 시작·종료 두 칸, 상태는 아래 한 줄. 세 칸을 세로로 쌓으면 첫 화면을 다 차지한다 */
 @media (max-width: 520px) {
   .ct-stat-grid {

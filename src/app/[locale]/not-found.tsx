@@ -1,3 +1,4 @@
+import { Analytics } from '@/components/site/Analytics';
 import { SiteFooter } from '@/components/site/SiteChrome';
 import { SiteHeader } from '@/components/site/SiteHeader';
 import NotFoundContent from './(site)/not-found';
@@ -10,6 +11,7 @@ export default function LocaleNotFound() {
         <NotFoundContent />
       </main>
       <SiteFooter />
+      <Analytics />
     </>
   );
 }
