@@ -42,6 +42,7 @@ Every entry is reviewed by a person against public sources (official announcemen
 ## URL patterns
 
 - Collab detail: \`${base}/{locale}/collabs/{slug}\` — dates, participating game and IP, companies, what the collab adds, and source links
+- Collab detail as Markdown: \`${base}/{locale}/collabs/{slug}.md\` — the same facts as plain Markdown (dates, status, properties, companies, venues, sources); easiest to quote. Each collab page links it with \`<link rel="alternate" type="text/markdown">\`
 - Game or IP (property): \`${base}/{locale}/properties/{slug}\` — every collab of that game, anime, film, character or brand
 - Company: \`${base}/{locale}/companies/{slug}\` — every collab a company developed, published or licensed
 - List filters (combine freely): \`${base}/{locale}${LIST_PATH}?q={text}&phase={ongoing|upcoming|ended}&sort={${SORTS.join('|')}}&from={YYYY-MM}&to={YYYY-MM}\`

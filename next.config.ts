@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
       { source: `/:locale(ko|en)${LEGACY}/:slug`, destination: '/:locale/collabs/:slug', statusCode: 301 },
     ];
   },
+  // 콜라보 상세의 마크다운 사본(AI 도구용). 점이 든 경로라 proxy(next-intl)를 거치지 않는다
+  async rewrites() {
+    return [{ source: '/:locale(ko|en)/collabs/:slug.md', destination: '/:locale/collabs/:slug/md' }];
+  },
   images: {
     remotePatterns: process.env.MEDIA_BASE_URL ? [new URL(`${process.env.MEDIA_BASE_URL}/**`)] : [],
   },

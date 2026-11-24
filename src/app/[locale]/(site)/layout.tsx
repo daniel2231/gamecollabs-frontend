@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { MemberProvider } from '@/components/member/MemberProvider';
+import { Analytics } from '@/components/site/Analytics';
 import { MockBanner, SiteFooter } from '@/components/site/SiteChrome';
 import { SiteHeader } from '@/components/site/SiteHeader';
 
@@ -18,6 +19,8 @@ export default async function SiteLayout({ children, params }: LayoutProps<'/[lo
         {children}
       </main>
       <SiteFooter />
+      {/* GA는 공개 사이트에만 싣는다. 관리자 화면(별도 레이아웃)은 집계하지 않는다 */}
+      <Analytics />
     </MemberProvider>
   );
 }

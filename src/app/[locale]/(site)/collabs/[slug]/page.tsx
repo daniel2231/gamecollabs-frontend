@@ -17,7 +17,7 @@ import { formatDate, formatPeriod, formatPeriodEnd, periodLabels } from '@/lib/f
 import { breadcrumbJsonLd, collabJsonLd } from '@/lib/jsonld';
 import { LIST_PATH } from '@/lib/filters';
 import { landingPath } from '@/lib/landing';
-import { alternatesFor, openGraphFor } from '@/lib/seo';
+import { alternatesFor, clampDescription, collabSearchTitle, openGraphFor } from '@/lib/seo';
 import { siteUrl } from '@/lib/site';
 import type { CollabDetail, FacetParam, TermRef } from '@/schema';
 
@@ -34,19 +34,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = rawLocale as Locale;
   const collab = await api.getCollab(slug, locale);
   if (!collab) return {};
-  const t = await getTranslations({ locale, namespace: 'Site' });
-  const description = (collab.summary || t('description')).slice(0, 160);
+  const [t, tDetail, tPeriod, tPhase] = await Promise.all([
+    getTranslations({ locale, namespace: 'Site' }),
+    getTranslations({ locale, namespace: 'Detail.meta' }),
+    getTranslations({ locale, namespace: 'Period' }),
+    getTranslations({ locale, namespace: 'Phase' }),
+  ]);
+  const known = collab.period.precision !== 'unknown' ? collab.period.start : null;
+  // '[게임] × [IP] 콜라보' 검색에 걸리도록 콜라보 표기와 시작 연도를 붙인다(같은 두 작품의 콜라보를 연도로 구별)
+  const title = collabSearchTitle(collab.title, known, {
+    plain: (title) => tDetail('title', { title }),
+    withYear: (title, year) => tDetail('titleYear', { title, year }),
+  });
+  // 상태·기간을 앞에 두어 검색 결과에서 바로 보이게 하고, 요약이 없으면 페이지에 무엇이 있는지 적는다
+  const phase = collab.phase === 'ended' && collab.period.endKind === 'conditional' ? tPeriod('endedEstimated') : tPhase(collab.phase);
+  const lead = known ? `${phase} · ${formatPeriod(collab.period, periodLabels(tPeriod))}` : phase;
+  const description = clampDescription(`${lead}. ${collab.summary || tDetail('descriptionFallback')}`);
   const path = `/collabs/${slug}`;
+  const alternates = alternatesFor(locale, path);
   return {
-    title: collab.title,
+    title,
     description,
-    alternates: alternatesFor(locale, path),
+    // AI 도구용 마크다운 사본(<link rel="alternate" type="text/markdown">)
+    alternates: { ...alternates, types: { ...alternates.types, 'text/markdown': `/${locale}${path}.md` } },
     openGraph: openGraphFor({
       locale,
       path,
       siteName: t('name'),
       type: 'article',
-      title: collab.title,
+      title,
       description,
       ...(collab.publishedAt ? { publishedTime: collab.publishedAt } : {}),
       modifiedTime: collab.updatedAt,
@@ -145,38 +161,47 @@ export default async function CollabDetailPage({ params }: Props) {
                 </figure>
               )}
 
-              <section className="ct-stat-grid" aria-label={t('status')}>
+              {/* 시작·종료·상태는 정의 목록으로 둔다. 날짜는 <time>에 기계가 읽는 값을 함께 넣는다 */}
+              <dl className="ct-stat-grid" aria-label={t('status')}>
                 <div>
-                  <Text as="div" size="1" color="gray">
-                    {t('start')}
+                  <Text size="1" color="gray" asChild>
+                    <dt>{t('start')}</dt>
                   </Text>
-                  <Text as="div" size="5" weight="medium" className={start ? 'ct-mono' : undefined}>
-                    {start ?? tPeriod('unknown')}
+                  <Text size="5" weight="medium" className={start ? 'ct-mono' : undefined} asChild>
+                    <dd>{start && collab.period.start ? <time dateTime={machineDate(collab.period.start, collab.period.precision)}>{start}</time> : tPeriod('unknown')}</dd>
                   </Text>
                 </div>
                 <div>
-                  <Text as="div" size="1" color="gray">
-                    {t('end')}
+                  <Text size="1" color="gray" asChild>
+                    <dt>{t('end')}</dt>
                   </Text>
-                  <Text as="div" size="5" weight="medium" className={collab.period.endKind === 'fixed' && start ? 'ct-mono' : undefined}>
-                    {start ? end : tPeriod('unknown')}
+                  <Text size="5" weight="medium" className={collab.period.endKind === 'fixed' && start ? 'ct-mono' : undefined} asChild>
+                    <dd>
+                      {start && collab.period.endKind === 'fixed' && collab.period.end ? (
+                        <time dateTime={machineDate(collab.period.end, collab.period.precision)}>{end}</time>
+                      ) : start ? (
+                        end
+                      ) : (
+                        tPeriod('unknown')
+                      )}
+                    </dd>
                   </Text>
                 </div>
                 <div>
-                  <Text as="div" size="1" color="gray">
-                    {t('status')}
+                  <Text size="1" color="gray" asChild>
+                    <dt>{t('status')}</dt>
                   </Text>
                   <Text
-                    as="div"
                     size="5"
                     weight="medium"
                     style={collab.phase === 'ongoing' ? { color: 'var(--ct-signal)' } : undefined}
                     title={estimatedEnd ? tPeriod('estimatedHint') : undefined}
+                    asChild
                   >
-                    {estimatedEnd ? tPeriod('endedEstimated') : tPhase(collab.phase)}
+                    <dd>{estimatedEnd ? tPeriod('endedEstimated') : tPhase(collab.phase)}</dd>
                   </Text>
                 </div>
-              </section>
+              </dl>
 
               <Section title={t('summary')}>
                 {collab.summary ? (
@@ -312,6 +337,11 @@ export default async function CollabDetailPage({ params }: Props) {
       </div>
     </>
   );
+}
+
+/** <time dateTime>: 월 정밀도면 YYYY-MM(일까지 적으면 발표되지 않은 날짜를 단정하게 된다) */
+function machineDate(date: string, precision: CollabDetail['period']['precision']): string {
+  return precision === 'month' ? date.slice(0, 7) : date.slice(0, 10);
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

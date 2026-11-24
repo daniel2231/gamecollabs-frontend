@@ -66,3 +66,30 @@ export function siteVerification(env: Record<string, string | undefined> = proce
   const bing = env.BING_SITE_VERIFICATION || SITE_VERIFICATION.bing;
   return { ...(google ? { google } : {}), other: { 'naver-site-verification': naver, 'msvalidate.01': bing } };
 }
+
+/** 검색 결과 설명(약 160자). 넘치면 단어 중간이 아니라 공백에서 자르고 …를 붙인다 */
+export function clampDescription(text: string, max = 160): string {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max - 1);
+  const space = cut.lastIndexOf(' ');
+  // 띄어쓰기가 드문 문장이면 너무 짧아지지 않도록 그냥 자른다
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:·—–-]+$/, '')}…`;
+}
+
+/** 제목에 이미 콜라보라는 말이 있으면 다시 붙이지 않는다 */
+const COLLAB_WORD = /collab|콜라보|컬래버|콜라보레이션/i;
+
+/**
+ * '[게임] × [IP] 콜라보' 검색에 맞춘 콜라보 상세 제목: 제목 + 콜라보 표기 + 시작 연도.
+ * 같은 두 작품이 여러 번 콜라보하므로 연도로 구별한다. format은 언어별 메시지({title}, {year})
+ */
+export function collabSearchTitle(
+  title: string,
+  start: string | null,
+  format: { plain: (title: string) => string; withYear: (title: string, year: string) => string },
+): string {
+  const year = start?.slice(0, 4) ?? null;
+  if (COLLAB_WORD.test(title)) return year ? `${title} (${year})` : title;
+  return year ? format.withYear(title, year) : format.plain(title);
+}
