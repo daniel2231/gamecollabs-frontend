@@ -11,7 +11,8 @@ export type Landing = { param: 'phase'; key: Exclude<Phase, 'unknown'> } | { par
 export const LANDING_PHASES = ['ongoing', 'upcoming', 'ended'] as const;
 
 export function landingOf(query: CollabQuery): Landing | null {
-  if (query.q || query.from || query.to) return null;
+  // 작품·회사를 고정한 목록은 작품·회사 페이지와 겹치므로 랜딩으로 색인하지 않는다
+  if (query.q || query.from || query.to || query.property || query.company) return null;
   const facets = FACET_PARAMS.filter((f) => query[f].length > 0);
   if (query.phase) {
     if (facets.length > 0 || query.phase === 'unknown') return null;

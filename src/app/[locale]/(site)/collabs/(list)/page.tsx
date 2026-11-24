@@ -1,4 +1,4 @@
-import { Cross2Icon } from '@radix-ui/react-icons';
+import { Cross2Icon, PlusIcon } from '@radix-ui/react-icons';
 import { Badge, Button, Flex, Heading, Link as RadixLink, Text } from '@radix-ui/themes';
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
@@ -15,7 +15,7 @@ import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
 import { groupByPhase, groupByStartMonth } from '@/lib/format';
-import { EMPTY_FILTERS, hasActiveFilters, hasFilterPanelValues, LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
+import { EMPTY_FILTERS, entitySuggestions, hasActiveFilters, hasFilterPanelValues, LIST_PATH, listHref, parseCollabQuery } from '@/lib/filters';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { landingOf, landingPath, type Landing } from '@/lib/landing';
 import { alternatesFor, defaultOgImage, openGraphFor } from '@/lib/seo';
@@ -85,13 +85,16 @@ export default async function CollabListPage({ params, searchParams }: PageProps
   setRequestLocale(locale);
   const query = parseCollabQuery(await searchParams);
 
-  const [t, tPhase, tSite, terms, list, stats] = await Promise.all([
+  const [t, tPhase, tSite, terms, list, stats, property, company] = await Promise.all([
     getTranslations('List'),
     getTranslations('Phase'),
     getTranslations('Site'),
     api.getTaxonomies(),
     api.listCollabs(query, locale),
     api.getStats(),
+    // 고정한 작품·회사의 이름(칩에 쓴다). 작품·회사 페이지와 같은 캐시를 쓴다
+    query.property ? api.getProperty(query.property, locale) : null,
+    query.company ? api.getCompany(query.company, locale) : null,
   ]);
 
   const landing = landingOf(query);
@@ -130,9 +133,16 @@ export default async function CollabListPage({ params, searchParams }: PageProps
 
   const hasFacetFilters = hasFilterPanelValues(query);
   // 좁은 화면의 필터 버튼에 붙는 수: 고른 분류 항목 수 + 기간(걸려 있으면 1)
-  const filterCount = FACET_PARAMS.reduce((n, f) => n + query[f].length, 0) + (query.from || query.to ? 1 : 0);
+  const filterCount =
+    FACET_PARAMS.reduce((n, f) => n + query[f].length, 0) + (query.from || query.to ? 1 : 0) + (query.property ? 1 : 0) + (query.company ? 1 : 0);
   const chips: { label: string; href: string }[] = [
     ...(query.q ? [{ label: t('searchChip', { q: query.q }), href: href({ q: undefined, limit: 20 }) }] : []),
+    ...(query.property
+      ? [{ label: t('propertyChip', { name: property?.name.value ?? query.property }), href: href({ property: undefined, limit: 20 }) }]
+      : []),
+    ...(query.company
+      ? [{ label: t('companyChip', { name: company?.name.value ?? query.company }), href: href({ company: undefined, limit: 20 }) }]
+      : []),
     ...FACET_PARAMS.flatMap((f) =>
       query[f].map((key) => ({
         label: labels.get(key) ?? key,
@@ -148,6 +158,9 @@ export default async function CollabListPage({ params, searchParams }: PageProps
         ]
       : []),
   ];
+
+  // 검색어와 이름이 맞는 작품: 고르면 검색어 대신 작품 필터로 바꿔 다른 필터와 조합할 수 있게 한다
+  const suggestions = query.property ? [] : entitySuggestions(list.items, query.q);
 
   return (
     <>
@@ -213,6 +226,24 @@ export default async function CollabListPage({ params, searchParams }: PageProps
                 <SortSelect query={query} />
                 <CopyLinkButton label={t('copyLink')} copiedLabel={t('copied')} failedLabel={t('copyFailed')} variant="ghost" compact />
               </Flex>
+
+              {suggestions.length > 0 && (
+                <Flex wrap="wrap" align="center" gap="2" className="ct-suggest">
+                  <Text size="2" color="gray">
+                    {t('narrowBy')}
+                  </Text>
+                  {suggestions.map((s) => (
+                    <Badge key={s.slug} asChild size="2" variant="soft" color="gray" highContrast className="ct-chip">
+                      <Link href={href({ property: s.slug, q: undefined, limit: 20 })} scroll={false} aria-label={t('narrowByLabel', { name: s.name })}>
+                        <LinkPending />
+                        <PlusIcon aria-hidden="true" />
+                        {s.name}
+                        <span className="ct-suggest-kind">{s.kind}</span>
+                      </Link>
+                    </Badge>
+                  ))}
+                </Flex>
+              )}
 
               {/* 필터·탭·정렬을 바꾸는 동안 결과 위에서 흐르는 진행선(globals.css의 .ct-progress) */}
               <div className="ct-progress" aria-hidden="true" />

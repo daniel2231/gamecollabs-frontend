@@ -1,17 +1,20 @@
 'use client';
 
-import { Cross2Icon } from '@radix-ui/react-icons';
-import { Button, Checkbox, Flex, Link as RadixLink, Select, Text } from '@radix-ui/themes';
+import { ChevronDownIcon, Cross2Icon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
+import { Button, Checkbox, Flex, IconButton, Link as RadixLink, Select, Text, TextField } from '@radix-ui/themes';
 import { useLocale, useTranslations } from 'next-intl';
-import { useId, useOptimistic, useState, useTransition } from 'react';
+import { useId, useOptimistic, useState, useTransition, type ReactNode } from 'react';
 import { PendingMark } from '@/components/site/Pending';
 import { useRouter } from '@/i18n/navigation';
 import { EMPTY_FILTERS, hasFilterPanelValues, listHref, toggleFacet } from '@/lib/list-url';
-import { flatten, type TermNode } from '@/lib/taxonomy';
+import { countSelected, flatten, searchTree, type TermNode } from '@/lib/taxonomy';
 import type { CollabQuery, FacetParam } from '@/schema';
 import { useFilterUi } from './FilterUi';
 
+/** 처음 보여 줄 상위 항목 수 */
 const VISIBLE = 5;
+/** 항목(하위 포함)이 이보다 많으면 찾기 상자를 둔다 */
+const SEARCHABLE = 10;
 
 type Props = {
   query: CollabQuery;
@@ -78,6 +81,12 @@ export function FilterPanel({ query, facets }: Props) {
   );
 }
 
+/**
+ * 분류 하나의 체크 목록.
+ * - 상위 항목만 먼저 보이고, 하위 항목은 화살표로 펼친다(하위에서 고른 것이 있으면 펼친 채로 시작)
+ * - 상위 항목이 VISIBLE개보다 많으면 나머지는 '더 보기'로
+ * - 항목이 SEARCHABLE개보다 많으면 위에 찾기 상자를 두고, 입력하면 일치하는 항목만 평평하게 보여준다
+ */
 function FacetGroup({
   legend,
   tree,
@@ -92,36 +101,119 @@ function FacetGroup({
   hint?: string;
 }) {
   const t = useTranslations('List');
+  const id = useId();
   const [expanded, setExpanded] = useState(false);
-  const hiddenSelected = tree.slice(VISIBLE).some((n) => flatten([n]).some((x) => selected.includes(x.key)));
+  const [search, setSearch] = useState('');
+  // 직접 펼치거나 접은 항목만 기억한다. 손대지 않은 항목은 하위에서 고른 것이 있을 때 펼친다(찾기로 고른 뒤에도)
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const searchable = flatten(tree).length > SEARCHABLE;
+  const matches = searchable ? searchTree(tree, search) : [];
+  const searching = searchable && search.trim() !== '';
+  const hiddenSelected = tree.slice(VISIBLE).some((n) => countSelected(n, selected) > 0);
   const roots = expanded || hiddenSelected ? tree : tree.slice(0, VISIBLE);
   const rest = tree.length - VISIBLE;
-  const nodes = flatten(roots);
+
+  const childSelected = (n: TermNode) => n.children.some((c) => countSelected(c, selected) > 0);
+  const isOpen = (n: TermNode) => toggled[n.key] ?? childSelected(n);
+
+  const check = (n: TermNode, extra?: ReactNode) => (
+    <Text as="label" className="ct-check" color={n.depth ? 'gray' : undefined}>
+      <Checkbox checked={selected.includes(n.key)} onCheckedChange={() => onToggle(n.key)} />
+      <span className="ct-check-label">
+        {n.label}
+        {extra}
+      </span>
+    </Text>
+  );
+
+  const renderNode = (n: TermNode): ReactNode => {
+    const opened = isOpen(n);
+    const childId = `${id}-${n.key}`;
+    const hiddenCount = opened ? 0 : n.children.reduce((sum, c) => sum + countSelected(c, selected), 0);
+    return (
+      <li key={n.key}>
+        <div className="ct-facet-row">
+          {check(n, hiddenCount > 0 && <span className="ct-facet-count">{t('selectedInside', { count: hiddenCount })}</span>)}
+          {n.children.length > 0 && (
+            <IconButton
+              type="button"
+              size="1"
+              variant="ghost"
+              color="gray"
+              className="ct-facet-toggle"
+              data-open={opened || undefined}
+              aria-expanded={opened}
+              aria-controls={childId}
+              aria-label={t(opened ? 'collapseChildren' : 'expandChildren', { label: n.label })}
+              onClick={() => setToggled((prev) => ({ ...prev, [n.key]: !opened }))}
+            >
+              <ChevronDownIcon />
+            </IconButton>
+          )}
+        </div>
+        {n.children.length > 0 && opened && (
+          <ul id={childId} className="ct-facet-list ct-facet-children">
+            {n.children.map(renderNode)}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
   return (
     <fieldset className="ct-fieldset">
       <legend>{legend}</legend>
-      <Flex direction="column" gap="2">
-        {nodes.map((n) => (
-          <Text as="label" key={n.key} className="ct-check" style={{ paddingLeft: n.depth * 26 }} color={n.depth ? 'gray' : undefined}>
-            <Checkbox checked={selected.includes(n.key)} onCheckedChange={() => onToggle(n.key)} />
-            {n.label}
-          </Text>
-        ))}
-        {rest > 0 && !hiddenSelected && (
-          <RadixLink
-            size="2"
-            href="#"
-            style={{ paddingLeft: 26 }}
-            aria-expanded={expanded}
-            onClick={(e) => {
-              e.preventDefault();
-              setExpanded((v) => !v);
-            }}
-          >
-            {expanded ? t('showLess') : t('showMore', { count: rest })}
-          </RadixLink>
-        )}
-      </Flex>
+      {searchable && (
+        <TextField.Root
+          size="1"
+          type="search"
+          mb="2"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('facetSearch', { legend })}
+          aria-label={t('facetSearch', { legend })}
+          aria-controls={`${id}-list`}
+        >
+          <TextField.Slot>
+            <MagnifyingGlassIcon />
+          </TextField.Slot>
+        </TextField.Root>
+      )}
+      {searching ? (
+        <ul id={`${id}-list`} className="ct-facet-list" aria-live="polite">
+          {matches.length === 0 ? (
+            <li>
+              <Text size="2" color="gray">
+                {t('facetNoMatch')}
+              </Text>
+            </li>
+          ) : (
+            matches.map(({ node, parent }) => (
+              <li key={node.key}>{check({ ...node, depth: 0 }, parent && <span className="ct-facet-parent">{parent}</span>)}</li>
+            ))
+          )}
+        </ul>
+      ) : (
+        <>
+          <ul id={`${id}-list`} className="ct-facet-list">
+            {roots.map(renderNode)}
+          </ul>
+          {rest > 0 && !hiddenSelected && (
+            <RadixLink
+              size="2"
+              href="#"
+              className="ct-facet-more"
+              aria-expanded={expanded}
+              onClick={(e) => {
+                e.preventDefault();
+                setExpanded((v) => !v);
+              }}
+            >
+              {expanded ? t('showLess') : t('showMore', { count: rest })}
+            </RadixLink>
+          )}
+        </>
+      )}
       {hint && (
         <Text as="p" size="1" color="gray" mt="3" mb="0" style={{ textWrap: 'balance' }}>
           {hint}

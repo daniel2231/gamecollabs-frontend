@@ -1663,6 +1663,73 @@ body {
   background: none;
 }
 
+/* 필터 체크 목록: 상위 항목 오른쪽 화살표로 하위 항목을 펼친다 */
+.ct-facet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ct-facet-children {
+  margin-top: 4px;
+  padding-left: 26px;
+}
+
+.ct-facet-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ct-facet-row > .ct-check {
+  flex: 1;
+  min-width: 0;
+}
+
+.ct-check-label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+  min-width: 0;
+}
+
+.ct-facet-toggle > svg {
+  transition: transform 0.15s ease;
+}
+
+.ct-facet-toggle[data-open] > svg {
+  transform: rotate(180deg);
+}
+
+/* 접힌 상위 항목 옆: 하위에서 고른 수 */
+.ct-facet-count {
+  font-family: var(--code-font-family);
+  font-size: 11px;
+  color: var(--ct-signal);
+}
+
+/* 찾기 결과의 하위 항목 옆: 바로 위 항목 이름 */
+.ct-facet-parent {
+  font-size: 12px;
+  color: var(--gray-10);
+}
+
+.ct-facet-more {
+  display: inline-block;
+  margin-top: 8px;
+  padding-left: 26px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ct-facet-toggle > svg {
+    transition: none;
+  }
+}
+
 .ct-checklist {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1791,6 +1858,12 @@ body {
 .rt-Button,
 .rt-SelectTrigger,
 .ct-tabs a,
+/* 검색 결과 위: 검색어와 이름이 맞는 작품을 필터로 고정하는 제안 */
+.ct-suggest-kind {
+  font-size: 11px;
+  color: var(--gray-10);
+}
+
 .ct-chip,
 .ct-check {
   transition:

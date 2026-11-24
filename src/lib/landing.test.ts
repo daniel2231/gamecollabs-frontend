@@ -28,6 +28,11 @@ describe('landingOf', () => {
     expect(landingOf(q({ category: 'category.in_game', q: '태고' }))).toBeNull();
     expect(landingOf(q({ phase: 'ended', from: '2026-01' }))).toBeNull();
   });
+
+  it('작품·회사를 고정하면 랜딩이 아니다(작품·회사 페이지와 겹친다)', () => {
+    expect(landingOf(q({ phase: 'ongoing', property: 'genshin-impact' }))).toBeNull();
+    expect(landingOf(q({ region: 'region.korea', company: 'hoyoverse' }))).toBeNull();
+  });
 });
 
 describe('landingPath', () => {

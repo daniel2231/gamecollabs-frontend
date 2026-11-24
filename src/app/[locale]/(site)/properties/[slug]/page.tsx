@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { Badge, Flex, Heading, Text } from '@radix-ui/themes';
 import { FollowButton } from '@/components/member/FollowButton';
 import type { Metadata } from 'next';
@@ -10,6 +11,7 @@ import { JsonLd } from '@/components/site/JsonLd';
 import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
+import { listHref } from '@/lib/filters';
 import { formatMonth, originalName } from '@/lib/format';
 import { breadcrumbJsonLd, propertyJsonLd } from '@/lib/jsonld';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
@@ -49,6 +51,7 @@ export default async function PropertyPage({ params }: Props) {
   const p = await api.getProperty(slug, locale);
   if (!p) notFound();
   const t = await getTranslations('Property');
+  const tList = await getTranslations('List');
 
   const items = p.collabs.map((c) => {
     const other = c.parties.find((x) => x.slug !== p.slug);
@@ -84,7 +87,14 @@ export default async function PropertyPage({ params }: Props) {
               </Text>
             ))}
           </Flex>
-          <FollowButton type="property" slug={p.slug} />
+          <Flex align="center" gap="4" wrap="wrap">
+            <FollowButton type="property" slug={p.slug} />
+            {/* 이 작품·회사를 고정한 목록으로: 권역·진행 상태 같은 다른 필터와 조합할 수 있다 */}
+            <Link href={listHref({ property: p.slug })} className="ct-more">
+              {tList('filterInList')}
+              <ArrowRightIcon aria-hidden="true" />
+            </Link>
+          </Flex>
           {p.aliases.length > 0 && (
             <Flex wrap="wrap" align="center" gap="2" mt="1">
               <Text size="1" color="gray" mr="1">

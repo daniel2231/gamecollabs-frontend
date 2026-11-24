@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from '@radix-ui/react-icons';
 import { Badge, Flex, Heading, Text } from '@radix-ui/themes';
 import { FollowButton } from '@/components/member/FollowButton';
 import type { Metadata } from 'next';
@@ -7,8 +8,10 @@ import { CountList, StatGrid } from '@/components/entity/EntityParts';
 import { EntityTimeline } from '@/components/entity/EntityTimeline';
 import { Breadcrumb } from '@/components/site/Breadcrumb';
 import { JsonLd } from '@/components/site/JsonLd';
+import { Link } from '@/i18n/navigation';
 import type { Locale } from '@/i18n/routing';
 import { api } from '@/lib/api';
+import { listHref } from '@/lib/filters';
 import { formatMonth, originalName } from '@/lib/format';
 import { breadcrumbJsonLd, companyJsonLd } from '@/lib/jsonld';
 import { alternatesFor, openGraphFor } from '@/lib/seo';
@@ -48,6 +51,7 @@ export default async function CompanyPage({ params }: Props) {
   const c = await api.getCompany(slug, locale);
   if (!c) notFound();
   const [t, tp, tRole] = await Promise.all([getTranslations('Company'), getTranslations('Property'), getTranslations('Role')]);
+  const tList = await getTranslations('List');
   const regionName = c.country ? new Intl.DisplayNames([locale], { type: 'region' }).of(c.country) : null;
 
   const base = siteUrl();
@@ -74,7 +78,14 @@ export default async function CompanyPage({ params }: Props) {
               </Text>
             ))}
           </Flex>
-          <FollowButton type="company" slug={c.slug} />
+          <Flex align="center" gap="4" wrap="wrap">
+            <FollowButton type="company" slug={c.slug} />
+            {/* 이 작품·회사를 고정한 목록으로: 권역·진행 상태 같은 다른 필터와 조합할 수 있다 */}
+            <Link href={listHref({ company: c.slug })} className="ct-more">
+              {tList('filterInList')}
+              <ArrowRightIcon aria-hidden="true" />
+            </Link>
+          </Flex>
           {c.aliases.length > 0 && (
             <Flex wrap="wrap" align="center" gap="2" mt="1">
               <Text size="1" color="gray" mr="1">

@@ -12,6 +12,8 @@ export function serializeCollabQuery(query: Partial<CollabQuery>): string {
     const list = query[f];
     if (list && list.length) sp.set(f, [...list].sort().join(','));
   }
+  if (query.property) sp.set('property', query.property);
+  if (query.company) sp.set('company', query.company);
   if (query.phase) sp.set('phase', query.phase);
   if (query.from) sp.set('from', query.from);
   if (query.to) sp.set('to', query.to);
@@ -32,8 +34,10 @@ export function toggleFacet(query: CollabQuery, facet: FacetParam, key: string):
   return { ...query, [facet]: next, limit: 20 };
 }
 
-/** 필터 패널이 다루는 값(분류·기간)을 모두 비운 상태. 검색어·진행 상태·정렬은 그대로 둔다 */
+/** 필터 값(분류·기간·고정한 작품/회사)을 모두 비운 상태. 검색어·진행 상태·정렬은 그대로 둔다 */
 export const EMPTY_FILTERS = {
+  property: undefined,
+  company: undefined,
   category: [],
   partner_category: [],
   region: [],
@@ -43,7 +47,7 @@ export const EMPTY_FILTERS = {
   to: undefined,
 } satisfies Partial<CollabQuery>;
 
-/** 필터 패널에서 고른 값(분류·기간)이 하나라도 있는지 */
+/** 필터 값(분류·기간·고정한 작품/회사)이 하나라도 있는지 */
 export function hasFilterPanelValues(query: CollabQuery): boolean {
-  return FACET_PARAMS.some((f) => query[f].length > 0) || Boolean(query.from || query.to);
+  return FACET_PARAMS.some((f) => query[f].length > 0) || Boolean(query.from || query.to || query.property || query.company);
 }

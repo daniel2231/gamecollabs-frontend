@@ -20,3 +20,24 @@ export function flatten(nodes: TermNode[]): TermNode[] {
 export function labelMap(terms: TaxonomyTerm[], locale: Locale): Map<string, string> {
   return new Map(terms.map((t) => [t.key, t.label[locale]]));
 }
+
+/** 비교용: 대소문자·전각/반각·공백 차이를 없앤다("North America"와 "northamerica", "ＰＣ"와 "pc"가 같다) */
+export function normalizeTerm(s: string): string {
+  return s.normalize('NFKC').toLowerCase().replace(/[\s·・\-_]/g, '');
+}
+
+/** 노드와 그 아래에서 고른 항목 수 */
+export function countSelected(node: TermNode, selected: readonly string[]): number {
+  return flatten([node]).filter((n) => selected.includes(n.key)).length;
+}
+
+export type TermMatch = { node: TermNode; parent: string | null };
+
+/** 이름에 검색어가 들어간 항목을 화면 순서대로. 하위 항목은 바로 위 항목 이름을 함께 돌려준다 */
+export function searchTree(nodes: TermNode[], query: string): TermMatch[] {
+  const q = normalizeTerm(query);
+  if (!q) return [];
+  const walk = (list: TermNode[], parent: string | null): TermMatch[] =>
+    list.flatMap((n) => [...(normalizeTerm(n.label).includes(q) ? [{ node: n, parent }] : []), ...walk(n.children, n.label)]);
+  return walk(nodes, null);
+}
