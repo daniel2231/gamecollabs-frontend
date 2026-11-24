@@ -196,8 +196,25 @@ export function RankList({ title, items, hrefPrefix }: { title: string; items: (
   );
 }
 
-/** 연도 고르기: 전체 + 2026년 이후 시작한 콜라보가 있는 해. 목록 화면의 진행 상태 탭과 같은 모양 */
-export function YearTabs({ label, allLabel, years, current }: { label: string; allLabel: string; years: { year: number; count: number }[]; current: number | null }) {
+/**
+ * 연도 고르기: 전체 + 2026년 이후 시작한 콜라보가 있는 해. 목록 화면의 진행 상태 탭과 같은 모양.
+ * 올해 뒤의 해는 발표된 예정분뿐이라 '예정'을 붙인다
+ */
+export function YearTabs({
+  label,
+  allLabel,
+  plannedLabel,
+  thisYear,
+  years,
+  current,
+}: {
+  label: string;
+  allLabel: string;
+  plannedLabel: string;
+  thisYear: number;
+  years: { year: number; count: number }[];
+  current: number | null;
+}) {
   return (
     <nav aria-label={label}>
       <ul className="ct-tabs">
@@ -210,6 +227,7 @@ export function YearTabs({ label, allLabel, years, current }: { label: string; a
           <li key={y.year}>
             <Link href={`${STATS_PATH}/${y.year}`} aria-current={current === y.year ? 'page' : undefined}>
               {y.year}
+              {y.year > thisYear && <span className="ct-tab-tag">{plannedLabel}</span>}
               <sup>{y.count}</sup>
             </Link>
           </li>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, GlobeIcon } from '@radix-ui/react-icons';
 import { Button, DropdownMenu } from '@radix-ui/themes';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -51,8 +51,10 @@ function LanguageButton({ label, locale, pending = false, ...props }: { label: s
   return (
     // 접근 가능한 이름에 보이는 글자(KO)를 포함해야 음성 명령으로도 누를 수 있다
     <Button {...props} variant="ghost" color="gray" size="2" aria-label={`${label}: ${locale.toUpperCase()}`} loading={pending} className="ct-mono" style={{ marginInline: 0 }}>
+      {/* 글자만 있으면 눌리는 컨트롤로 보이지 않아 지구본 아이콘을 앞에 둔다 */}
+      <GlobeIcon aria-hidden />
       {locale.toUpperCase()}
-      <ChevronDownIcon />
+      <ChevronDownIcon aria-hidden />
     </Button>
   );
 }

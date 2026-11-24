@@ -226,6 +226,16 @@ body {
   background: var(--ct-signal);
 }
 
+/* 연도 탭의 '예정' 표시 */
+.ct-tab-tag {
+  padding: 1px 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--gray-11);
+  box-shadow: inset 0 0 0 1px var(--gray-a7);
+}
+
 .ct-tabs sup {
   font-family: var(--code-font-family);
   font-size: 11px;
@@ -959,8 +969,45 @@ body {
   top: 0;
   left: 0;
   display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 5px 8px;
   background: var(--ct-black);
+}
+
+/* 종료 임박(D-7부터): 진행 상태 옆. 커버 위 검은 바탕은 테마와 상관없이 같아서 글자색을 고정한다 */
+.ct-dday {
+  font-family: var(--code-font-family);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: #ede9e1;
+}
+
+/* D-3부터: 강조색 바탕으로 한눈에 */
+.ct-dday[data-urgent] {
+  margin-block: -2px;
+  padding: 2px 5px;
+  background: var(--ct-signal);
+  color: #0a0a09;
+}
+
+/* 카드의 파트너 분류: 아이콘 + 이름 */
+.ct-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.ct-kind > svg {
+  flex: none;
+}
+
+.ct-kind > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 진행 상태: 작은 사각형 + 글자. 진행 중만 강조색 */
@@ -2070,6 +2117,16 @@ body {
   font-size: 16px;
   line-height: 1.6;
   color: var(--ct-muted);
+}
+
+/* 연도 통계의 범위 안내(예정분이 섞인 해): 왼쪽 강조선 */
+.ct-stats-notice {
+  margin: 12px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--ct-signal);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--gray-11);
 }
 
 .ct-stats {

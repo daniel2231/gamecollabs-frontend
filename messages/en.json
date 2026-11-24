@@ -45,6 +45,11 @@
     "endedEstimated": "Ended (estimated)",
     "estimatedHint": "No end date was announced; this status is estimated from the start date."
   },
+  "Dday": {
+    "label": "D-{count}",
+    "today": "Ends today",
+    "spoken": "{count, plural, =0 {Ends today} one {Ends in # day} other {Ends in # days}}"
+  },
   "Home": {
     "title": "Game Collaborations & Crossover Tracker",
     "tally": "Collab count",
@@ -288,13 +293,15 @@
     "yearTitle": "Game collabs in {year}",
     "lead": "{count, plural, one {# game × IP collab} other {# game × IP collabs}} in the tracker, counted by period, category and the games and IPs involved.",
     "yearLead": "{count, plural, one {# game × IP collab} other {# game × IP collabs}} that started in {year}, counted by month, category and the games and IPs involved.",
+    "yearLeadPlanned": "{count, plural, one {# game × IP collab} other {# game × IP collabs}} announced to start in {year}, counted by month, category and the games and IPs involved.",
     "metaDescription": "Statistics on {count, plural, one {# game × IP collab} other {# game × IP collabs}}: monthly and yearly trends, partner categories such as anime, webtoons and brands, and the games, IPs and companies with the most collabs.",
     "yearMetaDescription": "{count, plural, one {# game collab} other {# game collabs}} that started in {year}: monthly trend, partner categories, and the games, IPs and companies with the most collabs.",
     "ogSubtitle": "{count, plural, one {# collab} other {# collabs}} · {range}",
     "breadcrumb": "Statistics",
     "years": {
       "label": "Year",
-      "all": "All"
+      "all": "All",
+      "planned": "Planned"
     },
     "kpi": {
       "label": "Summary",
@@ -303,7 +310,8 @@
       "peak": "Busiest month",
       "vsPrevious": "{diff} vs {year}",
       "vsPreviousRatio": "{diff} ({ratio}) vs {year}",
-      "noPrevious": "No collabs in {year}"
+      "noPrevious": "No collabs in {year}",
+      "yearPlanned": "Planned for {year}"
     },
     "section": {
       "monthly": "Collabs by month",
@@ -356,6 +364,10 @@
         "Region",
         "Platform"
       ]
+    },
+    "notice": {
+      "future": "{year} has not started yet, so this only counts collabs announced so far. The numbers will change as schedules shift or new collabs are announced.",
+      "current": "Months that have not passed yet only count collabs announced so far."
     }
   },
   "Changelog": {

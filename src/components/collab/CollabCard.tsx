@@ -5,6 +5,8 @@ import { CoverImage } from '@/components/site/CoverImage';
 import { SignalX } from '@/components/site/SignalX';
 import { coverFit, coverTone } from '@/lib/cover';
 import type { CollabSummary } from '@/schema';
+import { DdayBadge } from './DdayBadge';
+import { KindLabel } from './KindLabel';
 import { PeriodText } from './PeriodText';
 import { PhaseBadge } from './PhaseBadge';
 
@@ -15,7 +17,7 @@ const FEATURE_SIZES = '(max-width: 768px) 100vw, 760px';
 const GRID_SIZES = '(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 400px';
 
 /**
- * 콜라보 카드: 위쪽 커버(16:9, 틀 없이), 아래 기간·제목·참여 작품·분류.
+ * 콜라보 카드: 위쪽 커버(16:9, 틀 없이, 종료 임박이면 D-day), 아래 기간·제목·파트너 분류·태그.
  * feature는 홈 첫 화면의 큰 카드(넓으면 커버 왼쪽, 글 오른쪽). 커버를 바로 불러온다(eager로 바꿀 수 있다)
  */
 export function CollabCard({ collab, feature = false, eager = feature }: { collab: CollabSummary; feature?: boolean; eager?: boolean }) {
@@ -58,6 +60,7 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
         )}
         <span className="ct-card-phase">
           <PhaseBadge phase={collab.phase} />
+          {collab.phase === 'ongoing' && <DdayBadge period={collab.period} />}
         </span>
       </div>
 
@@ -70,7 +73,7 @@ export function CollabCard({ collab, feature = false, eager = feature }: { colla
         </Text>
         {(host || partner) && (
           <Text size="2" color="gray" className="ct-card-meta">
-            <SignalX text={[host?.kind.label, partner?.kind.label].filter(Boolean).join(' × ')} />
+            <KindLabel host={host} partner={partner} />
           </Text>
         )}
         {tags.length > 0 && (

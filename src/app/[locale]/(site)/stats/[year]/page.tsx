@@ -57,6 +57,10 @@ export default async function StatsYearPage({ params }: Props) {
   const [t, tPhase, tSite] = await Promise.all([getTranslations('Stats'), getTranslations('Phase'), getTranslations('Site')]);
 
   const now = new Date();
+  const thisYear = now.getUTCFullYear();
+  // 올해 뒤의 해는 발표된 예정분뿐, 올해는 남은 달이 예정분이다. 숫자를 확정치로 읽지 않게 위에서 알린다
+  const planned = year > thisYear;
+  const notice = planned ? t('notice.future', { year }) : year === thisYear ? t('notice.current') : null;
   const months = yearMonths(stats.monthly, year, now);
   const peak = peakMonth(months);
   const peakLabel = peak ? monthColumns([peak], locale)[0]!.label : '—';
@@ -95,17 +99,18 @@ export default async function StatsYearPage({ params }: Props) {
         <div>
           <Breadcrumb label={t('breadcrumb')} items={[{ href: STATS_PATH, label: t('breadcrumb') }, { label: String(year) }]} />
           <h1>{title}</h1>
-          <p className="ct-stats-lead">{t('yearLead', { year, count: stats.published })}</p>
+          <p className="ct-stats-lead">{t(planned ? 'yearLeadPlanned' : 'yearLead', { year, count: stats.published })}</p>
+          {notice && <p className="ct-stats-notice">{notice}</p>}
         </div>
       </header>
 
-      <YearTabs label={t('years.label')} allLabel={t('years.all')} years={stats.years} current={year} />
+      <YearTabs label={t('years.label')} allLabel={t('years.all')} plannedLabel={t('years.planned')} thisYear={thisYear} years={stats.years} current={year} />
 
       <div className="ct-stats">
         <KpiRow
           label={t('kpi.label')}
           items={[
-            { label: t('kpi.yearTotal', { year }), value: String(stats.published), hint: changeHint },
+            { label: t(planned ? 'kpi.yearPlanned' : 'kpi.yearTotal', { year }), value: String(stats.published), hint: changeHint },
             { label: t('kpi.peak'), value: peakLabel, hint: peak ? t('chart.count', { count: peak.count }) : undefined },
             { label: tPhase('ongoing'), value: String(stats.byPhase.ongoing), accent: true },
             { label: tPhase('upcoming'), value: String(stats.byPhase.upcoming) },

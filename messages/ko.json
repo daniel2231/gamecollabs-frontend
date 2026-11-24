@@ -45,6 +45,11 @@
     "endedEstimated": "종료(추정)",
     "estimatedHint": "종료일이 발표되지 않아 시작일 기준으로 추정한 상태입니다."
   },
+  "Dday": {
+    "label": "D-{count}",
+    "today": "오늘 종료",
+    "spoken": "{count, plural, =0 {오늘 종료} other {#일 후 종료}}"
+  },
   "Home": {
     "title": "게임 콜라보 모음 · 콜라보 이벤트 일정",
     "tally": "콜라보 현황",
@@ -288,13 +293,15 @@
     "yearTitle": "{year}년 게임 콜라보 통계",
     "lead": "트래커에 등록된 게임 × IP 콜라보 {count}건을 기간·분류·참여 작품별로 집계했습니다.",
     "yearLead": "{year}년에 시작한 게임 × IP 콜라보 {count}건을 월·분류·참여 작품별로 집계했습니다.",
+    "yearLeadPlanned": "{year}년에 시작 예정으로 발표된 게임 × IP 콜라보 {count}건을 월·분류·참여 작품별로 집계했습니다.",
     "metaDescription": "게임 × IP 콜라보 {count}건 통계: 월별·연도별 추이, 애니·웹툰·브랜드 등 파트너 IP 분류, 콜라보가 많은 게임·IP·회사 순위.",
     "yearMetaDescription": "{year}년에 시작한 게임 콜라보 {count}건: 월별 추이, 파트너 IP 분류, 콜라보가 많은 게임·IP·회사 순위.",
     "ogSubtitle": "콜라보 {count}건 · {range}",
     "breadcrumb": "통계",
     "years": {
       "label": "연도",
-      "all": "전체"
+      "all": "전체",
+      "planned": "예정"
     },
     "kpi": {
       "label": "요약",
@@ -303,7 +310,8 @@
       "peak": "가장 많은 달",
       "vsPrevious": "{year}년 대비 {diff}",
       "vsPreviousRatio": "{year}년 대비 {diff} ({ratio})",
-      "noPrevious": "{year}년 기록 없음"
+      "noPrevious": "{year}년 기록 없음",
+      "yearPlanned": "{year}년 시작 예정"
     },
     "section": {
       "monthly": "월별 콜라보",
@@ -356,6 +364,10 @@
         "권역",
         "플랫폼"
       ]
+    },
+    "notice": {
+      "future": "{year}년은 아직 오지 않은 해라 지금까지 발표된 예정 콜라보만 들어 있습니다. 일정이 바뀌거나 새 발표가 나오면 수가 달라집니다.",
+      "current": "아직 지나지 않은 달은 지금까지 발표된 예정 콜라보만 들어 있습니다."
     }
   },
   "Changelog": {

@@ -63,7 +63,7 @@ export default async function StatsPage({ params }: PageProps<'/[locale]/stats'>
         </div>
       </header>
 
-      <YearTabs label={t('years.label')} allLabel={t('years.all')} years={years} current={null} />
+      <YearTabs label={t('years.label')} allLabel={t('years.all')} plannedLabel={t('years.planned')} thisYear={thisYear} years={years} current={null} />
 
       {stats.published === 0 ? (
         <p className="ct-stats-empty">{t('empty')}</p>
