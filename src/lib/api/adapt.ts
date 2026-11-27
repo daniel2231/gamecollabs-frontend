@@ -58,6 +58,8 @@ type BeFollowUpPeriod = {
   endCondition?: EndCondition | null;
   endNote?: { ko: string | null; en: string | null } | null;
   expectedEnd?: string | null;
+  /** 시작일이 없을 때만: 출처가 준 대략적 시작 시기 `YYYY-MM[-DD]` */
+  expectedStart?: string | null;
 };
 /** 관리자 응답(저장된 문서)의 기간 */
 type BeStoredPeriod = {
@@ -69,6 +71,8 @@ type BeStoredPeriod = {
   endNote?: { ko: string | null; en: string | null } | null;
   expectedEnd?: string | null;
   expectedPrecision?: 'day' | 'month' | null;
+  expectedStart?: string | null;
+  expectedStartPrecision?: 'day' | 'month' | null;
 };
 type BeCover = {
   url: string;
@@ -219,6 +223,7 @@ type BePeriodInput = {
   endCondition?: EndCondition | null;
   endNote?: { ko: string; en: string } | null;
   expectedEnd?: string | null;
+  expectedStart?: string | null;
 };
 
 export type BeFollowUpProposal = {
@@ -323,8 +328,12 @@ function period(p: BePeriod): Period {
   return { ...base, endCondition: p.endCondition ?? 'other', endNote: p.endNote ?? null, expectedEnd: p.expectedEnd ?? null, endEstimated: true };
 }
 
+/** 시작일이 없을 때만 예상 시작 시기를 붙인다 */
+const withExpectedStart = (base: Period, expectedStart: string | null | undefined): Period =>
+  !base.start && expectedStart ? { ...base, expectedStart } : base;
+
 function followUpPeriod(p: BeFollowUpPeriod): Period {
-  const base: Period = { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind };
+  const base = withExpectedStart({ start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind }, p.expectedStart);
   if (p.endKind !== 'conditional') return base;
   return {
     ...base,
@@ -338,7 +347,11 @@ function followUpPeriod(p: BeFollowUpPeriod): Period {
 
 /** 저장된 기간(관리자) → 화면 기간. 예상 종료 시기는 정밀도에 맞춰 `YYYY-MM` 또는 `YYYY-MM-DD` */
 export function fromStoredPeriod(p: BeStoredPeriod): Period {
-  const base: Period = { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind };
+  const expectedStart = isoDay(p.expectedStart ?? null);
+  const base = withExpectedStart(
+    { start: isoDay(p.start), end: isoDay(p.end), precision: p.precision, endKind: p.endKind },
+    expectedStart && p.expectedStartPrecision === 'month' ? expectedStart.slice(0, 7) : expectedStart,
+  );
   if (p.endKind !== 'conditional') return base;
   const expected = isoDay(p.expectedEnd ?? null);
   return {
@@ -654,7 +667,7 @@ export function toAdminCollab(c: BeAdminCollab, duplicates: BeDuplicate[], media
 export function fromPeriodInput(p: BePeriodInput): Period {
   const start = p.start ?? null;
   const precision = p.precision ?? (!start ? 'unknown' : start.length === 7 ? 'month' : 'day');
-  const base: Period = { start: isoDay(start), end: isoDay(p.end), precision, endKind: p.endKind ?? 'fixed' };
+  const base = withExpectedStart({ start: isoDay(start), end: isoDay(p.end), precision, endKind: p.endKind ?? 'fixed' }, p.expectedStart);
   if (p.endKind !== 'conditional') return base;
   return { ...base, endCondition: p.endCondition ?? 'other', endNoteI18n: p.endNote ?? null, endNote: p.endNote?.ko ?? null, expectedEnd: p.expectedEnd ?? null, endEstimated: true };
 }
@@ -786,6 +799,8 @@ export function toCollabBody(input: CollabInput, existing?: BeAdminCollab['parti
       end: p.endKind !== 'fixed' || p.precision === 'unknown' ? null : p.precision === 'month' ? p.end?.slice(0, 7) ?? null : p.end,
       precision: p.precision,
       endKind: p.endKind,
+      // 시작일이 없을 때만 보낸다(백엔드는 시작일과 함께 받지 않는다)
+      ...(p.precision === 'unknown' && p.expectedStart ? { expectedStart: p.expectedStart } : {}),
       ...(p.endKind === 'conditional'
         ? {
             endCondition: p.endCondition ?? 'other',
