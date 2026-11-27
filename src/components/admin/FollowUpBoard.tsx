@@ -6,7 +6,7 @@ import { useState, useTransition } from 'react';
 import { resolveFollowUp } from '@/app/[locale]/admin/actions';
 import { LinkPending } from '@/components/site/Pending';
 import { Link, useRouter } from '@/i18n/navigation';
-import { adminPeriodLabel, ESCALATE_AFTER, FOLLOW_UP_REASON_HINT, FOLLOW_UP_REASON_LABEL } from '@/lib/followup';
+import { adminPeriodLabel, FOLLOW_UP_ESCALATION_HINT, FOLLOW_UP_REASON_HINT, FOLLOW_UP_REASON_LABEL } from '@/lib/followup';
 import type { FollowUpAction, FollowUpItem, FollowUpProposal, FollowUpView, Period } from '@/schema';
 
 const VIEWS: { view: FollowUpView; label: string; empty: string }[] = [
@@ -38,7 +38,9 @@ export function FollowUpBoard({ view, items, unavailable }: Props) {
           후속 확인
         </Heading>
         <Text size="2" color="gray">
-          날짜나 내용이 덜 발표된 콜라보는 수집기가 3 → 7 → 14 → 30일 간격으로 다시 확인합니다. 초안은 바로 고쳐져 “자동 반영”에 남고, 검수 중·발행된
+          날짜나 내용이 덜 발표된 콜라보는 수집기가 다시 확인합니다. 소식이 없을수록 간격이 3 → 7 → 14 → 30일로 늘지만, 시작 30·14·7일 전과 당일에는
+          꼭 확인하고 시작 직전 일주일과 시작 월 안에서는 3일마다, 진행 중인데 종료일이나 내용이 없으면 일주일마다 확인합니다. 순서는 발행된 것, 진행 중인 것,
+          시작이 가까운 것부터입니다. 초안은 바로 고쳐져 “자동 반영”에 남고, 검수 중·발행된
           콜라보는 “제안”에서 반영 여부를 정합니다.
         </Text>
       </Flex>
@@ -144,7 +146,7 @@ function FollowUpCard({ item, view }: { item: FollowUpItem; view: FollowUpView }
               <DataList.Label>확인</DataList.Label>
               <DataList.Value>
                 마지막 {day(item.lastCheckedAt)} · 다음 {day(item.nextCheckAt)} · 연속 무변화 {item.unchanged}회
-                {view === 'escalated' && ` (${ESCALATE_AFTER}회부터 알림)`}
+                {item.reason && ` · 알림 기준: ${FOLLOW_UP_ESCALATION_HINT[item.reason]}`}
               </DataList.Value>
             </DataList.Item>
           </DataList.Root>

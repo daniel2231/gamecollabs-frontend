@@ -113,7 +113,7 @@ export type DbCollab = {
   venues?: AdminVenue[];
   /** 콜라보 내용 미발표 */
   contentTba?: boolean;
-  /** 후속 확인 기록. 사유는 기간·contentTba에서 계산하므로 저장하지 않는다. 없으면 만든 지 3일 뒤가 첫 확인 */
+  /** 후속 확인 기록. 사유는 기간·contentTba에서 계산하므로 저장하지 않는다. 없으면 만든 날부터 날짜 기준 일정(lib/followup.ts nextCheckAt)으로 첫 확인 */
   followUp?: {
     nextCheckAt: string | null;
     lastCheckedAt: string | null;

@@ -687,7 +687,8 @@ export function CollabEditor({ collab, trees, entities, locale }: Props) {
 function normalizePeriod(p: Period): Period {
   if (p.endKind !== 'conditional') p = { ...p, endCondition: undefined, endNote: undefined, endNoteI18n: undefined, expectedEnd: undefined, endEstimated: undefined };
   else if (!p.endCondition) p = { ...p, endCondition: 'other' };
-  if (p.precision === 'unknown') return { ...p, start: null, end: p.endKind === 'fixed' ? p.end : null };
+  if (p.precision === 'unknown') return { ...p, start: null, end: p.endKind === 'fixed' ? p.end : null, expectedStart: p.expectedStart || null };
+  p = { ...p, expectedStart: undefined };
   const fix = (d: string | null) => (d && p.precision === 'month' ? `${d.slice(0, 7)}-01` : d);
   return { ...p, start: fix(p.start), end: p.endKind === 'fixed' ? fix(p.end) : null };
 }
@@ -730,6 +731,19 @@ function PeriodFields({ period, onChange }: { period: Period; onChange: (p: Peri
         <Text as="label" className="ct-field">
           <span className="ct-label">시작일</span>
           <TextField.Root type={inputType} className="ct-mono" value={shown(period.start)} onChange={(e) => onChange({ ...period, start: parse(e.target.value) })} style={{ colorScheme: 'dark' }} />
+        </Text>
+      )}
+      {period.precision === 'unknown' && (
+        <Text as="label" className="ct-field">
+          <span className="ct-label">예상 시작 시기 (출처에 있을 때만)</span>
+          <TextField.Root
+            type="month"
+            className="ct-mono"
+            value={period.expectedStart?.slice(0, 7) ?? ''}
+            onChange={(e) => onChange({ ...period, expectedStart: e.target.value || null })}
+            title="“2027년 초”, “2027년 9~12월”처럼 출처가 대략적인 시기를 줄 때 그 첫 달. 재확인 일정에만 쓰고 공개 화면에는 나오지 않습니다."
+            style={{ colorScheme: 'dark' }}
+          />
         </Text>
       )}
       <div className="ct-field">

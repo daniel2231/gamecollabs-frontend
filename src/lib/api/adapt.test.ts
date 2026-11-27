@@ -505,4 +505,25 @@ describe('조건부 종료 변환', () => {
     expect(A.toCollabBody(both).period.endNote).toEqual({ ko: '재고 소진 시 종료', en: 'While stocks last' });
     expect(A.toCollabBody({ ...input, period: { start: '2026-11-04', end: null, precision: 'day', endKind: 'tba' } }).period).not.toHaveProperty('endCondition');
   });
+
+  it('예상 시작 시기: 시작일이 없을 때만 읽고 보낸다', () => {
+    const stored = { start: null, end: null, precision: 'unknown' as const, endKind: 'tba' as const, expectedStart: '2027-09-01T00:00:00.000Z', expectedStartPrecision: 'month' as const };
+    expect(A.fromStoredPeriod(stored)).toEqual({ start: null, end: null, precision: 'unknown', endKind: 'tba', expectedStart: '2027-09' });
+    expect(A.fromStoredPeriod({ ...stored, start: '2027-09-10T00:00:00.000Z', precision: 'day' })).not.toHaveProperty('expectedStart');
+    expect(A.fromPeriodInput({ endKind: 'tba', expectedStart: '2027-09' })).toMatchObject({ precision: 'unknown', expectedStart: '2027-09' });
+    const input = {
+      slug: 'a',
+      i18n: { ko: { title: 't', summary: 's', note: '' }, en: { title: 't', summary: 's', note: '' } },
+      parties: [],
+      companies: [],
+      category: null,
+      regions: [],
+      platforms: [],
+      collabTypes: [],
+      period: { start: null, end: null, precision: 'unknown', endKind: 'tba', expectedStart: '2027-09' },
+      sources: [],
+    } satisfies CollabInput;
+    expect(A.toCollabBody(input).period).toEqual({ start: null, end: null, precision: 'unknown', endKind: 'tba', expectedStart: '2027-09' });
+    expect(A.toCollabBody({ ...input, period: { ...input.period, start: '2027-09-10', precision: 'day' } }).period).not.toHaveProperty('expectedStart');
+  });
 });

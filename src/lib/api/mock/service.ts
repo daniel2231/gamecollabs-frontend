@@ -710,13 +710,13 @@ function toAdmin(c: DbCollab): AdminCollab {
   };
 }
 
-/** 백엔드 규칙: 사유는 기간에서 계산, 기록이 없으면 만든 지 3일 뒤가 첫 확인 */
+/** 백엔드 규칙: 사유는 기간에서 계산, 기록이 없으면 만든 날부터 날짜 기준 일정으로 첫 확인 */
 function followUpOf(c: DbCollab): FollowUpState {
   const reason = followUpReasonOf(c.status, c.period, undefined, c.contentTba);
   const f = c.followUp;
   return {
     reason,
-    nextCheckAt: reason ? (f ? f.nextCheckAt : nextCheckAt(0, new Date(c.createdAt))) : null,
+    nextCheckAt: reason ? (f ? f.nextCheckAt : nextCheckAt(c, 0, new Date(c.createdAt))) : null,
     lastCheckedAt: f?.lastCheckedAt ?? null,
     unchanged: f?.unchanged ?? 0,
     escalated: Boolean(f?.escalatedAt),
@@ -1204,9 +1204,9 @@ export const mockAdminApi: AdminApi = {
       }
       c.rev++;
       c.updatedAt = now();
-      c.followUp = { ...c.followUp, nextCheckAt: nextCheckAt(0), lastCheckedAt: now(), unchanged: 0, escalatedAt: null, proposal: null };
+      c.followUp = { ...c.followUp, nextCheckAt: nextCheckAt(c, 0), lastCheckedAt: now(), unchanged: 0, escalatedAt: null, proposal: null };
     } else {
-      c.followUp = { ...c.followUp!, proposal: null, nextCheckAt: nextCheckAt(c.followUp!.unchanged) };
+      c.followUp = { ...c.followUp!, proposal: null, nextCheckAt: nextCheckAt(c, c.followUp!.unchanged) };
     }
     return toAdmin(c);
   },

@@ -59,6 +59,8 @@ export const periodSchema = z.object({
   expectedEnd: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/).nullable().optional(),
   /** 진행 상태가 발표된 날짜가 아니라 추정에서 나왔는지(조건부 종료) */
   endEstimated: z.boolean().optional(),
+  /** 관리자 전용. 시작일이 없을 때 출처가 준 대략적 시작 시기(`YYYY-MM` 또는 `YYYY-MM-DD`). 재확인 일정에만 쓴다 */
+  expectedStart: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/).nullable().optional(),
 });
 export type Period = z.infer<typeof periodSchema>;
 
